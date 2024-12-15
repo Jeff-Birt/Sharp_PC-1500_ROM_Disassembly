@@ -1,0 +1,9 @@
+build.bat	                - build script for command prompt
+build.ps1                       - build script for PowerShell (not working yet)
+File_Info.txt                   - This file :)
+PC-1500.lib                     - used for disassembly only, do not use for building
+PC-1500_A03.ROM                 - PC-1500 ROM dump Version A03
+PC-1500_ROM-A03.bin             - Binary produced by TASM
+PC-1500_ROM-A03.lh5801.Copy.asm - Temp file of list view of original disassembly
+PC-1500_ROM-A03.lh5801.asm      - PC-1500 A03 ROM dissasembly source
+PC-1500_ROM-A03.lst             - list file produced by TASM

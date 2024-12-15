@@ -1,0 +1,58 @@
+; PC-1500 Macros
+;------------------------------------------------------------------------------------------------------------
+; Assembly macros used to encode arguments for lh5801 'macros' that take arguments inline after CALL
+
+#define EQU .EQU
+.MSFIRST
+
+COMMA:      EQU $2C                         ; ',' used for macros
+CR:         EQU $0D                         ; '/CR' used for macros
+DASH:       EQU $2D                         ; '-' used for macros
+EQUALS:     EQU $3D                         ; '-' used for macros
+HASH:       EQU $23                         ; '#' used for macros
+SEMI:       EQU $3B                         ; ';' used for macros
+QUOTE:      EQU $22                         ; '-' used for macros
+DOLLAR:     EQU $24                         ; '#' used for macros
+PERCENT:    EQU $25                         ; ';' used for macros
+
+
+TOK_OFF:    EQU $F19E                       ; OFF   command token
+TOK_ON:     EQU $F19C                       ; ON    command token
+TOK_TAB:    EQU $F0BB                       ; TAB   command token
+TOK_USING:  EQU $F085                       ; USING command token
+
+
+#define ABRF(n8)        .BYTE n8 - $ - 1    ; calculate forward branch
+#define ABYT(n8)        .BYTE n8            ; use byte verbatium
+#define ABYTL(n16)      .BYTE n16 & $FF     ; use byte verbatium
+#define ACHR(ch)        .BYTE ch            ; character
+#define AWRD(n16)       .WORD n16           ; use word value verbatum
+#define CNIB(n81,n82)   .BYTE ((n81 & $F0) | (n82 & $0F))   ; calculates control nibble
+#define HB(n16)         (n16 >> 8)          ; Return HB of 16bit value
+#define LB(n16)         (n16 & $FF)         ; Return HB of 16bit value
+#define HBO(n16,n8)     ((n16 + n8) >> 8)   ; Return HB of 16bit value
+#define LBO(n16,n8)     ((n16 + n8) & $FF)  ; Return HB of 16bit value
+
+; CE-158 related
+#define HIGH_BANK       SPU \ SPV           ; Switch to High Bank
+#define LOW_BANK        RPU \ SPV           ; Switch to High Bank
+#define SETCOM_M        LDI A,$F9 \ STA (SETCOM_REG)    ; SETDEV to 2400,8,N,1
+#define SETDEV_M(n8)    LDI A,n8 \ STA (SETDEV_REG)     ; SETCOM to device passed
+#define SETOPN_M(n8)    LDI A,n8 \ STA (OPN)            ; Set OPN to n8 table
+
+KI:                 EQU $01                     ;
+DO:                 EQU $02                     ;
+PO:                 EQU $04                     ;
+CI:                 EQU $08                     ;
+CO:                 EQU $10                     ;
+U1:                 EQU $20                     ; U1, use UART 1 (Bit5=0=UART0, Bit5=1=UART1)
+PN:                 EQU $40                     ; PN, LPT port to input
+BP:                 EQU $80                     ; BP, enable BDP mode with U0
+
+#define ADDRCHK(add,location)        #if ($ > add)    ; check address
+#DEFCONT                     \!over_run
+#DEFCONT                     \.ECHO location
+#DEFCONT                     \.ECHO " address over run by "
+#DEFCONT                     \.ECHO ($ - add)
+#DEFCONT                     \.ECHO " bytes\r\n"
+#DEFCONT                     \#endif

@@ -1,0 +1,36 @@
+;New CE158 addresses
+;UART  0 Register Addresses
+CE158_UART_RBR0    = $D200 ;Receive buffer register READ only
+CE158_UART_THR0    = $D200 ;Transmit buffer register Write only
+CE158_UART_IER0    = $D201 ;Interrupt enable register
+CE158_UART_IIR0    = $D202 ;Interrupt identity register READ ONLY
+CE158_UART_LCR0    = $D203 ;Line control register, DLAB bit 7
+CE158_UART_MCR0    = $D204 ;Modem Control Register
+CE158_UART_LSR0    = $D205 ;Line Status Register
+CE158_UART_MSR0    = $D206 ;Modem Status Register - 
+CE158_UART_SCR0    = $D207 ;Scratch Register
+CE158_UART_DLL0    = $D200 ;Divisor latch. Shared location controlled by DLAB bit in LCR
+CE158_UART_DLM0    = $D201 ;Divisor latch. Shared location controlled by DLAB bit in LCR
+
+;UART  1 Register Addresses
+CE158_UART_RBR1    = $D400 ;Receive buffer register READ only
+CE158_UART_THR1    = $D400 ;Transmit buffer register Write only
+CE158_UART_IER1    = $D401 ;Interrupt enable register
+CE158_UART_IIR1    = $D402 ;Interrupt identity register READ ONLY
+CE158_UART_LCR1    = $D403 ;Line control register, DLAB bit 7
+CE158_UART_MCR1    = $D404 ;Modem Control Register
+CE158_UART_LSR1    = $D405 ;Line Status Register
+CE158_UART_MSR1    = $D406 ;Modem Status Register
+CE158_UART_SCR1    = $D407 ;Scratch Register
+CE158_UART_DLL1    = $D400 ;Divisor latch. Shared location controlled by DLAB bit in LCR
+CE158_UART_DLM1    = $D401 ;Divisor latch. Shared location controlled by DLAB bit in LCR
+
+;New CE158 Printer port adresses
+CE158_LPT_DATA_READ   = $D000 ;Read parallel port data LPTOE- Should be high
+CE158_LPT_STATUS_READ = $D001 ;Read Port Status register
+CE158_LPT_CTL_READ    = $D002 ;Read Port Control register
+CE158_LPT_DATA_WRITE  = $D000 ;Write Parallel port data LPTOE- should be low
+CE158_LPT_CTL_WRITE   = $D002 ;Write control register
+
+;New Interrupt buffer adresses 
+CE158_INT_BUF   = $DE00 ;Read Interrupt buffer D7 = 0 Interrupt, D7 = 1 No Interrupt
