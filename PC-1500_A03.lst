@@ -1,0 +1,209 @@
+
+ST_MAIN_ROM:
+C000   55                         .BYTE  $55
+
+TABLE#:
+C001   FD                         .BYTE  $FD
+
+NAME:
+C002   2A 65 FD A8 2A 68 78 84    .TEXT  *eý¨*hx.
+
+INIT_VEC:
+C00A   61 04 2E                   .BYTE  $61,$04,$2E
+
+INPUT#:
+C00D   9A A5 7A                   .BYTE  $9A,$A5,$7A
+
+PRINT#:
+C010   07 AE 78                   .BYTE  $07,$AE,$78
+
+MISC_VEC:
+C013   85 24 AE 78 84 A4 AE 78    .BYTE  $85,$24,$AE,$78,$84,$A4,$AE,$78
+C01B   83 9A                      .BYTE  $83,$9A
+
+TRACE:
+C01D   C4 AF FF                   .BYTE  $C4,$AF,$FF
+
+LETTER_A:
+C020   C0 56                      .BYTE  $C0,$56
+
+LETTER_B:
+C022   C0 99                      .BYTE  $C0,$99
+
+LETTER_C:
+C024   C0 A2                      .BYTE  $C0,$A2
+
+LETTER_D:
+C026   C0 E2                      .BYTE  $C0,$E2
+
+LETTER_E:
+C028   C1 0E                      .BYTE  $C1,$0E
+
+LETTER_F:
+C02A   C1 28                      .BYTE  $C1,$28
+
+LETTER_G:
+C02C   C1 30                      .BYTE  $C1,$30
+
+LETTER_H:
+C02E   00 00                      .BYTE  $00,$00
+
+LETTER_I:
+C030   C1 63                      .BYTE  $C1,$63
+
+LETTER_J:
+C032   00 00                      .BYTE  $00,$00
+
+LETTER_K:
+C034   00 00                      .BYTE  $00,$00
+
+LETTER_L:
+C036   C1 87                      .BYTE  $C1,$87
+
+LETTER_M:
+C038   C1 C2                      .BYTE  $C1,$C2
+
+LETTER_N:
+C03A   C1 D3                      .BYTE  $C1,$D3
+
+LETTER_O:
+C03C   C1 EC                      .BYTE  $C1,$EC
+
+LETTER_P:
+C03E   C2 0A                      .BYTE  $C2,$0A
+
+LETTER_Q:
+C040   00 00                      .BYTE  $00,$00
+
+LETTER_R:
+C042   C2 5F                      .BYTE  $C2,$5F
+
+LETTER_S:
+C044   C2 B8                      .BYTE  $C2,$B8
+
+LETTER_T:
+C046   C2 F6                      .BYTE  $C2,$F6
+
+LETTER_U:
+C048   C3 2A                      .BYTE  $C3,$2A
+
+LETTER_V:
+C04A   C3 3F                      .BYTE  $C3,$3F
+
+LETTER_W:
+C04C   C3 47                      .BYTE  $C3,$47
+
+LETTER_X:
+C04E   00 00                      .BYTE  $00,$00
+
+LETTER_Y:
+C050   00 00                      .BYTE  $00,$00
+
+LETTER_Z:
+C052   00 00                      .BYTE  $00,$00
+
+Addr  Ctrl  Name              Token  Vector
+C05E    B5  AREAD             F180   C684
+C066    A3  AND               F150   CD89
+C06E    A3  ABS               F170   F597
+C076    A3  ATN               F175   F496
+C07E    A3  ASN               F173   F49A
+C086    A3  ACS               F174   F492
+C08E    A3  ASC               F160   D9DD
+C097    84  ARUN              F181   C684
+C0A0    B4  BEEP              F182   E5C1
+C0A9    D4  CONT              F183   C8C7
+C0B4    86  CURSOR            F084   E846
+C0BE    C5  CLEAR             F187   C85F
+C0C6    C3  CLS               F088   E865
+C0CE    C3  COS               F17E   F391
+C0D7    A4  CHR$              F163   D9B1
+C0E0    A4  CALL              F18A   C863
+C0E8    D3  DIM               F18B   C988
+C0F3    C6  DEGREE            F18C   C697
+C0FB    C3  DEG               F165   F531
+C103    A3  DMS               F166   F564
+C10C    A4  DATA              F18D   C684
+C114    B3  END               F18E   C50D
+C11C    A3  EXP               F178   F1CB
+C126    A5  ERROR             F1B4   CD89
+C12E    B3  FOR               F1A5   C711
+C137    B4  GOTO              F192   C515
+C141    C5  GOSUB             F194   C64E
+C14C    A6  GPRINT            F09F   E7AC
+C158    C7  GCURSOR           F093   E83E
+C161    C4  GRAD              F186   C6A8
+C16B    D5  INPUT             F091   C8FA
+C172    C2  IF                F196   C5B4
+C17A    A3  INT               F171   F5BE
+C185    A6  INKEY$            F15C   D9AA
+C18E    D4  LIST              F090   C96E
+C196    83  LOG               F177   F165
+C19D    A2  LN                F176   F161
+C1A5    A3  LET               F198   C458
+C1AD    A3  LEN               F164   D9DD
+C1B7    85  LEFT$             F17A   D9F3
+C1C0    C4  LOCK              F1B5   C968
+C1C8    D3  MEM               F158   DA5D
+C1D1    C4  MID$              F17B   D9F3
+C1DA    D4  NEXT              F19A   C705
+C1E2    A3  NOT               F16D   599E
+C1EA    A3  NEW               F19B   C80A
+C1F1    92  ON                F19C   C5E0
+C1F8    A2  OR                F151   CD89
+C200    A3  OPN               F19D   E457
+C208    C3  OFF               F19E   CD89
+C212    B5  PRINT             F097   E4EB
+C219    C2  PI                F15D   F5B5
+C223    C5  PEEK#             F16E   D993
+C22C    A4  PEEK              F16F   D993
+C236    A5  POKE#             F1A0   C778
+C23F    C4  POKE              F1A1   C777
+C249    C5  POINT             F168   EECB
+C253    A5  PAUSE             F1A2   E6A5
+C25D    A5  P                 F1A3   CD89
+C265    B3  RUN               F1A4   C8B4
+C270    86  RETURN            F199   C6AC
+C279    A4  READ              F1A6   C7B8
+C285    A7  RESTORE           F1A7   C7A2
+C28D    A3  RND               F17C   F5DD
+C298    A6  RANDOM            F1A8   F641
+C2A3    C6  RIGHT$            F172   D9F3
+C2AE    C6  RADIAN            F1AA   C6A4
+C2B6    C3  REM               F1AB   C676
+C2BF    B4  STOP              F1AC   C4B6
+C2C7    A3  SQR               F16B   F0E9
+C2CF    A3  SIN               F17D   F3A2
+C2D7    A3  SGN               F179   F59D
+C2E0    A4  STR$              F161   D9CE
+C2EB    A6  STATUS            F167   5A44
+C2F4    A4  STEP              F1AD   CD89
+C2FD    B4  THEN              F1AE   CD89
+C305    A3  TAN               F17F   F39E
+C30E    A4  TIME              F15B   DE82
+C317    C4  TRON              F1AF   C68C
+C321    C5  TROFF             F1B0   C693
+C328    C2  TO                F1B1   CD89
+C332    B5  USING             F085   C67C
+C33D    C6  UNLOCK            F1B6   C96A
+C345    D3  VAL               F162   D9D7
+C34E    94  WAIT              F1B3   E86A
+C34F    D0
+
+
+
+SM_NEW0:
+C34F   4E 45 57 30 3F 20 3A 43    .BYTE  $4E,$45,$57,$30,$3F,$20,$3A,$43
+C357   48 45 43 4B 20             .BYTE  $48,$45,$43,$4B,$20
+
+
+SM_BREAK:
+C35C   42 52 45 41 4B 20          .BYTE  $42,$52,$45,$41,$4B,$20
+
+
+SM_IN:
+C362   49 4E 20                   .BYTE  $49,$4E,$20
+
+
+SM_ERROR:
+C365   45 52 52 4F 52 20          .BYTE  $45,$52,$52,$4F,$52,$20

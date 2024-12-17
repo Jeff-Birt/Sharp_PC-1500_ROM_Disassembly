@@ -6,7 +6,8 @@
 
 ; PC-1500 versions via CGH
 ; Checksum  Peeks     : Version    - Notes
-; &B1D9     {56, 129} : A01 = ROM0 - PC1500 (early-mid 1982) -> PEEK &E2B9 <> 56, which makes the keyboard driver unusable.
+; &B1D9     {56, 129} : A01 = ROM0 - PC1500 (early-mid 1982) -> PEEK &E2B9 <> 56, 
+; which makes the keyboard driver unusable.
 ; &NNNN     {xx, yy}  : A02 = ROM? - No information or to be specified.
 ; &AE48     {59, 129} : A03 = ROM1 - PC1500 (12/1982) = PC2
 ; &AA1E     {59, 74}  : A04 = ROM2 - PC1500 = PC1500A = PC2
@@ -18,7 +19,7 @@
 ; Then do CALL &78C0,X as an output, the checksum is in X. If X is negative, press 65536-X
 
 #INCLUDE    "lib/PC-1500.lib"
-; #INCLUDE    "lib/CE-150.lib"
+#INCLUDE    "lib/CE-150.lib"
 ; #INCLUDE    "lib/CE-158.lib"
 ; #INCLUDE    "lib/CE-158N.lib"
 #INCLUDE    "lib/PC-1500_Macros.lib"
@@ -29,23 +30,29 @@
 
 .org $C000
 
-; Marking for token table from C020
+;------------------------------------------------------------------------------
+; $C000 - BASIC Command Table $C000. This is not a normal token table though.
+; From $C001~$C01C are two small OS functions
+; $C01D~$C01F is the normal TRACE vector 
+; $C020~$C053 Token table pointers for for built in commands
+; $C054~$C34E Token table for built in commands
+;------------------------------------------------------------------------------
 ST_MAIN_ROM: ; $C000
     .BYTE  $55
 
 
 
 ;------------------------------------------------------------------------------
-; (CA) Transfer 16-bit value from X-Reg to memory page 7BXX
-;            Address: C001 (CA)
+; $C001 - (CA) Transfer 16-bit value from X-Reg to memory page 7BXX
+;            Address: $C001 (CA)
 ;                     D1: sets low byte in memory page 78XX
 ;   Entry parameters: None
 ;
 ; Modified registers: X-Reg was saved after (7801 f.). U-Reg points to the 
-;                     next address of 7801. Accumulator= XL
+;                     next address of 7801. Accumulator = XL
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-SA_XREG_2RAM: ; $C001
+SA_XREG_2RAM: 
     POP  U
     LIN  U
     PSH  U
@@ -58,12 +65,15 @@ SA_XREG_2RAM: ; $C001
     RTN
 
 
-; (DA) Variable address from U-Reg, length from AR-X to variable pointer
-SAVEVARPTR_ARX_SRC: ; $C00E
+
+;------------------------------------------------------------------------------
+;$C00E - (DA) Variable address from U-Reg, length from AR-X to variable pointer
+;------------------------------------------------------------------------------
+SAVEVARPTR:
     LDA  (ARX + $07)
 
 ; Store address from U-Reg and Accumulator.
-SAVEVARPTR_A: ; $C011
+SAVEVARPTR_1: ; $C011
     STA  (CURVARTYPE)   ; CURVARTYPE = $7885
     LDA  UL
     STA  (CURVARADD_L)
@@ -72,127 +82,243 @@ SAVEVARPTR_A: ; $C011
     RTN
 
 
-; Trace vector of this token table
-TRACE_VEC: ; $C01D
+
+;------------------------------------------------------------------------------
+; $C01D - Trace vector of this token table
+;------------------------------------------------------------------------------
+TRACE_VEC: 
     .BYTE  $C4,$AF
     .BYTE  $FF
 
 
 
-; Auxiliary table for detecting Basic commands. The following addresses point to the 2nd letter of the Basic command, where the 1st letter of the commands in the token table has changed.
-ST_BAS_TBL: ; $C020
-    .BYTE  $C0,$56,$C0,$99,$C0,$A2,$C0,$E2
-    .BYTE  $C1,$0E,$C1,$28,$C1,$30,$00,$00
-    .BYTE  $C1,$63,$00,$00,$00,$00,$C1,$87
-    .BYTE  $C1,$C2,$C1,$D3,$C1,$EC,$C2,$0A
-    .BYTE  $00,$00,$C2,$5F,$C2,$B8,$C2,$F6
-    .BYTE  $C3,$2A,$C3,$3F,$C3,$47,$00,$00
-    .BYTE  $00,$00,$00,$00
+;------------------------------------------------------------------------------
+; $C020 - Token Tabale pointers. The following addresses point to the 2nd 
+;         letter of the Basic command, where the 1st letter of the commands in
+;         the token table has changed.
+;------------------------------------------------------------------------------
+;% B_TBL_C000 START
+
+B_TBL_C000_A_KW: ; $C02
+    .WORD  LET_A                                       ; 
+
+B_TBL_C000_B_KW: ; C022
+    .WORD  LET_B                                       ; 
+
+B_TBL_C000_C_KW: ; $C024
+    .WORD  LET_C                                       ; 
+
+B_TBL_C000_D_KW: ; $C026
+    .WORD  LET_D                                       ; 
+
+B_TBL_C000_E_KW: ; $C028
+    .WORD  LET_E                                       ; 
+
+B_TBL_C000_F_KW: ; $C02A
+    .WORD  LET_F                                       ; 
+
+B_TBL_C000_G_KW: ; $C02C
+    .WORD  LET_G                                       ; 
+
+B_TBL_C000_H_KW: ; $C02E
+    .WORD  $0000                                       ; 
+
+B_TBL_C000_I_KW: ; $C030
+    .WORD  LET_I                                       ; 
+
+B_TBL_C000_J_KW: ; $C032
+    .WORD  $0000                                       ; 
+
+B_TBL_C000_K_KW: ; $C034
+    .WORD  $0000                                       ; 
+
+B_TBL_C000_L_KW: ; $C036
+    .WORD  LET_L                                       ; 
+
+B_TBL_C000_M_KW: ; $C038
+    .WORD  LET_M                                       ; 
+
+B_TBL_C000_N_KW: ; $C03A
+    .WORD  LET_N                                       ; 
+
+B_TBL_C000_O_KW: ; $C03C
+    .WORD  LET_O                                       ; 
+
+B_TBL_C000_P_KW: ; $C03E
+    .WORD  LET_P                                       ; 
+
+B_TBL_C000_Q_KW: ; $C040
+    .WORD  $0000                                       ; 
+
+B_TBL_C000_R_KW: ; $C042
+    .WORD  LET_R                                       ;
+
+B_TBL_C000_S_KW: ; $C044
+    .WORD  LET_S                                       ;
+
+B_TBL_C000_T_KW: ; $C046
+    .WORD  LET_T                                       ;
+
+B_TBL_C000_U_KW: ; $C048
+    .WORD  LET_U                                       ;
+
+B_TBL_C000_V_KW: ; $C04A
+    .WORD  LET_V                                       ;
+
+B_TBL_C000_W_KW: ; $C04C
+    .WORD  LET_W                                       ;
+
+B_TBL_C000_X_KW: ; $C04E
+    .WORD  $0000                                       ;
+
+B_TBL_C000_Y_KW: ; $C050
+    .WORD  $0000                                       ;
+
+B_TBL_C000_Z_KW: ; $C052
+    .WORD  $0000                                       ;
 
 
 
-; TOKEN TABLE
-TOKEN_TBL: ; $C054
-    .BYTE  $B5,$41,$52,$45,$41,$44,$F1,$80
-    .BYTE  $C6,$84,$A3,$41,$4E,$44,$F1,$50
-    .BYTE  $CD,$89,$A3,$41,$42,$53,$F1,$70
-    .BYTE  $F5,$97,$A3,$41,$54,$4E,$F1,$75
-    .BYTE  $F4,$96,$A3,$41,$53,$4E,$F1,$73
-    .BYTE  $F4,$9A,$A3,$41,$43,$53,$F1,$74
-    .BYTE  $F4,$92,$A3,$41,$53,$43,$F1,$60
-    .BYTE  $D9,$DD,$84,$41,$52,$55,$4E,$F1
-    .BYTE  $81,$C6,$84,$B4,$42,$45,$45,$50
-    .BYTE  $F1,$82,$E5,$C1,$D4,$43,$4F,$4E
-    .BYTE  $54,$F1,$83,$C8,$C7,$86,$43,$55
-    .BYTE  $52,$53,$4F,$52,$F0,$84,$E8,$46
-    .BYTE  $C5,$43,$4C,$45,$41,$52,$F1,$87
-    .BYTE  $C8,$5F,$C3,$43,$4C,$53,$F0,$88
-    .BYTE  $E8,$65,$C3,$43,$4F,$53,$F1,$7E
-    .BYTE  $F3,$91,$A4,$43,$48,$52,$24,$F1
-    .BYTE  $63,$D9,$B1,$A4,$43,$41,$4C,$4C
-    .BYTE  $F1,$8A,$C8,$63,$D3,$44,$49,$4D
-    .BYTE  $F1,$8B,$C9,$88,$C6,$44,$45,$47
-    .BYTE  $52,$45,$45,$F1,$8C,$C6,$97,$C3
-    .BYTE  $44,$45,$47,$F1,$65,$F5,$31,$A3
-    .BYTE  $44,$4D,$53,$F1,$66,$F5,$64,$A4
-    .BYTE  $44,$41,$54,$41,$F1,$8D,$C6,$84
-    .BYTE  $B3,$45,$4E,$44,$F1,$8E,$C5,$0D
-    .BYTE  $A3,$45,$58,$50,$F1,$78,$F1,$CB
-    .BYTE  $A5,$45,$52,$52,$4F,$52,$F1,$B4
-    .BYTE  $CD,$89,$B3,$46,$4F,$52,$F1,$A5
-    .BYTE  $C7,$11,$B4,$47,$4F,$54,$4F,$F1
-    .BYTE  $92,$C5,$15,$C5,$47,$4F,$53,$55
-    .BYTE  $42,$F1,$94,$C6,$4E,$A6,$47,$50
-    .BYTE  $52,$49,$4E,$54,$F0,$9F,$E7,$AC
-    .BYTE  $C7,$47,$43,$55,$52,$53,$4F,$52
-    .BYTE  $F0,$93,$E8,$3E,$C4,$47,$52,$41
-    .BYTE  $44,$F1,$86,$C6,$A8,$D5,$49,$4E
-    .BYTE  $50,$55,$54,$F0,$91,$C8,$FA,$C2
-    .BYTE  $49,$46,$F1,$96,$C5,$B4,$A3,$49
-    .BYTE  $4E,$54,$F1,$71,$F5,$BE,$A6,$49
-    .BYTE  $4E,$4B,$45,$59,$24,$F1,$5C,$D9
-    .BYTE  $AA,$D4,$4C,$49,$53,$54,$F0,$90
-    .BYTE  $C9,$6E,$83,$4C,$4F,$47,$F1,$77
-    .BYTE  $F1,$65,$A2,$4C,$4E,$F1,$76,$F1
-    .BYTE  $61,$A3,$4C,$45,$54,$F1,$98,$C4
-    .BYTE  $58,$A3,$4C,$45,$4E,$F1,$64,$D9
-    .BYTE  $DD,$85,$4C,$45,$46,$54,$24,$F1
-    .BYTE  $7A,$D9,$F3,$C4,$4C,$4F,$43,$4B
-    .BYTE  $F1,$B5,$C9,$68,$D3,$4D,$45,$4D
-    .BYTE  $F1,$58,$DA,$5D,$C4,$4D,$49,$44
-    .BYTE  $24,$F1,$7B,$D9,$F3,$D4,$4E,$45
-    .BYTE  $58,$54,$F1,$9A,$C7,$05,$A3,$4E
-    .BYTE  $4F,$54,$F1,$6D,$59,$9E,$A3,$4E
-    .BYTE  $45,$57,$F1,$9B,$C8,$0A,$92,$4F
-    .BYTE  $4E,$F1,$9C,$C5,$E0,$A2,$4F,$52
-    .BYTE  $F1,$51,$CD,$89,$A3,$4F,$50,$4E
-    .BYTE  $F1,$9D,$E4,$57,$C3,$4F,$46,$46
-    .BYTE  $F1,$9E,$CD,$89,$B5,$50,$52,$49
-    .BYTE  $4E,$54,$F0,$97,$E4,$EB,$C2,$50
-    .BYTE  $49,$F1,$5D,$F5,$B5,$C5,$50,$45
-    .BYTE  $45,$4B,$23,$F1,$6E,$D9,$93,$A4
-    .BYTE  $50,$45,$45,$4B,$F1,$6F,$D9,$93
-    .BYTE  $A5,$50,$4F,$4B,$45,$23,$F1,$A0
-    .BYTE  $C7,$78,$C4,$50,$4F,$4B,$45,$F1
-    .BYTE  $A1,$C7,$77,$C5,$50,$4F,$49,$4E
-    .BYTE  $54,$F1,$68,$EE,$CB,$A5,$50,$41
-    .BYTE  $55,$53,$45,$F1,$A2,$E6,$A5,$A5
-    .BYTE  $50,$20,$20,$20,$20,$F1,$A3,$CD
-    .BYTE  $89,$B3,$52,$55,$4E,$F1,$A4,$C8
-    .BYTE  $B4,$86,$52,$45,$54,$55,$52,$4E
-    .BYTE  $F1,$99,$C6,$AC,$A4,$52,$45,$41
-    .BYTE  $44,$F1,$A6,$C7,$B8,$A7,$52,$45
-    .BYTE  $53,$54,$4F,$52,$45,$F1,$A7,$C7
-    .BYTE  $A2,$A3,$52,$4E,$44,$F1,$7C,$F5
-    .BYTE  $DD,$A6,$52,$41,$4E,$44,$4F,$4D
-    .BYTE  $F1,$A8,$F6,$41,$C6,$52,$49,$47
-    .BYTE  $48,$54,$24,$F1,$72,$D9,$F3,$C6
-    .BYTE  $52,$41,$44,$49,$41,$4E,$F1,$AA
-    .BYTE  $C6,$A4,$C3,$52,$45,$4D,$F1,$AB
-    .BYTE  $C6,$76,$B4,$53,$54,$4F,$50,$F1
-    .BYTE  $AC,$C4,$B6,$A3,$53,$51,$52,$F1
-    .BYTE  $6B,$F0,$E9,$A3,$53,$49,$4E,$F1
-    .BYTE  $7D,$F3,$A2,$A3,$53,$47,$4E,$F1
-    .BYTE  $79,$F5,$9D,$A4,$53,$54,$52,$24
-    .BYTE  $F1,$61,$D9,$CE,$A6,$53,$54,$41
-    .BYTE  $54,$55,$53,$F1,$67,$5A,$44,$A4
-    .BYTE  $53,$54,$45,$50,$F1,$AD,$CD,$89
-    .BYTE  $B4,$54,$48,$45,$4E,$F1,$AE,$CD
-    .BYTE  $89,$A3,$54,$41,$4E,$F1,$7F,$F3
-    .BYTE  $9E,$A4,$54,$49,$4D,$45,$F1,$5B
-    .BYTE  $DE,$82,$C4,$54,$52,$4F,$4E,$F1
-    .BYTE  $AF,$C6,$8C,$C5,$54,$52,$4F,$46
-    .BYTE  $46,$F1,$B0,$C6,$93,$C2,$54,$4F
-    .BYTE  $F1,$B1,$CD,$89,$B5,$55,$53,$49
-    .BYTE  $4E,$47,$F0,$85,$C6,$7C,$C6,$55
-    .BYTE  $4E,$4C,$4F,$43,$4B,$F1,$B6,$C9
-    .BYTE  $6A,$D3,$56,$41,$4C,$F1,$62,$D9
-    .BYTE  $D7,$94,$57,$41,$49,$54,$F1,$B3
-    .BYTE  $E8,$6A,$D0
+;------------------------------------------------------------------------------
+; $C054 - TOKEN TABLE
+;------------------------------------------------------------------------------
+B_TBL_C000_CMD_LST:     ;Token LB < 80 command is function, else is proceedure
+
+;Addr  Ctrl  Name              Token  Vector
+;Ctrl nibble    Ctrl nib calc            Name                  Token  Vector
+LET_A:  EQU ($ + 2) ; First keyword starting with 'A'. LET_A = Address of 'R' in AREAD
+CN1:    EQU $A5 \ CNIB($B5,CN1)     \ .TEXT "AREAD"    \ .WORD $F180, $C684          ; $C684 - Basic command 
+CN2:    EQU $A3 \ CNIB(CN1,CN2)     \ .TEXT "AND"      \ .WORD $F150, $CD89          ; $CD89 - Basic command
+CN3:    EQU $A3 \ CNIB(CN2,CN3)     \ .TEXT "ABS"      \ .WORD $F170, $F597          ; $F597 - Basic command
+CN4:    EQU $A3 \ CNIB(CN3,CN4)     \ .TEXT "ATN"      \ .WORD $F175, $F496          ; $F496 - Basic command
+CN5:    EQU $A3 \ CNIB(CN4,CN5)     \ .TEXT "ASN"      \ .WORD $F173, $F49A          ; $F49A - Basic command
+CN6:    EQU $A3 \ CNIB(CN5,CN6)     \ .TEXT "ACS"      \ .WORD $F174, $F492          ; $F492 - Basic command
+CN7:    EQU $83 \ CNIB(CN6,CN7)     \ .TEXT "ASC"      \ .WORD $F160, $D9DD          ; $D9DD - Basic command
+CN8:    EQU $B4 \ CNIB(CN7,CN8)     \ .TEXT "ARUN"     \ .WORD $F181, $C684          ; $C684 - Basic command
+
+LET_B:  EQU ($ + 2) ; First keyword starting with 'B'. LET_B = Address of 'E' in BEEP
+CN9:    EQU $D4 \ CNIB(CN8,CN9)     \ .TEXT "BEEP"     \ .WORD $F182, $E5C1          ; $E5C1 - Basic command
+
+LET_C:  EQU ($ + 2) ; First keyword starting with 'C'. LET_C = Address of 'O' in CONT
+CN10:   EQU $84 \ CNIB(CN9,CN10)    \ .TEXT "CONT"     \ .WORD $F183, $C8C7          ; $C8C7 - Basic command
+CN11:   EQU $C6 \ CNIB(CN10,CN11)   \ .TEXT "CURSOR"   \ .WORD $F084, $E846          ; $E846 - Basic command
+CN12:   EQU $C5 \ CNIB(CN11,CN12)   \ .TEXT "CLEAR"    \ .WORD $F187, $C85F          ; $C85F - Basic command
+CN13:   EQU $C3 \ CNIB(CN12,CN13)   \ .TEXT "CLS"      \ .WORD $F088, $E865          ; $E865 - Basic command
+CN14:   EQU $A3 \ CNIB(CN13,CN14)   \ .TEXT "COS"      \ .WORD $F17E, $F391          ; $F391 - Basic command
+CN15:   EQU $A4 \ CNIB(CN14,CN15)   \ .TEXT "CHR$"     \ .WORD $F163, $D9B1          ; $D9B1 - Basic command
+CN16:   EQU $D4 \ CNIB(CN15,CN16)   \ .TEXT "CALL"     \ .WORD $F18A, $C863          ; $C863 - Basic command
+
+LET_D:  EQU ($ + 2) ; First keyword starting with 'D'. LET_D= Address of 'I' in DIM
+CN17:   EQU $C3 \ CNIB(CN16,CN17)   \ .TEXT "DIM"      \ .WORD $F18B, $C988          ; $C988 - Basic command
+CN18:   EQU $C6 \ CNIB(CN17,CN18)   \ .TEXT "DEGREE"   \ .WORD $F18C, $C697          ; $C697 - Basic command
+CN19:   EQU $A3 \ CNIB(CN18,CN19)   \ .TEXT "DEG"      \ .WORD $F165, $F531          ; $F531 - Basic command
+CN20:   EQU $A3 \ CNIB(CN19,CN20)   \ .TEXT "DMS"      \ .WORD $F166, $F564          ; $F654 - Basic command
+CN21:   EQU $B4 \ CNIB(CN20,CN21)   \ .TEXT "DATA"     \ .WORD $F18D, $C684          ; $C684 - Basic command
+
+LET_E:  EQU ($ + 2) ; First keyword starting with 'E'. LET_E = Address of 'N' in END
+CN22:   EQU $A3 \ CNIB(CN21,CN22)   \ .TEXT "END"      \ .WORD $F18E, $C50D          ; $C50D - Basic command
+CN23:   EQU $A3 \ CNIB(CN22,CN23)   \ .TEXT "EXP"      \ .WORD $F178, $F1CB          ; $F1CB - Basic command
+CN24:   EQU $B5 \ CNIB(CN23,CN24)   \ .TEXT "ERROR"    \ .WORD $F1B4, $CD89          ; $CD89 - Basic command
+
+LET_F:  EQU ($ + 2) ; First keyword starting with 'F'. LET_F = Address of 'O' in FOR
+CN25:   EQU $B3 \ CNIB(CN24,CN25)   \ .TEXT "FOR"      \ .WORD $F1A5, $C711          ; $C711 - Basic command
+
+LET_G:  EQU ($ + 2) ; First keyword starting with 'G'. LET_G = Address of 'O' in GOTO
+CN26:   EQU $C4 \ CNIB(CN25,CN26)   \ .TEXT "GOTO"     \ .WORD $F192, $C515          ; $C515 - Basic command
+CN27:   EQU $A5 \ CNIB(CN26,CN27)   \ .TEXT "GOSUB"    \ .WORD $F194, $C64E          ; $C64E - Basic command
+CN28:   EQU $C6 \ CNIB(CN27,CN28)   \ .TEXT "GPRINT"   \ .WORD $F09F, $E7AC          ; $E7AC - Basic command
+CN29:   EQU $C7 \ CNIB(CN28,CN29)   \ .TEXT "GCURSOR"  \ .WORD $F093, $E83E          ; $E83E - Basic command
+CN30:   EQU $D4 \ CNIB(CN29,CN30)   \ .TEXT "GRAD"     \ .WORD $F186, $C6A8          ; $C6A8 - Basic command
+
+LET_I:  EQU ($ + 2) ; First keyword starting with 'I'. LET_I = Address of 'N' in INPUT
+CN31:   EQU $C5 \ CNIB(CN30,CN31)   \ .TEXT "INPUT"    \ .WORD $F091, $C8FA          ; $C8FA - Basic command
+CN32:   EQU $A2 \ CNIB(CN31,CN32)   \ .TEXT "IF"       \ .WORD $F196, $C5B4          ; $C5B4 - Basic command
+CN33:   EQU $A3 \ CNIB(CN32,CN33)   \ .TEXT "INT"      \ .WORD $F171, $F5BE          ; $F5BE - Basic command
+CN34:   EQU $D6 \ CNIB(CN33,CN34)   \ .TEXT "INKEY$"   \ .WORD $F15C, $D9AA          ; $D9AA - Basic command
+
+LET_L:  EQU ($ + 2) ; First keyword starting with 'L'. LET_L = Address of 'I' in LIST
+CN35:   EQU $84 \ CNIB(CN34,CN35)   \ .TEXT "LIST"     \ .WORD $F090, $C96E          ; $C96E - Basic command
+CN36:   EQU $A3 \ CNIB(CN35,CN36)   \ .TEXT "LOG"      \ .WORD $F177, $F165          ; $F165 - Basic command
+CN37:   EQU $A2 \ CNIB(CN36,CN37)   \ .TEXT "LN"       \ .WORD $F176, $F161          ; $F161 - Basic command
+CN38:   EQU $A3 \ CNIB(CN37,CN38)   \ .TEXT "LET"      \ .WORD $F198, $C458          ; $C458 - Basic command
+CN39:   EQU $83 \ CNIB(CN38,CN39)   \ .TEXT "LEN"      \ .WORD $F164, $D9DD          ; $D9DD - Basic command
+CN40:   EQU $C5 \ CNIB(CN39,CN40)   \ .TEXT "LEFT$"    \ .WORD $F17A, $D9F3          ; $D9F3 - Basic command
+CN41:   EQU $D4 \ CNIB(CN40,CN41)   \ .TEXT "LOCK"     \ .WORD $F1B5, $C968          ; $C968 - Basic command
+
+LET_M:  EQU ($ + 2) ; First keyword starting with 'M'. LET_M = Address of 'E' in MEM
+CN42:   EQU $C3 \ CNIB(CN41,CN42)   \ .TEXT "MEM"      \ .WORD $F158, $DA5D          ; $DA5D - Basic command
+CN43:   EQU $D4 \ CNIB(CN42,CN43)   \ .TEXT "MID$"     \ .WORD $F17B, $D9F3          ; $D9F3 - Basic command
+
+LET_N:  EQU ($ + 2) ; First keyword starting with 'N'. LET_N = Address of 'E' in NEXT
+CN44:   EQU $A4 \ CNIB(CN43,CN44)   \ .TEXT "NEXT"     \ .WORD $F19A, $C705          ; $C705 - Basic command
+CN45:   EQU $A3 \ CNIB(CN44,CN45)   \ .TEXT "NOT"      \ .WORD $F16D, $599E          ; $599E - Basic command
+CN46:   EQU $93 \ CNIB(CN45,CN46)   \ .TEXT "NEW"      \ .WORD $F19B, $C80A          ; $C80A - Basic command
+
+LET_O:  EQU ($ + 2) ; First keyword starting with 'O'. LET_O = Address of 'N' in ON
+CN47:   EQU $A2 \ CNIB(CN46,CN47)   \ .TEXT "ON"       \ .WORD $F19C, $C5E0          ; $C5E0 - Basic command
+CN48:   EQU $A2 \ CNIB(CN47,CN48)   \ .TEXT "OR"       \ .WORD $F151, $CD89          ; $CD89 - Basic command
+CN49:   EQU $C3 \ CNIB(CN48,CN49)   \ .TEXT "OPN"      \ .WORD $F19D, $E457          ; $E457 - Basic command
+CN50:   EQU $B3 \ CNIB(CN49,CN50)   \ .TEXT "OFF"      \ .WORD $F19E, $CD89          ; $CD89 - Basic command
+
+LET_P:  EQU ($ + 2) ; First keyword starting with 'P'. LET_P = Address of 'R' in PRINT
+CN51:   EQU $c5 \ CNIB(CN50,CN51)   \ .TEXT "PRINT"    \ .WORD $F097, $E4EB          ; $E4EB - Basic command
+CN52:   EQU $C2 \ CNIB(CN51,CN52)   \ .TEXT "PI"       \ .WORD $F15D, $F5B5          ; $F5B5 - Basic command
+CN53:   EQU $A5 \ CNIB(CN52,CN53)   \ .TEXT "PEEK#"    \ .WORD $F16E, $D993          ; $D993 - Basic command
+CN54:   EQU $A4 \ CNIB(CN53,CN54)   \ .TEXT "PEEK"     \ .WORD $F16F, $D993          ; $D993 - Basic command
+CN55:   EQU $C5 \ CNIB(CN54,CN55)   \ .TEXT "POKE#"    \ .WORD $F1A0, $C778          ; $C778 - Basic command
+CN56:   EQU $C4 \ CNIB(CN55,CN56)   \ .TEXT "POKE"     \ .WORD $F1A1, $C777          ; $C777 - Basic command
+CN57:   EQU $A5 \ CNIB(CN56,CN57)   \ .TEXT "POINT"    \ .WORD $F168, $EECB          ; $EECB - Basic command
+CN58:   EQU $A5 \ CNIB(CN57,CN58)   \ .TEXT "PAUSE"    \ .WORD $F1A2, $E6A5          ; $E6A5 - Basic command
+CN59:   EQU $B5 \ CNIB(CN58,CN59)   \ .TEXT "P    "    \ .WORD $F1A3, $CD89          ; $CD89 - Basic command
+
+LET_R:  EQU ($ + 2) ; First keyword starting with 'R'. LET_R = Address of 'U' in RUN
+CN60:   EQU $83 \ CNIB(CN59,CN60)   \ .TEXT "RUN"      \ .WORD $F1A4, $C8B4          ; $C8B4 - Basic command
+CN61:   EQU $A6 \ CNIB(CN60,CN61)   \ .TEXT "RETURN"   \ .WORD $F199, $C6AC          ; $C6AC - Basic command
+CN62:   EQU $A4 \ CNIB(CN61,CN62)   \ .TEXT "READ"     \ .WORD $F1A6, $C7B8          ; $C7B8 - Basic command
+CN63:   EQU $A7 \ CNIB(CN62,CN63)   \ .TEXT "RESTORE"  \ .WORD $F1A7, $C7A2          ; $C7A2 - Basic command
+CN64:   EQU $A3 \ CNIB(CN63,CN64)   \ .TEXT "RND"      \ .WORD $F17C, $F5DD          ; $F5DD - Basic command
+CN65:   EQU $C6 \ CNIB(CN64,CN65)   \ .TEXT "RANDOM"   \ .WORD $F1A8, $F641          ; $F641 - Basic command
+CN66:   EQU $C6 \ CNIB(CN65,CN66)   \ .TEXT "RIGHT$"   \ .WORD $F172, $D9F3          ; $D9F3 - Basic command
+CN67:   EQU $C6 \ CNIB(CN66,CN67)   \ .TEXT "RADIAN"   \ .WORD $F1AA, $C6A4          ; $C6A4 - Basic command
+CN68:   EQU $B3 \ CNIB(CN67,CN68)   \ .TEXT "REM"      \ .WORD $F1AB, $C676          ; $C676 - Basic command
+
+LET_S:  EQU ($ + 2) ; First keyword starting with 'S'. LET_S = Address of 'T' in STOP
+CN69:   EQU $A4 \ CNIB(CN68,CN69)   \ .TEXT "STOP"     \ .WORD $F1AC, $C4B6          ; $C4B6 - Basic command
+CN70:   EQU $A3 \ CNIB(CN69,CN70)   \ .TEXT "SQR"      \ .WORD $F16B, $F0E9          ; $F0E9 - Basic command
+CN71:   EQU $A3 \ CNIB(CN70,CN71)   \ .TEXT "SIN"      \ .WORD $F17D, $F3A2          ; $F3A2 - Basic command
+CN72:   EQU $A3 \ CNIB(CN71,CN72)   \ .TEXT "SGN"      \ .WORD $F179, $F59D          ; $F59D - Basic command
+CN73:   EQU $A4 \ CNIB(CN72,CN73)   \ .TEXT "STR$"     \ .WORD $F161, $D9CE          ; $D9CE - Basic command
+CN74:   EQU $A6 \ CNIB(CN73,CN74)   \ .TEXT "STATUS"   \ .WORD $F167, $5A44          ; $5A44 - Basic command
+CN75:   EQU $B4 \ CNIB(CN74,CN75)   \ .TEXT "STEP"     \ .WORD $F1AD, $CD89          ; $CD89 - Basic command
+
+LET_T:  EQU ($ + 2) ; First keyword starting with 'T'. LET_T = Address of 'H' in THEN
+CN76:   EQU $A4 \ CNIB(CN75,CN76)   \ .TEXT "THEN"     \ .WORD $F1AE, $CD89          ; $CD89 - Basic command
+CN77:   EQU $A3 \ CNIB(CN76,CN77)   \ .TEXT "TAN"      \ .WORD $F17F, $F39E          ; $F39E - Basic command
+CN78:   EQU $C4 \ CNIB(CN77,CN78)   \ .TEXT "TIME"     \ .WORD $F15B, $DE82          ; $DE82 - Basic command
+CN79:   EQU $C4 \ CNIB(CN78,CN79)   \ .TEXT "TRON"     \ .WORD $F1AF, $C68C          ; $C68C - Basic command
+CN80:   EQU $C5 \ CNIB(CN79,CN80)   \ .TEXT "TROFF"    \ .WORD $F1B0, $C693          ; $C693 - Basic command
+CN81:   EQU $B2 \ CNIB(CN80,CN81)   \ .TEXT "TO"       \ .WORD $F1B1, $CD89          ; $CD89 - Basic command
+
+LET_U:  EQU ($ + 2) ; First keyword starting with 'U'. LET_U = Address of 'S' in USING
+CN82:   EQU $C5 \ CNIB(CN81,CN82)   \ .TEXT "USING"    \ .WORD $F085, $C67C          ; $C67C - Basic command
+CN83:   EQU $D6 \ CNIB(CN82,CN83)   \ .TEXT "UNLOCK"   \ .WORD $F1B6, $C96A          ; $C96A - Basic command
+
+LET_V:  EQU ($ + 2) ; First keyword starting with 'V'. LET_V = Address of 'A' in VAL
+CN84:   EQU $93 \ CNIB(CN83,CN84)   \ .TEXT "VAL"      \ .WORD $F162, $D9D7          ; $D9D7 - Basic command
+
+LET_W:  EQU ($ + 2) ; First keyword starting with 'W'. LET_W = Address of 'A' in WAIT
+CN85:   EQU $94 \ CNIB(CN84,CN85)   \ .TEXT "WAIT"     \ .WORD $F1B3, $E86A          ; $E86A - Basic command
+
+CN86:  EQU $D0 \ .BYTE CN86
+
+B_TBL_8000_END:
+;% B_TBL_8000 END
 
 
 
-; Messages
+;------------------------------------------------------------------------------
+; $C34F - System Messages
+;------------------------------------------------------------------------------
 SM_NEW0: ; $C34F 
     .BYTE  $4E,$45,$57,$30,$3F,$20,$3A,$43
     .BYTE  $48,$45,$43,$4B,$20              ; NEW0? :CHECK
@@ -204,48 +330,104 @@ SM_IN: ; $C362
     .BYTE  $49,$4E,$20                      ; IN
 
 SM_ERROR: ; $C36B
-    .BYTE  $45,$52,$52,$4F,$52,$20          ; Error
+    .BYTE  $45,$52,$52,$4F,$52,$20          ; ERROR
 
 
 
+;------------------------------------------------------------------------------
 ; Table for occupied DEF keys
+;------------------------------------------------------------------------------
 DEFKEY_TBL: ; $C36B
-    .BYTE  $20,$41,$42,$43,$44,$F0,$46,$47
-    .BYTE  $48,$F0,$4A,$4B,$4C,$4D,$4E,$F0
-    .BYTE  $F0,$F0,$F1,$53,$F1,$F0,$56,$F0
-    .BYTE  $58,$F1,$5A,$20,$20,$3D,$20,$20
+    ;      Value    DEF   Normal  Use
+    .BYTE  $20 ;    DEF-  SPACE   : -
+    .BYTE  $41 ;    DEF-  A       : -   
+    .BYTE  $42 ;    DEF-  B       : -
+    .BYTE  $43 ;    DEF-  C       : -
+    .BYTE  $44 ;    DEF-  D       : -
+    .BYTE  $F0 ;    DEF-  E       USING
+    .BYTE  $46 ;    DEF-  F       : -
+    .BYTE  $47 ;    DEF-  G       : -
+    .BYTE  $48 ;    DEF-  H       : -
+    .BYTE  $F0 ;    DEF-  I       CLOAD
+    .BYTE  $4A ;    DEF-  J       : -
+    .BYTE  $4B ;    DEF-  K       : -
+    .BYTE  $4C ;    DEF-  L       : -
+    .BYTE  $4D ;    DEF-  M       : -
+    .BYTE  $4E ;    DEF-  N       : -
+    .BYTE  $F0 ;    DEF-  O       MERGE
+    .BYTE  $F0 ;    DEF-  P       LIST
+    .BYTE  $F0 ;    DEF-  Q       INPUT        
+    .BYTE  $F1 ;    DEF-  R       GOTO
+    .BYTE  $53 ;    DEF-  S       :-
+    .BYTE  $F1 ;    DEF-  T       GOSUB
+    .BYTE  $F0 ;    DEF-  U       CSAVE
+    .BYTE  $56 ;    DEF-  V       :-
+    .BYTE  $F0 ;    DEF-  W       PRINT
+    .BYTE  $58 ;    DEF-  X       :-
+    .BYTE  $F1 ;    DEF-  Y       RETURN
+    .BYTE  $5A ;    DEF-  Z       :-
+    .BYTE  $20 ;        
+    .BYTE  $20 ;        
+    .BYTE  $3D ;    DEF-  =       :-
+    .BYTE  $20 ;        
+    .BYTE  $20 ;        
 
 
 
+;------------------------------------------------------------------------------
 ; Address table for editor control characters
+;------------------------------------------------------------------------------
 EDCTRL_TBL: ; $C38B
-    .BYTE  $CA,$64,$CB,$61,$CA,$55,$CA,$80
-    .BYTE  $CB,$C7,$CB,$CF,$CB,$9C,$CB,$A0
-    .BYTE  $CC,$22,$CB,$69,$CC,$48,$CC,$38
-    .BYTE  $CB,$E4,$CC,$C1,$C4
+    .BYTE  $CA,$64 ; CL
+    .BYTE  $CB,$61 ; RCL
+    .BYTE  $CA,$55 ; CA
+    .BYTE  $CA,$80 ; DEF
+    .BYTE  $CB,$C7 ; INS
+    .BYTE  $CB,$CF ; DEL
+    .BYTE  $CB,$9C ; SHIFT-MODE
+    .BYTE  $CB,$A0 ; MODE
+    .BYTE  $CC,$22 ; CURSOR-LEFT
+    .BYTE  $CB,$69 ; (up/down arrow)
+    .BYTE  $CC,$48 ; CURSOR-DOWN
+    .BYTE  $CC,$38 ; CURSOR-UP
+    .BYTE  $CB,$E4 ; CURSOR-RIGHT
+    .BYTE  $CC,$C1 ; ENTER
+    .BYTE  $C4,$C6 ; BREAK
+    .BYTE  $CD,$71 ; OFF
 
 
 
 ; Operator table for formula evaluation of the subroutines (DE), (D6DF)
 FVAL_TBLE: ; $C3A8
-    .BYTE  $C6,$CD,$71,$2B,$81,$3F,$08,$00
-    .BYTE  $2D,$81,$3F,$08,$00,$2A,$82,$22
-    .BYTE  $04,$E2,$2F,$82,$22,$04,$E2,$5E
-    .BYTE  $84,$22,$04,$E2,$3D,$80,$22,$04
-    .BYTE  $32,$3C,$80,$22,$3D,$15,$3E,$80
-    .BYTE  $22,$3D,$29,$0D,$00,$22,$01,$E1
-    .BYTE  $2C,$60,$22,$01,$E2,$28,$20,$1D
-    .BYTE  $01,$0A,$29,$10,$22,$20,$E2,$2E
-    .BYTE  $00,$1D,$00,$58,$22,$00,$1D,$00
-    .BYTE  $35,$5D,$F1,$1D,$00,$5A,$5B,$F1
-    .BYTE  $1D,$10,$64,$26,$00,$1D,$00,$39
+    .BYTE  $2B,$81,$3F,$08,$00 ; + branched to (D755)
+    .BYTE  $2D,$81,$3F,$08,$00 ; -     (D755)
+    .BYTE  $2A,$82,$22,$04,$E2 ; *     (D837)
+    .BYTE  $2F,$82,$22,$04,$E2 ; /     (D837)
+    .BYTE  $5E,$84,$22,$04,$E2 ; ^     (D837)
+    .BYTE  $3D,$80,$22,$04,$32 ; =     (D787)
+    .BYTE  $3C,$80,$22,$3D,$15 ; <     (D76A)
+    .BYTE  $3E,$80,$22,$3D,$29 ; >     (D77E)
+    .BYTE  $0D,$00,$22,$01,$E1 ; ENTER (D836)
+    .BYTE  $2C,$60,$22,$01,$E2 ; ,     (D837)
+    .BYTE  $28,$20,$1D,$01,$0A ; (     (D75F)
+    .BYTE  $29,$10,$22,$20,$E2 ; )     (D837)
+    .BYTE  $2E,$00,$1D,$00,$58 ; .     (D7AD)
+    .BYTE  $22,$00,$1D,$00,$35 ; "     (D78A)
+    .BYTE  $5D,$F1,$1D,$00,$5A ; π     (D7AF)
+    .BYTE  $5B,$F1,$1D,$10,$64 ; √     (D7B9)
+    .BYTE  $26,$00,$1D,$00,$39 ; &     (D78E)
 
 
-; (E2) - BASIC interpreter: Y-Reg points to command or line end
-BASIC_INT: ; $ C400
+
+;------------------------------------------------------------------------------
+; (E2) $C400 - BASIC interpreter: Y-Reg points to command or line end
+;------------------------------------------------------------------------------
+BASIC_INT: ; $C400
     VEJ  (C0)
 
-; (40) - Process command in U-Reg  
+;------------------------------------------------------------------------------
+; (40) $C401 - Process command in U-Reg
+;------------------------------------------------------------------------------
     VEJ  (D8)
     BZR  BASIC_INT_1 ; $C409
     CPI  UL,$0D
@@ -317,9 +499,10 @@ BASIC_INT_4: ; $C457
     DEC  Y 
 
 
-
-; BASIC command LET
-BCMD_LET: ; $C458
+;------------------------------------------------------------------------------
+; $C458 - BASIC command LET
+;------------------------------------------------------------------------------
+BCMD_LET:
     VEJ  (D8)
     BZR  BCMD_LET_1 ; $C461
     LDI  A,$02
@@ -381,13 +564,15 @@ BCMD_LET_4: ; $C4A5
     BZS BCMD_LET_9 ; BCMD_STOP_6 ; $C4AD
     LDI  UL,$00
 
-BCMD_LET_9: ; $????
+BCMD_LET_9: ; $C4AD
     BCH BCMD_STOP_5 ; $C4BC
 
 
 
-; Trace routine
-TRCROUTINE: ; $C4AF
+;------------------------------------------------------------------------------
+; $C4AF - Trace routine
+;------------------------------------------------------------------------------
+TRCROUTINE:
     VEJ  (CC) \ ABYTL($788E)
     BZS $C4AB
     LDI  UH,$00
@@ -395,8 +580,10 @@ TRCROUTINE: ; $C4AF
 
 
 
-; BASIC command STOP
-BCMD_STOP: ; $C4B6
+;------------------------------------------------------------------------------
+; $C4B6 - BASIC command STOP
+;------------------------------------------------------------------------------
+BCMD_STOP:
     VEJ  (C8) \ ABRF(BCMD_STOP_1) ; $C4C5
     VMJ  ($18)
 
@@ -454,8 +641,10 @@ BCMD_STOP_6: ; $C4AD
 
 
 
-; Basic Command END
-BCMD_END: ; $C50D
+;------------------------------------------------------------------------------
+; $C50D - Basic Command END
+;------------------------------------------------------------------------------
+BCMD_END:
     VEJ  (C2) \ ACHR($0D) \ ABRF(BCMD_ON_1) ; $C5F9
 
 BCMD_END_1:; $C510
@@ -464,8 +653,10 @@ BCMD_END_1:; $C510
 
 
 
-; Basic Command GOTO
-BCMD_GOTO: ; $C515
+;------------------------------------------------------------------------------
+; $C515 - Basic Command GOTO
+;------------------------------------------------------------------------------
+BCMD_GOTO:
     VEJ  (D8)
     BZR DEFKEY_EVAL_1 ; $C5A2
     LDI  UH,$1A
@@ -479,8 +670,10 @@ BCMD_GOTO: ; $C515
 
 
 
-; Evaluation of def keys (label addressing)
-DEFKEY_EVAL: ; $C529
+;------------------------------------------------------------------------------
+; $C529 -  Evaluation of DEF keys (label addressing)
+;------------------------------------------------------------------------------
+DEFKEY_EVAL:
     STA  XL
     STA  (BAS_DATA_STK_L)
     SJP  (ISARXBCD_1) ; $DBF5
@@ -566,8 +759,10 @@ DEFKEY_EVAL_10: ; $C5AB
 
 
 
-; Basic Command IF
-BCMD_IF: ; $C5B4
+;------------------------------------------------------------------------------
+; $C5B4 - Basic Command IF
+;------------------------------------------------------------------------------
+BCMD_IF:
     VEJ  (DE) \ ABRF(BCMD_GOSUB_1) ; $C675
     LDI  XL,$04
     LDI  XH,$7A
@@ -607,8 +802,10 @@ BCMD_IF_5: ; $C5DD
 
 
 
-; Basic-Command ON
-BCMD_ON: ; $C5E0
+;------------------------------------------------------------------------------
+; $C5E0 - Basic-Command ON
+;------------------------------------------------------------------------------
+BCMD_ON:
     VEJ  (C2) \ AWRD($F1B4) \ ABRF(BCMD_ON_2) ; $C605
     VEJ  (C2) \ AWRD($F192) \ ABRF(BCMD_ON_1) ; $C5F9
     VMJ  ($2E) \ ABRF(BCMD_GOSUB_1) ; $C675
@@ -683,8 +880,10 @@ BCMD_ON_6: ; $C64D
 
 
 
-; Basic Command GOSUB
-BCMD_GOSUB: ; $C64E
+;------------------------------------------------------------------------------
+; $C64E - Basic Command GOSUB
+;------------------------------------------------------------------------------
+BCMD_GOSUB: 
     VMJ  ($2E) \ ABRF(BCMD_GOSUB_1) ; $C675
     VEJ  (D0) \ ABYT($83) \ ABRF(BCMD_GOSUB_1) ; $C675
     VMJ  ($1A) \ ABRF(BCMD_GOSUB_1) ; $C675
@@ -712,16 +911,20 @@ BCMD_GOSUB_1: ; $C675
 
 
 
-; Basic Command REM
-BCMD_REM: ; $C676
+;------------------------------------------------------------------------------
+; $C676 - Basic Command REM
+;------------------------------------------------------------------------------
+BCMD_REM:
     VMJ  ($20)
     REC
     JMP  BASIC_INT_7 ; $C40C
 
 
 
-; Basic Command USING
-BCMD_USING: ; $C67C
+;------------------------------------------------------------------------------
+; $C67C - Basic Command USING
+;------------------------------------------------------------------------------
+BCMD_USING: 
     LDI  A,$01
     SJP  (EVAL_USING_1) ; $DAB4
     VEJ  (DE) \ ABYT($56) ; $C760 ***wrong original calc c6da
@@ -729,8 +932,10 @@ BCMD_USING: ; $C67C
 
 
 
-; Basic Command DATA / ARUN / AREAD
-BCMD_DATA: ; $C684
+;------------------------------------------------------------------------------
+; $C684 - Basic Command DATA / ARUN / AREAD
+;------------------------------------------------------------------------------
+BCMD_DATA:
     DEC  Y
     LDI  S,(CPU_STACK + $4F)
     SJP  (BCMD_TIME_3) ; $DF42
@@ -738,8 +943,10 @@ BCMD_DATA: ; $C684
 
 
 
-; Basic Command TRON
-BCMD_TRON: ; $C68C
+;------------------------------------------------------------------------------
+; $C68C - Basic Command TRON
+;------------------------------------------------------------------------------
+BCMD_TRON:
     LDA  (OPN)
 
 BCMD_TRON_1: ; $C68F
@@ -748,15 +955,19 @@ BCMD_TRON_1: ; $C68F
 
 
 
-; Basic Command TROFF
-BCMD_TROFF: ; $C693
+;------------------------------------------------------------------------------
+; $C693 - Basic Command TROFF
+;------------------------------------------------------------------------------
+BCMD_TROFF:
     LDI  A,$00
     BCH BCMD_TRON_1 ; $C68F
 
 
 
-; Basic Command DEGREE
-BCMD_DEGREE: ; $C697
+;------------------------------------------------------------------------------
+; $C697 - Basic Command DEGREE
+;------------------------------------------------------------------------------
+BCMD_DEGREE:
     LDI  UL,$03
 
 BCMD_DEGREE_1: ; $C699
@@ -769,22 +980,28 @@ BCMD_DEGREE_1: ; $C699
 
 
 
-; Basic Command RADIAN
-BCMD_RADIAN: ; $C6A4
+;------------------------------------------------------------------------------
+; $C6A4 - Basic Command RADIAN
+;------------------------------------------------------------------------------
+BCMD_RADIAN:
     LDI  UL,$04
     BCH BCMD_DEGREE_1 ; $C699
 
 
 
-; Basic Command GRAD
-BCMD_GRAD: ; $C6A8
+;------------------------------------------------------------------------------
+; $C6A8 - Basic Command GRAD
+;------------------------------------------------------------------------------
+BCMD_GRAD:
     LDI  UL,$06
     BCH BCMD_DEGREE_1 ; $C699
 
 
 
-; Basic Command RETURN
-BCMD_RETURN: ; $C6AC
+;------------------------------------------------------------------------------
+; $C6AC - Basic Command RETURN
+;------------------------------------------------------------------------------
+BCMD_RETURN:
     VEJ  (C2) \ ACHR($0D) \ ABRF($10) ; $C710
     LDA  (GOSB_STK_PTR_L)
     INC  A
@@ -840,8 +1057,10 @@ BCMD_RETURN_3: ; $C6FD
 
 
 
-; Basic Command NEXT
-BCMD_NEXT: ; $C704
+;------------------------------------------------------------------------------
+; $C704 - Basic Command NEXT
+;------------------------------------------------------------------------------
+BCMD_NEXT:
     VEJ  (C6)
     VEJ  (CE) \ ABYT($68) \ ABRF($C70F)
     SJP  (VARONBSTK)
@@ -858,8 +1077,10 @@ BCMD_NEXT_3: ; $C710
 
 
 
-; Basic Command FOR
-BCMD_FOR: ; $C711
+;------------------------------------------------------------------------------
+; $C711Basic Command FOR
+;------------------------------------------------------------------------------
+BCMD_FOR:
     VEJ  (CE) \ ABYT($68) \ ABRF(BCMD_FOR_2) ; $C776
     VEJ  (DA)
     SJP  (VARONBSTK)
@@ -922,11 +1143,15 @@ BCMD_FOR_2: ; $C776
 
 
 
-; Basic Command POKE
-BCMD_POKE: ; $C777
+;------------------------------------------------------------------------------
+; $C777 - Basic Command POKE
+;------------------------------------------------------------------------------
+BCMD_POKE:
     REC
 
-; Basic Command POKE# $C778
+;------------------------------------------------------------------------------
+; $C778 - Basic Command POKE#
+;------------------------------------------------------------------------------
     LDA  XL
     PSH  A
     VEJ  (DE) \ ABRF(BCMD_READ_2) ; $C7F1
@@ -959,8 +1184,11 @@ BCMD_POKE_1: ; $C7A1
     VEJ  (E4)
 
 
-; Basic Command RESTORE
-BCMD_RESTORE: ; $C7A2
+
+;------------------------------------------------------------------------------
+; $C7A2 - Basic Command RESTORE
+;------------------------------------------------------------------------------
+BCMD_RESTORE:
     SJP  (BTN_DOWN_2) ; $CC8B
     ORI  (X),$62
     VEJ  (CC) \ ABYTL(CURR_TOP_H) ; $789E
@@ -978,8 +1206,10 @@ BCMD_RESTORE: ; $C7A2
 
 
 
-; Basic Command READ
-BCMD_READ: ; $C7B8
+;------------------------------------------------------------------------------
+; $C7B8 - Basic Command READ
+;------------------------------------------------------------------------------
+BCMD_READ:
     VEJ  (CE) \ ABYT($58) \ ABRF(BCMD_READ_2) ; $C7F1
     VEJ  (DA)
     PSH  Y
@@ -1045,8 +1275,12 @@ BCMD_READ_9: ; $C802
     ADR  Y
     BCH BCMD_READ_11 ; $C7E9
 
-; Basic Command NEW
-    SBC  VL ; $C80A
+
+
+;------------------------------------------------------------------------------
+; $C80A - Basic Command NEW
+;------------------------------------------------------------------------------
+    SBC  VL ; .BYTE 30?
     SHR
     BHR BCMD_READ_12 ; $C81B
     VEJ  (C8) \ ABRF(BCMD_CONT_1) ; $C8F0
@@ -1105,11 +1339,17 @@ BCMD_READ_20: ; $C857
     DEC  Y
     SJP  (PRGLINE_TDI_2) ; $D00D
 
-; Basic Command CLEAR  
-    SJP  (DELSVARS) ; $C85F
+
+
+;------------------------------------------------------------------------------
+; $C85F - Basic Command CLEAR 
+;------------------------------------------------------------------------------ 
+    SJP  (DELSVARS)
     VEJ (E2)
 
-; Basic Command CALL ; C863
+;------------------------------------------------------------------------------
+; $C863 - Basic Command CALL
+;------------------------------------------------------------------------------
     VEJ  (DE) \ ABRF(BCMD_CONT_2) ; $C8F1
     VEJ  (D0) \ ABYT($00) \ ABRF(BCMD_CONT_2) ; $C8F1
     PSH  U
@@ -1158,8 +1398,12 @@ BCMD_READ_22: ; $C8B0
     VMJ  ($24)
     BCH BCMD_READ_21 ; $C8AC
 
-; Basic Command RUN
-    INC  XL ; $C8B4
+
+
+;------------------------------------------------------------------------------
+; $C8B4 - Basic Command RUN
+;------------------------------------------------------------------------------
+    INC  XL
     SJP  (BTN_DOWN_1) ; $CC86
     NOP
     VCR  ($42) ; orig ($42)($21) 21 bogus
@@ -1175,8 +1419,10 @@ BCMD_READ_1: ; $C8C2
 
 
 
-; Basic Command CONT
-BCMD_CONT: ; $C8C7
+;------------------------------------------------------------------------------
+; $C8C7 - Basic Command CONT
+;------------------------------------------------------------------------------
+BCMD_CONT:
     INC  XL
     VEJ  (C8) \ ABRF(BCMD_CONT_1) ; $C8F0
     BII  (BREAKPARAM),$E0
@@ -1211,8 +1457,10 @@ BCMD_CONT_4: ; $C42E
 
 
 
-; Basic Command INPUT
-BCMD_INPUT: ; $C8FA
+;------------------------------------------------------------------------------
+; $C8FA - Basic Command INPUT
+;------------------------------------------------------------------------------
+BCMD_INPUT:
     VEJ  (C2) \ ACHR($23) \ ABRF(BCMD_INPUT_2) ; $C900
     JMP  $E4E7
 
@@ -1234,7 +1482,7 @@ BCMD_INPUT_9: ; $C907
     LDI  YH,$7B
     LDA  (ARX + $07)
     STA  UL
-    SJP  (XREG2YREG)
+    SJP  (SYSMSG_3)
     LDA  YL
     STA  (INBUFPTR_L)
     POP  Y
@@ -1283,22 +1531,26 @@ BCMD_INPUT_7: ; $C967
 
 
 
-; Basic Command LOCK
-BCMD_LOCK: ; $C968
+;------------------------------------------------------------------------------
+; $C968 - Basic Command LOCK
+;------------------------------------------------------------------------------
+BCMD_LOCK:
     LDI  A,$00
 
-
-
-; Basic Command UNLOCK
-BCMD_UNLOCK: ; $C96A
+;------------------------------------------------------------------------------
+; $C96A - Basic Command UNLOCK
+;------------------------------------------------------------------------------
+BCMD_UNLOCK:
     STA  (UNDEF_REG_79FF)
     VEJ  (E2)
 
 
 
-; Basic Command LIST
-BCMD_LIST: ; $C96E
-    SBC  UL
+;------------------------------------------------------------------------------
+; $C96E - Basic Command LIST
+;------------------------------------------------------------------------------
+BCMD_LIST:
+    SBC  UL ; .BYTE $20
     SJP  (BTN_DOWN_1); $CC86
     LDA  XL
     BCS BCMD_LIST_1 ; $C97D
@@ -1317,8 +1569,10 @@ BCMD_LIST_1: ; $C97D
 
 
 
-; Basic Command DIM
-BCMD_DIM: ; $C988
+;------------------------------------------------------------------------------
+; $C988 - Basic Command DIM
+;------------------------------------------------------------------------------
+BCMD_DIM:
     VEJ  (CE) \ ABYT($14) \ ABRF(BCMD_DIM_1) ; $C9D4
     VEJ  (DA)
     VMJ  ($2C) \ ABRF(BCMD_DIM_1) ; $C9D4
@@ -1385,8 +1639,10 @@ BCMD_DIM_6: ; $C9E3
 
 
 
-; Editor Cold Start
-COLD_START: ; $C9E4
+;------------------------------------------------------------------------------
+; $C9E4 - Editor Cold Start
+;------------------------------------------------------------------------------
+COLD_START:
     SJP  (PRGLINE_TDI_3) ; $CFCC
     SJP  (INBUF_INIT)
     LDI  UL,$0C
@@ -1421,7 +1677,7 @@ COLD_START_1: ; $CA24
     STA  (DISP_BUFF + $4F)
 
 COLD_START_2: ; $CA29
-    SJP  (SYSMSG)
+    SJP  (SYSMSG_2)
     LDI  XL,$30
     LDA  (ARV + $02)
 
@@ -1461,14 +1717,18 @@ COLD_START_3: ; $CA4A
 
 
 
-; SHIFT CL button (Clear All)
-BTN_SHCL: ; $CA55
+;------------------------------------------------------------------------------
+; $CA55 - SHIFT CL button (Clear All)
+;------------------------------------------------------------------------------
+BTN_SHCL:
     SJP  (PRGLINE_TDI_3) ; $CFCC
 
 
 
-; (42) Editor Warm Boot
-WARM_START: ; $CA58
+;------------------------------------------------------------------------------
+; $CA58 - (42) Editor Warm 
+;------------------------------------------------------------------------------
+WARM_START:
     SJP  (INBUF_CLRRST_1) ; $D02B
     LDI  A,$3E
     STA  (Y)
@@ -1477,8 +1737,10 @@ WARM_START: ; $CA58
 
 
 
-; CL Button
-BUTTON_CL: ; CA64
+;------------------------------------------------------------------------------
+; $CA64 - CL Button
+;------------------------------------------------------------------------------
+BUTTON_CL:
     BCR BUTTON_CL_1 ; $CA67
     VEJ  (F2)
 
@@ -1497,12 +1759,18 @@ BUTTON_CL_2: ; $CA75
 BUTTON_CL_3: ; $CA78
     LDI  A,$00
 
-; (44) Editor (display is retained)
-BUTTON_CL_5: ; $CA7A
+
+
+;------------------------------------------------------------------------------
+; (44) $CA7A - Editor (display is retained)
+;------------------------------------------------------------------------------
+BUTTON_CL_5:
     STA  (DISPARAM)
 
-; (46) Editor Jump
-BUTTON_CL_4: ; $CA7D
+;------------------------------------------------------------------------------
+; (46) $CA7D - Editor Jump
+;------------------------------------------------------------------------------
+BUTTON_CL_4:
     SJP  (PRGMDISP)
     ANI  (CURR_LINE_L),$00
     ANI  (CURR_LINE_H),$00
@@ -1643,8 +1911,10 @@ BUTTON_CL_13: ; $CB46
 
 
 
-; RCL button
-BTN_RCL: ; $CB61
+;------------------------------------------------------------------------------
+; $CB61 - RCL button
+;------------------------------------------------------------------------------
+BTN_RCL:
     ROR
     BCS RSV_CHNG_1 ; $CB93
 
@@ -1654,8 +1924,10 @@ BTN_RCL_1: ; $CB64
 
 
 
-; Switching the RESERVE layers
-RSV_CHNG: ; $CB69
+;------------------------------------------------------------------------------
+;  $CB69 - Switching the RESERVE layers
+;------------------------------------------------------------------------------
+RSV_CHNG:
     LDI  XL,$4E
     LDI  XH,$76
     LDA  (X)
@@ -1689,15 +1961,17 @@ RSV_CHNG_1: ; $CB93
 
 
 
-; SHIFT MODE button
-BTN_SHMODE: ; $CB9C
+;------------------------------------------------------------------------------
+; $CB9C - SHIFT MODE button
+;------------------------------------------------------------------------------
+BTN_SHMODE:
     LDI  UL,$10
     BCH $CBA2
 
-
-
-; MODE button
-BTN_MODE: ; $CBA0
+;------------------------------------------------------------------------------
+; $CBA0 - MODE button
+;------------------------------------------------------------------------------
+BTN_MODE:
     LDI  UL,$40
     VCS  ($46) ; orig ($46)($23) 23 bogus
     LDI  XL,$4F
@@ -1728,17 +2002,19 @@ BTN_MODE_3: ; $CBC5
 
 
 
-; INS Button
-BTN_INS: ; $CBC7
+;------------------------------------------------------------------------------
+; $CBC7 - INS Button
+;------------------------------------------------------------------------------
+BTN_INS:
     SHL
     VCR  ($46) ; orig ($46)($23) 23 bogus
     SJP  (INS2INBUF)
     BCH BTN_DEL_2 ; $CBE1
 
-
-
-; DEL Button
-BTN_DEL: ; $CBCF
+;------------------------------------------------------------------------------
+; $CBCF - DEL Button
+;------------------------------------------------------------------------------
+BTN_DEL:
     SHL
     VCR  ($46) ; orig ($46)($23) 23 bogus
     LDA  (Y)
@@ -1756,8 +2032,10 @@ BTN_DEL_2: ; $CBE1
 
 
 
-; Cursor Right Button
-BTN_RIGHT: ; $CBE4
+;------------------------------------------------------------------------------
+; $CBE4 - Cursor Right Button
+;------------------------------------------------------------------------------
+BTN_RIGHT:
     ROL
     BCS BTN_RIGHT_1 ; $CBFF
     ROL
@@ -1805,16 +2083,20 @@ BTN_RIGHT_2: ; $CC15
 
 
 
-; Programmatic "ENTER" by "@"
-PRG_ENTER: ; $CC1D
+;------------------------------------------------------------------------------
+; $CC1D - Programmatic "ENTER" by "@"
+;------------------------------------------------------------------------------
+PRG_ENTER:
     VEJ  (CC) \ ABYTL(DISPARAM) ; $7880
     ROL
     BCH BTN_ENTER_2 ; $CCC3
 
 
 
-; Cursor Left Button
-BTN_LEFT: ; CC22
+;------------------------------------------------------------------------------
+; $CC22 - Cursor Left Button
+;------------------------------------------------------------------------------
+BTN_LEFT:
     ROL
     BCS BTN_LEFT_2 ; $CC29
     ROL
@@ -1836,8 +2118,10 @@ BTN_LEFT_2: ; $CC29
 
 
 
-; Cursor Up Button
-BTN_UP: ; $CC38
+;------------------------------------------------------------------------------
+; $CC38 - Cursor Up Button
+;------------------------------------------------------------------------------
+BTN_UP:
     ORI  (CURS_CTRL),$40
     LDA  (DISP_BUFF + $4F)
     ROL
@@ -1849,8 +2133,10 @@ BTN_UP: ; $CC38
 
 
 
- ; Cursor Down Button
-BTN_DOWN: ; $CC48
+;------------------------------------------------------------------------------
+; $CC48 - Cursor Down Button
+;------------------------------------------------------------------------------
+BTN_DOWN:
     VCS  ($46) ; ($46)($23)
     LDA  (DISP_BUFF + $4F)
     ROL
@@ -1953,8 +2239,10 @@ BTN_DOWN_9: ; $CCBF
 
 
 
-; Enter Button
-BTN_ENTER: ; $CCC1
+;------------------------------------------------------------------------------
+; $CCC1 - Enter Button
+;------------------------------------------------------------------------------
+BTN_ENTER:
     VCS  ($46) ; ($46)($23)
 
 BTN_ENTER_2: ; $CCC3
@@ -2003,7 +2291,7 @@ BTN_ENTER_3: ; $CCEC
     BCR BTN_ENTER_6 ; $CD19
     VEJ  (F4) \ AWRD(LASTVARADD_H)
     VEJ  (CC) \ ABYTL($7888)
-    SJP  (SAVEVARPTR_A)
+    SJP  (SAVEVARPTR_1)
     SJP  (VAR_TYPE)
     BCR ERRN
     CPA  XL
@@ -2119,14 +2407,16 @@ BTN_OFF_2: ; $CD83
 
 
 
-; (E4) Output Error 1 and return to the editor
-ERR1: ; $CD89
+;------------------------------------------------------------------------------
+; (E4)  $CD89 - Output Error 1 and return to the editor
+;------------------------------------------------------------------------------
+ERR1:
     LDI  UH,$01
 
-
-
-; (E0) Output error from UH
-ERRN: ; $CD8B
+;------------------------------------------------------------------------------
+; (E0) $CD8B - Output error from UH
+;------------------------------------------------------------------------------
+ERRN:
     LDA  UH
     STA  (ERL)
     LDI  S,(CPU_STACK + $4F)
@@ -2228,10 +2518,11 @@ INS2INBUF_2: ; $CE0C
 INS2INBUF_1: ; $CE0F
     RTN
 
-;
 
-; Character input in Input Buffer
-CHAR2INBUF: ; $CE10
+;------------------------------------------------------------------------------
+; $CE10 - Character input in Input Buffer
+;------------------------------------------------------------------------------
+CHAR2INBUF:
     LDA  UH
     BZS CHAR2INBUF_1 ; $CE2D
     CPI  YL,$FF
@@ -2289,7 +2580,7 @@ DELFRMINBUF: ; $CE38
     EAI  $FF
     STA  UL
     INC  X
-    SJP  (XREG2YREG)
+    SJP  (SYSMSG_3)
     LDI  A,$0D
     STA  (Y)
     POP  Y
@@ -2297,8 +2588,10 @@ DELFRMINBUF: ; $CE38
 
 
 
-; Evaluate programmed button; Clears input buffer.
-DEFEVAL: ; $CE4A
+;------------------------------------------------------------------------------
+; $CE4A - Evaluate programmed button; Clears input buffer.
+;------------------------------------------------------------------------------
+DEFEVAL:
     PSH  X
     BII  (DISPARAM),$40
     BZR DEFEVAL_3 ; $CE81
@@ -2319,7 +2612,7 @@ DEFEVAL: ; $CE4A
     VEJ  (DC)
     LDI  YL,$B0
     LDI  YH,$7B
-    SJP  (XREG2YREG)
+    SJP  (SYSMSG_3)
 
 DEFEVAL_4: ; $CE7A
     POP  U
@@ -2392,6 +2685,7 @@ DEFEVAL_6: ; $CEAC
     RTN
 
 
+
 ;------------------------------------------------------------------------------
 ; Determines the start address of the text that explains the reserve assignment 
 ; for the set reserve key level I, II, or III.
@@ -2417,6 +2711,7 @@ DEFEVAL_7: ; $CEBF
     LDA  UL
     STA  XL
     RTN
+
 
 
 ;------------------------------------------------------------------------------
@@ -2545,7 +2840,7 @@ TXFR_RSV_KEY_1: ; $CF0B
     STA  UH
 
 TXFR_RSV_KEY_9: ; $CF1C
-    SJP  (XREG2YREG)
+    SJP  (SYSMSG_3)
     LDA  UH
     BZR TXFR_RSV_KEY_10 ; $CF23
     STA  (Y)
@@ -2691,12 +2986,16 @@ PRGLINE_TDI_6: ; $CFC8
     BCH PRGLINE_TDI_12 ; $CFB9
 
 
-; Initializes system addresses??
-PRGLINE_TDI_3: ; $CFCC
+;------------------------------------------------------------------------------
+; $CFCC - Initializes system addresses and turn off TRACE
+;------------------------------------------------------------------------------
+PRGLINE_TDI_3:
     ANI  (TRACE_ON),$00
 
-; Initialization of system addresses.
-PRGLINE_TDI_7: ; $CFD0
+;------------------------------------------------------------------------------
+; $CFD0 - Initialization of system addresses.
+;------------------------------------------------------------------------------
+PRGLINE_TDI_7:
     VMJ  ($12)
 
 PRGLINE_TDI_14: ; $CFD2
@@ -2728,11 +3027,15 @@ PRGLINE_TDI_13: ; $CFEE
     SIN  X
     SIN  X
 
-; Initializes FOR / GOSUB pointers. Sets the error flag.
-PRGLINE_TDI_1: ; $CFF7
+;------------------------------------------------------------------------------
+; $CFF7 - Initializes FOR / GOSUB pointers. Sets the error flag.
+;------------------------------------------------------------------------------
+PRGLINE_TDI_1: ; 
     ORI  (ON_ERR_ADD_H),$80
 
-; (3A) basic-stack keyboard and input status    
+;------------------------------------------------------------------------------
+; (3A) $CFFB - basic-stack keyboard and input status 
+;------------------------------------------------------------------------------   
     ANI  (CURS_CTRL),$1F
     ANI  (BREAKPARAM),$00
     ORI  (GOSB_STK_PTR_L),$FF
@@ -2740,8 +3043,10 @@ PRGLINE_TDI_1: ; $CFF7
     STA  (FORNXT_STK_PTR)
     RTN
 
-; Initialization of the program pointers.
-PRGLINE_TDI_2: ; $D00D
+;------------------------------------------------------------------------------
+; $D00D - Initialization of the program pointers.
+;------------------------------------------------------------------------------
+PRGLINE_TDI_2:
     VEJ  (CC) \ ABYTL(SRCH_TOP_H) ; $78AA
     BCH PRGLINE_TDI_14 ; $CFD2
 
@@ -2772,8 +3077,10 @@ PRGLINE_TDI_15: ; $D01F
 
 
 
-; 	Clears the rest of the input buffer with "0D"
-INBUF_CLRRST: ; $D021
+;------------------------------------------------------------------------------
+; $D021 - Clears the rest of the input buffer with "0D"
+;------------------------------------------------------------------------------
+INBUF_CLRRST:
     LDA  (INBUFPTR_L)
     STA  XL
     STA  YL
@@ -2827,6 +3134,7 @@ INBUF_CLR_1: ; $D038
 ; Modified Registers: X-Reg, Y-Reg, U-Reg, Accumulator
 ;   Error conditions: None
 ;------------------------------------------------------------------------------ 
+SYSMSG:    
     POP  U
     LIN  U
     STA  XL
@@ -2834,23 +3142,24 @@ INBUF_CLR_1: ; $D038
     PSH  U
     STA  UL
 
-
 ; Transfers system messages.
-SYSMSG: ; $D046
+SYSMSG_2: ; $D046
     LDI  XH,$C3
 
 SYSMSG_1: ; $D048
     TIN
 
-
 ; Transfers UL bytes from X-Reg to Y-Reg
-XREG2YREG: ; $D049
+SYSMSG_3: ; $D049
     LOP  UL,SYSMSG_1 ; $D048
     RTN
 
 
-; Searches for variable on Basic stack, if not found C=0.
-VARONBSTK: ; $D04C
+
+;------------------------------------------------------------------------------ 
+; $D04C - Searches for variable on Basic stack, if not found C=0.
+;------------------------------------------------------------------------------ 
+VARONBSTK:
     LDA  (FORNXT_STK_PTR)
     LDI  XH,$7A
     CPI  A,$39
@@ -2892,9 +3201,10 @@ POPBSTK: ; $D065
     STA  UL
     BCH PSHBSTK_2 ; $D07B
 
-
-; (32) Save U-Reg on Basic Stack
-PSHBSTK: ; $D071
+;------------------------------------------------------------------------------
+; (32) $D071 - Save U-Reg on Basic Stack
+;------------------------------------------------------------------------------
+PSHBSTK:
     LDA  (STK_PTR_GSB_FOR)
     STA  XL
     LDI  XH,$7A
@@ -2913,14 +3223,14 @@ PSHBSTK_3: ; $D07C
 
 
 ;------------------------------------------------------------------------------
-; Delete variable (standard and dimensioned variable)
+; $D080 - Delete variable (standard and dimensioned variable)
 ;            Address: D080
 ;          Parameter: None
 ; 
 ; Modified Registers: X-Reg, U-Reg, Accumulator
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-DELSVARS: ; $D080
+DELSVARS: 
     LDI  XH,$76
     SJP  (DEL_DIM_VARS_1) ; $D0AA
     SJP  (DEL_DIM_VARS_1) ; $D0AA
@@ -2932,14 +3242,14 @@ DELSVARS: ; $D080
 
 
 ;------------------------------------------------------------------------------
-; Delete dimensioned variables
+; $D091 - Delete dimensioned variables
 ;            Address: D091
 ;          Parameter: None
 ; 
 ; Modified Registers: Variable pointer
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-DELDVARS: ; $D091
+DELDVARS:
     LDA  (RAM_END_H)
     STA  (VAR_START_H)
     ANI  (VAR_START_L),$00
@@ -2947,14 +3257,14 @@ DELDVARS: ; $D091
 
 
 ;------------------------------------------------------------------------------
-; Delete dimensioned variable if program and variable memory overlap
+; $D09C - Delete dimensioned variable if program and variable memory overlap
 ;            Address: D09C
 ;          Parameter: None
 ;
 ; Modified Registers: X-Reg, Accumulator
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-DEL_DIM_VARS: ; $D09C
+DEL_DIM_VARS:
     VEJ  (CC) \ ABYTL(BASPRG_END_H) ; $7867
     SEC
     LDA  XL
@@ -2964,8 +3274,10 @@ DEL_DIM_VARS: ; $D09C
     BCS DELDVARS
     RTN
 
-; Delete standard variables (176 bytes) from XH 50.
-DEL_DIM_VARS_1: ; $D0AA
+;------------------------------------------------------------------------------
+; $D0AA - Delete standard variables (176 bytes) from XH 50.
+;------------------------------------------------------------------------------
+DEL_DIM_VARS_1: 
     LDI  XL,$50
     LDI  UL,$AF
 
@@ -2987,8 +3299,12 @@ DEL_DIM_VARS_3: ; $D0B0
     LOP  UL,DEL_DIM_VARS_3 ; $D0B0
     RTN
 
-; Initializes pointer for search program
-DEL_DIM_VARS_2: ; $D0B4
+
+
+;------------------------------------------------------------------------------
+; $D0B4 - Initializes pointer for search program
+;------------------------------------------------------------------------------
+DEL_DIM_VARS_2: 
     LDA  XH
     STA  (SRCH_TOP_H)
     LDA  XL
@@ -3010,9 +3326,12 @@ DEL_DIM_VARS_14: ; $D0BC
     STA  XH
     JMP  BCMD_READ_17 ; $C853
 
-; Compare BCD numbers in AR-X & AR-Y according to operand in Accumulator Set 
+
+;------------------------------------------------------------------------------
+; $D0D2 - Compare BCD numbers in AR-X & AR-Y according to operand in Accumulator Set 
 ; AR-X according to result 0 or 1.
-DEL_DIM_VARS_16: ; $D0D2
+;------------------------------------------------------------------------------
+DEL_DIM_VARS_16:
     PSH  A
     LDA  (ARX + $01)
     EOR  (ARY + $01)
@@ -3041,10 +3360,14 @@ DEL_DIM_VARS_6: ; $D0F7
     VEJ  (EC)
     RTN
 
-; Comparison of two strings according to operator in the accumulator
+
+
+;------------------------------------------------------------------------------
+; $D0F9 - Comparison of two strings according to operator in the accumulator
 ; Comparison of two strings according to the operand in the accumulator whose 
 ; CSI is in AR-X and AR-Y. AR-X is set to 1=true or 0=false, depending on the result.
-DEL_DIM_VARS_15: ; $D0F9
+;------------------------------------------------------------------------------
+DEL_DIM_VARS_15:
     PSH  A
     LDI  UL,$15
     SJP  (BCMD_TIME_7) ; $DEBE
@@ -3111,9 +3434,12 @@ DEL_DIM_VARS_17: ; $D14C
     STX  Y
 
 
-; BCD value pointed to by Y-Reg points passed to AR-X
+
+;------------------------------------------------------------------------------
+; $D14F - BCD value pointed to by Y-Reg points passed to AR-X
 ; Decimal number pointed to by Y-Reg, passed to AR-X. Jump if there is an error.
-BCD_Y2ARX: ; $D14F
+;------------------------------------------------------------------------------
+BCD_Y2ARX:
     PSH  U
     VEJ  (EC)
     DEC  X
@@ -3365,16 +3691,17 @@ BCD_Y2ARX_28: ; $D241
 ;                     U-Reg and Accumulator overwritten.
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-; Transfer line where error occurred to input buffer
-BCD_Y2ARX_45: ; $D246
+; $D246 - Transfer line where error occurred to input buffer
+BCD_Y2ARX_45:
     VEJ  (CC) \ ABYTL(ERR_ADD_H) ; $78B2
     STX  Y
     VEJ  (CC) \ ABYTL(ERR_TOP_H) ; $78B6
     BCH BCD_Y2ARX_48 ; $D254
 
-
-; Transfer line of the instruction to be processed to input buffer
-BCD_Y2ARX_44: ; $D24E
+;------------------------------------------------------------------------------
+; $D24E - Transfer line of the instruction to be processed to input buffer
+;------------------------------------------------------------------------------
+BCD_Y2ARX_44: 
     VEJ  (CC) \ ABYTL(PREV_ADD_H) ; $78A0
     STX  Y
     VEJ  (CC) \ ABYTL(PREV_TOP_H) ; $78A4
@@ -3400,9 +3727,10 @@ BCD_Y2ARX_48: ; $D254
     DEC  A
     BCH BCD_Y2ARX_32 ; $D27E
 
-
-; Transfers 1st line of program to input buffer
-BCD_Y2ARX_47: ; $D26F
+;------------------------------------------------------------------------------
+; $D26F - Transfers 1st line of program to input buffer
+;------------------------------------------------------------------------------
+BCD_Y2ARX_47:
     VMJ  ($12)
 
 BCD_Y2ARX_38: ; $D271
@@ -3410,10 +3738,11 @@ BCD_Y2ARX_38: ; $D271
     STX  Y
     BCH $D27C
 
-
-; Transfers last line of program to input buffer
+;------------------------------------------------------------------------------
+; $D277 - Transfers last line of program to input buffer
 ; Lists line in which BREAK occurred on the LCD.
-BCD_Y2ARX_46: ; $D277
+;------------------------------------------------------------------------------
+BCD_Y2ARX_46:
     VEJ  (CC) \ ABYTL(BASPRG_END_H) ; $7867
 
 BCD_Y2ARX_42: ; $D279
@@ -3462,8 +3791,10 @@ BCD_Y2ARX_35: ; $D2AF
     LDI  UH,$1F
     BCH BCD_Y2ARX_37 ; $D2AA
 
-; Transfers next line to Input buffer
+;------------------------------------------------------------------------------
+; $D2B3 - Transfers next line to Input buffer
 ; Finds the last line number $D2B3
+;------------------------------------------------------------------------------
     VEJ  (CC) \ ABYTL(SRCH_ADD_H) ; $78A6
     INC  X
     INC  X
@@ -3489,14 +3820,18 @@ BCD_Y2ARX_41: ; $D2CD
     LDI  UH,$00
     RTN
 
-; Transmits output line to which X-Reg points to Input buffer
+;------------------------------------------------------------------------------
+; $D2D0 - Transmits output line to which X-Reg points to Input buffer
 ; Lists program line on LCD.
-BCD_Y2ARX_1: ; $D2D0
+;------------------------------------------------------------------------------
+BCD_Y2ARX_1:
     DEC  X
     BCH BCD_Y2ARX_38 ; $D271
 
-; Searches for line address according to search pointer
-BCD_Y2ARX_43: ; $D2D3
+;------------------------------------------------------------------------------
+; $D2D3 - Searches for line address according to search pointer
+;------------------------------------------------------------------------------
+BCD_Y2ARX_43:
     VMJ  ($12)
     STX  U
     VEJ  (CC) \ ABYTL(SRCH_ADD_H) ; $78A6
@@ -3504,31 +3839,34 @@ BCD_Y2ARX_43: ; $D2D3
     BCS BCD_Y2ARX_41 ; $D2CD
     BCH BCD_Y2ARX_42 ; $D279
 
-; Searches for line number according to U-Reg from merge start
+;------------------------------------------------------------------------------
+; $D2E0 - Searches for line number according to U-Reg from merge start
 ; Searches for the line number from the start of the merge.
-BCD_Y2ARX_2: ; $D2E0
+;------------------------------------------------------------------------------
+BCD_Y2ARX_2: 
     VEJ  (CC) \ ABYTL($7869)
     PSH  Y
     BCH SRCHPRGLINE_2 ; $D2FF
 
-
-
 ;------------------------------------------------------------------------------
-; (1A) Searches according to U-Reg ; D2E6
+; (1A) $D2E0 - Searches according to U-Reg ; D2E6
 ; Searches for line numbers according to U-Reg. Jump if an error occurs.
 ;------------------------------------------------------------------------------
     CPI  UH,$FF
     BZR SRCHPRGLINE_3 ; $D327
 
-
-; Searches line number according to U-Reg from beginning of program memory
+;------------------------------------------------------------------------------
+; $D2EA - Searches line number according to U-Reg from beginning of program memory
 ; Searches for line number corresponding to U-Reg; updated program pointer. 
 ; If not found, jump to Distance Address.
-LINESEARCH: ; $D2EA
+;------------------------------------------------------------------------------
+LINESEARCH:
     VMJ  ($12)
 
-; Searches for program line from U-Reg from X-Reg
-SRCHPRGLINE: ; $D2EC
+;------------------------------------------------------------------------------
+; $D2EC - Searches for program line from U-Reg from X-Reg
+;------------------------------------------------------------------------------
+SRCHPRGLINE:
     PSH  Y
     PSH  U
     VEJ  (CA) \ ABYTL(SRCH_TOP_H) ; $78AA
@@ -3631,9 +3969,11 @@ SRCHPRGLINE_13: ; $D36F
 
 
 
-; Reserves space for simple variables
+;------------------------------------------------------------------------------
+; $D371 - Reserves space for simple variables
 ; Reserves space for simple variables and corrects variable pointers.
-SRCHPRGLINE_16: ; $D371
+;------------------------------------------------------------------------------
+SRCHPRGLINE_16:
     LDA  (CURVARADD_L)
     ANI  A,$20
     SHR
@@ -3649,8 +3989,10 @@ SRCHPRGLINE_15: ; $D37E
     STA  UL
     STA  UH
 
-; Reserves space for variables
-SRCHPRGLINE_1 ; $D386
+;------------------------------------------------------------------------------
+; $D386 - Reserves space for variables
+;------------------------------------------------------------------------------
+SRCHPRGLINE_1:
     PSH  U
     VEJ  (F4) \ AWRD(VAR_START_H)
     LDI  A,$07
@@ -3725,7 +4067,7 @@ DELU_FROMX_2: ; $D3CF
 
 ;------------------------------------------------------------------------------
 ; Conversion decimal to hexadecimal
-; Address:	D335
+; Address:	D3D5
 ;   Entry parameters: Y-Reg points to 1st ASCII character of decimal number. 
 ;                     Leading zeros are skipped.
 ; 
@@ -3734,7 +4076,7 @@ DELU_FROMX_2: ; $D3CF
 ;   Error conditions: If the value range is not complied with, 
 ;                     error code 1E UH is loaded and the carry flag is set.
 ;------------------------------------------------------------------------------
-DEC2HEX: ; $D335
+DEC2HEX: ; $D3D5
     LDI  XL,$00
     LDI  XH,$00
 
@@ -4042,8 +4384,12 @@ DEC2HEX_15: ; $D510
     LDI  XH,$79
     BCH DEC2HEX_33 ; $D4F6
 
-; Determines indexed default variable
-DEC2HEX_78: ; $D52A
+
+
+;------------------------------------------------------------------------------
+; $D52A - Determines indexed default variable
+;------------------------------------------------------------------------------
+DEC2HEX_78:
     PSH  A
     PSH  U
     VMJ  ($28) \ ABRF(DEC2HEX_34) ; $D5F5
@@ -4201,11 +4547,12 @@ DEC2HEX_34: ; $D5F5
     BCH DEC2HEX_28 ; $D5A5
 
 
+
 ;------------------------------------------------------------------------------
-; (D0) Convert AR-X to integer and load to U-Reg. D1 specifies the area. 
+; (D0) $D5F9 - Convert AR-X to integer and load to U-Reg. D1 specifies the area. 
 ; If exceeded, jump
 ;------------------------------------------------------------------------------
-    POP  X ; D5F9
+    POP  X 
     LIN  X
     PSH  X
     PSH  Y
@@ -4341,10 +4688,11 @@ DEC2HEX_54: ; $D6AB
     .BYTE $E6,$FF,$38
 
 
+
 ;------------------------------------------------------------------------------
-; (2E) Calculates formula expression and transfers result to AR-X.
+; (2E) $DC60 - Calculates formula expression and transfers result to AR-X.
 ;------------------------------------------------------------------------------
-    PSH  Y ; $DC60
+    PSH  Y 
     SJP  (DEC2HEX)
     BCS DEC2HEX_62 ; $D6DD
     BZS DEC2HEX_62 ; $D6DD
@@ -4363,12 +4711,11 @@ DEC2HEX_1:  ; $D6D9
 DEC2HEX_62:  ; $D6DD
     POP  Y
 
-
 ;------------------------------------------------------------------------------
-; (DE) Calculates formula pointed to by Y-Reg and transfers the result to AR-X. 
+; $D6DF - (DE) Calculates formula pointed to by Y-Reg and transfers the result to AR-X. 
 ; Jump if an error occurs.
 ;------------------------------------------------------------------------------
-    LDI  A,$01 ; $D6DF
+    LDI  A,$01 
 
 DEC2HEX_63:  ; $D6E1
     ANI  ($7889),$FE
@@ -4519,8 +4866,11 @@ DEC2HEX_80:  ; $D7BF
     BZS DEC2HEX_109 ; $D858
 
 
-; UH = 1st index, UL = 2nd index of a variable. Jump if error.
-DEC2HEX_40:  ; $D7CA
+
+;------------------------------------------------------------------------------
+; ; $D7CA - UH = 1st index, UL = 2nd index of a variable. Jump if error.
+;------------------------------------------------------------------------------
+DEC2HEX_40:  
     ADI  (NUMARGS),$FD
     LDI  UH,$08
     VCS  ($48) ; ($48)($24)
@@ -4763,8 +5113,12 @@ DEC2HEX_112:  ; $D909
     CPI  YL,$2B
     BZR DEC2HEX_119 ; $D96F
 
-; Concatenate two strings
-    SJP  (BCMD_TIME_8) ; $DFA0
+
+
+;------------------------------------------------------------------------------
+; $DFA0 - Concatenate two strings
+;------------------------------------------------------------------------------
+    SJP  (BCMD_TIME_8)
     LDI  XH,$DC
     STX  Y
     PSH  U
@@ -4842,8 +5196,10 @@ DEC2HEX_123:  ; $D98D
 
 
 
-; Basic commands PEEK#/PEEK
-BCMD_PEEK: ; $D993
+;------------------------------------------------------------------------------
+; $D993 - Basic commands PEEK#/PEEK
+;------------------------------------------------------------------------------
+BCMD_PEEK:
     VEJ  (D0) \ ABYT($00) \ ABRF(ARUINT2ARX_1) ; $D9F2
     INC  YL
     LDA  (U)
@@ -4855,8 +5211,10 @@ BCMD_PEEK_1: ; $D99C
 
 
 
-; Basic command NOT
-BCMD_NOT: ; $D99E
+;------------------------------------------------------------------------------
+; $D99E - Basic command NOT
+;------------------------------------------------------------------------------
+BCMD_NOT:
     VEJ  (D0) \ ABYT($04) \ ABRF(ARUINT2ARX_1) ; $D9F2
     SJP  (TWOSCOMP)
     DEC  U
@@ -4865,16 +5223,20 @@ BCMD_NOT: ; $D99E
 
 
 
-; Basic INKEY$ command
-BCMD_INKY: ; $D9AA
+;------------------------------------------------------------------------------
+; $D9AA - Basic INKEY$ command
+;------------------------------------------------------------------------------
+BCMD_INKY:
     SJP  (KEY2ASCII)
     LDI  XH,$D0
     BCH BCMD_CHR_1 ; $D9B6
 
 
 
-; Basic CHR$ Command
-BCMD_CHR: ; $D981
+;------------------------------------------------------------------------------
+; $D981 - Basic CHR$ Command
+;------------------------------------------------------------------------------
+BCMD_CHR:
     VEJ  (D0) \ ABYT($08) \ ABRF(ARUINT2ARX_1) ; $D9F2
     LDI  XH,$C1
 
@@ -4902,21 +5264,29 @@ BCMD_CHR_3: ; $D9C6
 
 
 
-; Basic STRS command
-BCMD_STR: ; $D9CF
+;------------------------------------------------------------------------------
+; $D9CF - Basic STRS command
+;------------------------------------------------------------------------------
+BCMD_STR:
     VEJ  (D2) \ ABRF(ARUINT2ARX_1) \ ABYT($80)
     SJP  (ARX2STRNG)
     BCH BCMD_RLM_STR_5 ; $DA3D
 
 
 
-; Basic VAL command
-BCMD_LEN: ; $D9D7
+;------------------------------------------------------------------------------
+; $D9D7 - Basic VAL command
+;------------------------------------------------------------------------------
+BCMD_LEN:
     SJP  (DEL_DIM_VARS_17) ; $D14C
     CPA  (Y)
     BCH BCMD_RLM_STR_4 ; $DA41
 
-; Basic LEN / ASC Command $D9DD
+
+
+;------------------------------------------------------------------------------
+; $D9DD - Basic LEN / ASC Command 
+;------------------------------------------------------------------------------
     VEJ  (DC)
     BZS BCMD_LEN_2 ; $D9E5
     DEC  YL
@@ -4931,8 +5301,10 @@ BCMD_LEN_2: ; $D9E5
 
 
 
-; Transfers U-Reg as an integer to AR-X in the format '82 UH UL '.
-ARUINT2ARX: ; $D9E7
+;------------------------------------------------------------------------------
+; $D9E7 - Transfers U-Reg as an integer to AR-X in the format '82 UH UL '.
+;------------------------------------------------------------------------------
+ARUINT2ARX:
     LDI  XL,$04
     LDI  XH,$7A
     LDI  A,$B2
@@ -4947,8 +5319,10 @@ ARUINT2ARX_1: ; $D9F2
 
 
 
-; Basic RIGHT$ / LEFT$ / MID$ Commands
-BCMD_RLM_STR: ; D9F3
+;------------------------------------------------------------------------------
+; $D9F3 - Basic RIGHT$ / LEFT$ / MID$ Commands
+;------------------------------------------------------------------------------
+BCMD_RLM_STR:
     LDA  YL
     ANI  A,$03
     SJP  (ISARXBCD_8) ; $DBB3
@@ -5024,8 +5398,10 @@ BCMD_RLM_STR_4: ; $DA41
 
 
 
-; Basic STATUS Command
-BCMD_STATUS: ; $DA44
+;------------------------------------------------------------------------------
+; $DA44 - Basic STATUS Command
+;------------------------------------------------------------------------------
+BCMD_STATUS:
     VEJ  (D0) \ ABYT($08) \ ABRF(MULT16B_3) ; $DAA7
     DEC  UL
     BCR BCMD_MEM
@@ -5045,8 +5421,10 @@ BCMD_STATUS_1: ; $DA59
 
 
 
- ;Basic MEM Command
-BCMD_MEM: ; $DA5D
+;------------------------------------------------------------------------------
+; $DA5D - Basic MEM Command
+;------------------------------------------------------------------------------
+BCMD_MEM:
     SJP  (MEM_IN_UREG)
     BCH BCMD_MEM_3 ; $DA65
 
@@ -5121,8 +5499,10 @@ MULT16B_2: ; $DA97
 
 
 
-; Searches operator table by value in accumulator
-MULT16B_1: ; $DA98
+;------------------------------------------------------------------------------
+; $DA98 - Searches operator table by value in accumulator
+;------------------------------------------------------------------------------
+MULT16B_1: ; 
     LDI  XL,$A7
     LDI  XH,$C3
 
@@ -5141,8 +5521,10 @@ MULT16B_3: ; $DAA7
 
 
 
-; Forms a two’s complement of U-Reg
-TWOSCOMP: ; $DAA8
+;------------------------------------------------------------------------------
+; $DAA8 - Forms a two’s complement of U-Reg
+;------------------------------------------------------------------------------
+TWOSCOMP:
     LDA  UH
     EAI  $FF
     STA  UH
@@ -5154,13 +5536,17 @@ TWOSCOMP: ; $DAA8
 
 
 
-; Y-Reg points to a string with USING parameters. Evaluation and transfer to 
+;------------------------------------------------------------------------------
+; $DAB2 - Y-Reg points to a string with USING parameters. Evaluation and transfer to 
 ; the using pointers.
-EVAL_USING: ; $DAB2
+;------------------------------------------------------------------------------
+EVAL_USING:
     LDI  A,$00
 
-; Read USING parameters and update in memory. Jump in case of error.
-EVAL_USING_1: ; $DAB4
+;------------------------------------------------------------------------------
+; $DAB4 - Read USING parameters and update in memory. Jump in case of error.
+;------------------------------------------------------------------------------
+EVAL_USING_1:
     STA  (STK_PTR_GSB_FOR)
     VMJ  ($36)
     BCR EVAL_USING_2 ; $DAC0
@@ -5358,10 +5744,11 @@ ISARXBCD_9: ; $DB91
     LDI  UH,$11
     VMJ  ($48) ; ($48)($24)
 
-
-; Checks whether the address in the AR-X is within the string buffer. If OK, 
+;------------------------------------------------------------------------------
+; $DB95 - Checks whether the address in the AR-X is within the string buffer. If OK, 
 ; resets the string buffer pointer. If not, set error 11 in UH and jump.
-ISARXBCD_6: ; $DB95
+;------------------------------------------------------------------------------
+ISARXBCD_6:
     LDI  XL,$04
     LDI  XH,$7A
     LIN  X
@@ -5378,14 +5765,18 @@ ISARXBCD_6: ; $DB95
     STA  (STR_BUF_PTR_L)
     VMJ  ($4C) ; ($4C)($26)
 
+
+
 ;------------------------------------------------------------------------------
-; (28) Checks in $788C to see if the variable was one-dimensional. If not, load 
+; (28) $DBB1 - Checks in $788C to see if the variable was one-dimensional. If not, load 
 ; error code 12 to UH and jump.
 ;------------------------------------------------------------------------------
-    LDI  A,$01 ; $DBB1
+    LDI  A,$01
 
-; Checks whether the variable is one-dimensional. Jump, if not
-ISARXBCD_8: ; $DBB3
+;------------------------------------------------------------------------------
+; $DBB3 - Checks whether the variable is one-dimensional. Jump, if not
+;------------------------------------------------------------------------------
+ISARXBCD_8:
     CPA  (NUMARGS)
     VZS  ($4C) ; ($4C)($26) 
     LDI  UH,$12
@@ -5422,8 +5813,12 @@ ISARXBCD_10: ; $DBCA
     STA  UH
     RTN
 
-; Gets U-Reg from basic stack
-ISARXBCD_7: ; $DBD3
+
+
+;------------------------------------------------------------------------------
+; $DBD3 - Gets U-Reg from basic stack
+;------------------------------------------------------------------------------
+ISARXBCD_7: ; 
     ADI  (BAS_PENOP_STK_L),$02
     LDA  (BAS_PENOP_STK_L)
     STA  UL
@@ -5432,9 +5827,13 @@ ISARXBCD_7: ; $DBD3
     BCH ISARXBCD_10 ; $DBCA
 
 
-; Save U-Reg on the basic stack. Loads error code 0E to UH in case of stack 
+
+
+;------------------------------------------------------------------------------
+; $DBE0 - Save U-Reg on the basic stack. Loads error code 0E to UH in case of stack 
 ; overflow. If o.k. C = 0.
-ISARXBCD_5: ; $DBE0
+;------------------------------------------------------------------------------
+ISARXBCD_5:
     LDA  (BAS_PENOP_STK_L)
     STA  XL
     LDA  (BAS_DATA_STK_L)
@@ -5450,8 +5849,11 @@ ISARXBCD_5: ; $DBE0
     RTN
 
 
-; Transfer AR-X to Basic Stack
-ISARXBCD_1: ; $DBF5
+
+;------------------------------------------------------------------------------
+; $DBF5 - Transfer AR-X to Basic Stack
+;------------------------------------------------------------------------------
+ISARXBCD_1:
     LDA  (BAS_DATA_STK_L)
     STA  XL
     CPI  A,$38
@@ -5463,9 +5865,10 @@ ISARXBCD_1: ; $DBF5
     ADI  (BAS_DATA_STK_L),$08
     LDI  XH,$7A
 
-
-; Transfers AR-X from the memory cell pointed to by X-Reg. (8-bytes).
-ISARXBCD_24: ; $DC0C
+;------------------------------------------------------------------------------
+; $DC0C - Transfers AR-X from the memory cell pointed to by X-Reg. (8-bytes).
+;------------------------------------------------------------------------------
+ISARXBCD_24:
     PSH  Y
     STX  Y
     LDI  XL,$00
@@ -5474,7 +5877,7 @@ ISARXBCD_24: ; $DC0C
 
 
 ;------------------------------------------------------------------------------
-; (30) Get AR-X from Basic Stack $DC16
+; (30) $DC16 - Get AR-X from Basic Stack 
 ;------------------------------------------------------------------------------
     ADI  (BAS_DATA_STK_L),$F8
     LDA  (BAS_DATA_STK_L)
@@ -5570,19 +5973,25 @@ ISARXBCD_17: ; $DCA0
     VMJ  ($44) ; ($44)($22)
 
 
+
 ;------------------------------------------------------------------------------
-; (2C) Passes function result to AR-X. $DCA6
+; (2C) $DCA6 - Passes function result to AR-X. $DCA6
 ;------------------------------------------------------------------------------
     LDI  A,$01
     STA  ($7889)
     JMP  DEC2HEX_127 ; $D6E5
 
-; Compares accumulator with pointer to the input buffer
-ISARXBCD_3: ; $DCAE
+
+
+;------------------------------------------------------------------------------
+; $DCAE - Compares accumulator with pointer to the input buffer
+;------------------------------------------------------------------------------
+ISARXBCD_3:
     DEC  A
     CPA  (INBUFPTR_L)
     RTN
     .BYTE $80,$00,$FF
+
 
 
 ;------------------------------------------------------------------------------
@@ -5624,6 +6033,7 @@ CHAR_U_N_RANGE_: ; $DCB7
     BCH LOAD_NEXT_6 ; $DD03
 
 
+
 ;------------------------------------------------------------------------------
 ; (C8) Branch if not end of command sequence or end of line
 ;            Address: DCC5 (C8)
@@ -5647,6 +6057,7 @@ ISARXBCD_23: ; $DCCD
     BCH LOAD_NEXT_7 ; $DD01
 
 
+
 ;------------------------------------------------------------------------------
 ; (C2) Checks for the presence of a specific character or token. If found,  
 ; a branch is made to the offset address.
@@ -5662,8 +6073,10 @@ ISARXBCD_23: ; $DCCD
 LOAD_NEXT_C2: ; $DCD4 (C2)
     VEJ  (C0)
 
-;Checks tokens/characters in U-Reg with data bytes If not equal, branch.
-LOAD_NEXT_C4: ; $DCD5 (C4)
+;------------------------------------------------------------------------------ 
+; (C4) $DCD5 - Checks tokens/characters in U-Reg with data bytes If not equal, branch.
+;------------------------------------------------------------------------------ 
+LOAD_NEXT_C4:
     POP  X
     LIN  X
     CPI  A,$E0
@@ -5683,7 +6096,6 @@ LOAD_NEXT_5: ; $DCE6
     STX  P
     POP  X
     BCH LOAD_NEXT_3 ; $DCF1
-
 
 
 
@@ -5732,7 +6144,11 @@ RTN_TO_MAIN: ; $DCF9
     POP  X
     BCH LOAD_NEXT_7 ; $DD01
 
-; (4A) Return to distance address. Restore Y-Reg $DCFD
+
+
+;------------------------------------------------------------------------------
+; (4A) $DCFD - Return to distance address. Restore Y-Reg $DCFD
+;------------------------------------------------------------------------------
     POP  X
     POP  Y
 
@@ -5744,7 +6160,11 @@ LOAD_NEXT_6: ; $DD03
     ADR  X
     STX  P
 
-; (C0) Load next character/token into U-REG
+
+
+;------------------------------------------------------------------------------
+; (C0) $DD08 - Load next character/token into U-REG
+;------------------------------------------------------------------------------
     LDI  UH,$00
     LIN  Y
     CPI  A,$E0
@@ -5756,9 +6176,12 @@ LOAD_NEXT_9: ; $DD11
     STA  UL
     RTN
 
+
+
 ;------------------------------------------------------------------------------
-; (C6) $$DD13 Decrements Y-Reg for tokens in U-Reg by 2-bytes, or by 1-byte 
-; for characters
+; (C6) $DD13 - Decrements Y-Reg for tokens in U-Reg by 2-bytes, or by 1-byte 
+; for characters. Correct program pointer
+;------------------------------------------------------------------------------
     CPI  UH,$00
     BZS LOAD_NEXT_10 ; $DD18
     DEC  Y
@@ -5795,14 +6218,18 @@ LOAD_NEXT_11: ; $DD23
     
 
 
+;------------------------------------------------------------------------------
 ; (10)  Convert U-Reg according to data bytes
 ;       00: Save U-Reg to AR-X in BCD format. (0-65535)
 ;       40: Save to (Y-Reg) in ASCII
 ;       8D: Save U-Reg in AR-X as BCD. (integer number)
 ;       E0: Save to Y-Reg with 2 digits in ASCII
-    LDX  U
+;------------------------------------------------------------------------------
+    LDX  U ; $DD2D
 
+;------------------------------------------------------------------------------
 ; $DD2F Like subroutine (10-DD2D).
+;------------------------------------------------------------------------------
 LOAD_NEXT_1:
     POP  U
     LIN  U
@@ -5908,8 +6335,9 @@ LOAD_NEXT_19: ; $DDAA
     BCH LOAD_NEXT_12 ; $DD58
 
 
+
 ;------------------------------------------------------------------------------
-; (F6) U-Reg transferred to main memory
+; (F6) $DDB5 - U-Reg transferred to main memory
 ;            Address: DDB5 (F6)
 ;          Parameter: D1 & D2 identify address to which U-Reg is transferred
 ; 
@@ -5936,7 +6364,7 @@ UREG_2_MEM: ; $DDB5
 
 
 ;------------------------------------------------------------------------------
-; (CC) Load X-Reg with 16-bit value from memory page 78XX
+; (CC) $DDC8 - Load X-Reg with 16-bit value from memory page 78XX
 ;            Address: DDC8 (CC)
 ;                     D1: Low byte of address in memory page 78XX
 ;   Entry parameters: None
@@ -6010,7 +6438,7 @@ LOAD_NEXT_22: ; $DE03
     LDI  UH,$01
 
 LOAD_NEXT_23: ; $DE14
-    SJP  (XREG2YREG)
+    SJP  (SYSMSG_3)
     LDA  UH
     BZR LOAD_NEXT_24 ; $DE1B
     STA  (Y)
@@ -6073,7 +6501,6 @@ LOAD_NEXT_32: ; $DE53
 
 
 
-
 ;------------------------------------------------------------------------------
 ; (0A) Variable, whose address is in AR-X, is transferred numerically to AR-X, 
 ;      if string: determine length
@@ -6118,8 +6545,10 @@ LOAD_NEXT_33: ; $DE71
 
 
 
-; Basic command TIME
-BCMD_TIME: ; $DE82
+;------------------------------------------------------------------------------
+; $DE82 - Basic command TIME
+;------------------------------------------------------------------------------
+BCMD_TIME:
     VEJ  (EC)
     SJP  (TIME2ARX)
     LDI  XL,$02
@@ -6135,7 +6564,10 @@ BCMD_TIME_11: ; $DE91
     RTN
 
 
-; (0C) $DE97 Read the length of the string from U-Reg and creates CSI in AR-X.
+
+;------------------------------------------------------------------------------
+; (0C) $DE97 - Gets length of the string from U-Reg and creates CSI in AR-X.
+;------------------------------------------------------------------------------
     LDI  UL,$50
     LDX  Y
     LDI  UH,$00
@@ -6156,7 +6588,6 @@ BCMD_TIME_12: ; $DEAD
 
 BCMD_TIME_9: ; $DEAE
     LDA  UH
-
 
 
 ;------------------------------------------------------------------------------
@@ -6183,7 +6614,9 @@ BCMD_TIME_10: ; $DEAF
     RTN
 
 
-; (DC) $DEBC Loads CSI from AR-X address to X-Reg length to UL and accumulator
+;------------------------------------------------------------------------------
+; (DC) $DEBC - Loads CSI from AR-X address to X-Reg length to UL and accumulator
+;------------------------------------------------------------------------------
     LDI  UL,$05
 
 ; Transfers from address 7A UL, 16-bit address to X-Reg and length to UL.
@@ -6198,7 +6631,10 @@ BCMD_TIME_7: ; $DEBE
     RTN
 
 
-; $DEC7 Get program pointer from basic stack
+
+;------------------------------------------------------------------------------
+; $DEC7 - Get program pointer from basic stack
+;------------------------------------------------------------------------------
 BCMD_TIME_4: 
     VEJ  (D4) \ ABYT($A0)
     LDA  (STK_PTR_GSB_FOR)
@@ -6207,7 +6643,9 @@ BCMD_TIME_4:
     BCH BCMD_TIME_14 ; $DED9
 
 
-; (D6) $DED1 Loads address pointer from memory to AR-Y: A6=PROGRAM, AC=BREAK, B8=0N ERROR.
+;------------------------------------------------------------------------------
+; (D6) $DED1 - Loads address pointer from memory to AR-Y: A6=PROGRAM, AC=BREAK, B8=0N ERROR.
+;------------------------------------------------------------------------------
     POP  X
     LIN  X
     STA  UL
@@ -6271,22 +6709,28 @@ BCMD_TIME_15: ; $DEF3
     RTN
 
 
-; Write address, line number, and start address of nth instruction to stack
-BCMD_TIME_5: ; $DEFC
+
+;------------------------------------------------------------------------------
+; $DEFC - Write address, line number, and start address of nth instruction to stack
+;------------------------------------------------------------------------------
+BCMD_TIME_5: 
     VEJ  (C8) \ ABRF(BCMD_TIME_6) ; $DEFE
 
-
-; Address, line number, program start of current instruction on basic stack
-BCMD_TIME_6: ; $DEFE
+;------------------------------------------------------------------------------
+; $DEFE - Address, line number, program start of current instruction on basic stack
+;------------------------------------------------------------------------------
+BCMD_TIME_6: ; 
     VMJ  ($18)
     VEJ  (CC) \ ABYTL($7881)
     LDI  XH,$7A
     BCH BCMD_TIME_16 ; $DEEB
 
 
-; Transfers 3 addresses (program pointer) within memory map
+;------------------------------------------------------------------------------
+; $DF06 - Transfers 3 addresses (program pointer) within memory map
 ; Relocate 6 bytes starting from address 78UL to 78XL.
-BCMD_TIME_1: ; $DF06
+;------------------------------------------------------------------------------
+BCMD_TIME_1: ; 
     LDI  UH,$78
     LDI  XH,$78
     LIN  U
@@ -6297,7 +6741,7 @@ BCMD_TIME_1: ; $DF06
 
 
 ;------------------------------------------------------------------------------
-; (36) Create CSI in AR-X for string. C=0 if no string found
+; (36) $DF0F - Create CSI in AR-X for string. C=0 if no string found
 ;            Address: DF0F (36)
 ;   Entry parameters: Y-Reg points to double quotes or name of string variable 
 ;                     in main memory.
@@ -6305,7 +6749,7 @@ BCMD_TIME_1: ; $DF06
 ; Modified registers: AR-X contains the CSI of the string
 ;   Error conditions: If no string was recognized, Carry=0
 ;------------------------------------------------------------------------------
-STRING_2_CSI: ; DF0F
+STRING_2_CSI: ; 
     PSH  Y
     VEJ  (C2) \ ACHR($22) \ ABRF(BCMD_TIME_18) ; $DF18
     VMJ  ($0C)
@@ -6385,14 +6829,18 @@ CHECK_CALC_MODE: ; $DF38 (d8)
     RTN
 
 
-; Syntax check: Checks whether the string is enclosed in “…” max 80 characters. 
+
+;------------------------------------------------------------------------------
+; $DF42 - Syntax check: Checks whether the string is enclosed in “…” max 80 characters. 
 ; Whether the program is running. If so, Z=0.
-BCMD_TIME_3: ; $DF42
+;------------------------------------------------------------------------------
+BCMD_TIME_3: ; 
     LDI  UL,$50
 
-
-; As above, Syntax check: whether the string is enclosed by “…”. If not UL=FF.
-BCMD_TIME_2: ; $DF44
+;------------------------------------------------------------------------------
+; $DF44 - As above, Syntax check: whether the string is enclosed by “…”. If not UL=FF.
+;------------------------------------------------------------------------------
+BCMD_TIME_2: ; 
     LDI  UH,$00
     DEC  UL
 
@@ -6423,14 +6871,14 @@ BCMD_TIME_26: ; $DF5E
 
 
 ;------------------------------------------------------------------------------
-;(22) If string constant follows in main memory, save CSI to AR-X $DF63
-; Address:	DF63 (22)
+; (22) $DF63 - If string constant follows in main memory, save CSI to AR-X $DF63
+;            Address:	DF63 (22)
 ; 
 ;    Entry Parameter:	Y-Reg must point to main memory
 ; Modified Registers:	Y-Reg points to the next memory location in main memory following the string. AR-X may contain CSI. U-Reg contains the next character/token.
 ;   Error conditions:	Carry=1 if string found and CSI created in AR-X Carry=0 if no string found
 ;------------------------------------------------------------------------------
-IS_STRING: ; $DF63   
+IS_STRING: ;    
     VEJ  (C2) \ ACHR($22) \ ABRF($DF70)
     VMJ  ($0C)
     VEJ  (C2) \ ACHR($0D) \ ABRF($DF6C)
@@ -6441,8 +6889,11 @@ IS_STRING: ; $DF63
     RTN
 
 
-; (20) $DF72 Find next beginning of line from (Y-Reg)
+
+;------------------------------------------------------------------------------
+; (20) $DF72 - Find next beginning of line from (Y-Reg)
 ; Increments Y-Reg to the low byte of the next line number (REM).
+;------------------------------------------------------------------------------
     LDI  A,$0D
     LDI  UL,$4C
     LDX  Y
@@ -6457,7 +6908,10 @@ BCMD_TIME_30: ; $DF7D
     RTN
 
 
-; (18) $DF80 Updates program parameters for next instruction
+
+;------------------------------------------------------------------------------
+; (18) $DF80 - Updates program parameters for next instruction
+;------------------------------------------------------------------------------
     VEJ  (D4) \ ABYT($A0)
     BCS BCMD_TIME_32 ; $DF8E
     LIN  Y
@@ -6474,7 +6928,10 @@ BCMD_TIME_32: ; $DF8E
     RTN
 
 
-; (12) $DF93 Loads program start address to X-Reg
+
+;------------------------------------------------------------------------------
+; (12) $DF93 - Loads program start address to X-Reg
+;------------------------------------------------------------------------------
     VEJ  (CC) \ ABYTL($61) ; $7861
     ROL
     BCR BCMD_TIME_33 ; $DF9A
@@ -6485,15 +6942,18 @@ BCMD_TIME_33: ; $DF9A
     LDI  A,$10
     STA  (STR_BUF_PTR_L)
 
-; Inserts a string, the address of which is stored in 
+
+;------------------------------------------------------------------------------
+; $DFA0 - Inserts a string, the address of which is stored in 
 ; the AR-X, into the string buffer. Jump if overflow. Update buffer pointers.
+;------------------------------------------------------------------------------
 BCMD_TIME_8: ; $DFA0
     VEJ  (DC)
 
-
-
-; Inserts String pointed to by X-Res into String buffer. Jump if overflow.
-XREG2STRBUF: ; $DFA1
+;------------------------------------------------------------------------------
+; $DFA1 - Inserts String pointed to by X-Res into String buffer. Jump if overflow.
+;------------------------------------------------------------------------------
+XREG2STRBUF: ; 
     PSH  Y
     SJP  (XREG2STRBUF_1) ; $DFB4
     VCS  ($4A) ;($4A)($25)
@@ -6510,8 +6970,11 @@ XREG2STRBUF_2: ; $DFAF
     VMJ  ($4E) ; ($4E)($27)
 
 
-; $DFB4 Checks whether the string buffer can still hold the number of 
+
+;------------------------------------------------------------------------------
+; $DFB4 - Checks whether the string buffer can still hold the number of 
 ; characters contained in the accumulator. If not, C=1.
+;------------------------------------------------------------------------------
 XREG2STRBUF_1: ; $DFB4
     STA  UL
     LDA  (STR_BUF_PTR_L)
@@ -6527,8 +6990,11 @@ XREG2STRBUF_4: ; $DFC1
     RTN
 
 
-; Save String buffer pointers to X-Reg and AR-X. Updating pointer with YL
-ARX2STRBUF: ; $DFC4
+
+;------------------------------------------------------------------------------
+; $DFC4 - Save String buffer pointers to X-Reg and AR-X. Updating pointer with YL
+;------------------------------------------------------------------------------
+ARX2STRBUF: ; 
     STA  UL
 
 ; $DFC5 Loads AR-X with a pointer to the string buffer.
@@ -6555,8 +7021,9 @@ ARX2STRBUF_4: ; $DFE1
     DEC  U
 
 
-
+;------------------------------------------------------------------------------
 ;  $DFE2 U-Reg=U-Reg-X-Reg. If overflow occurs C=0 and UH=16
+;------------------------------------------------------------------------------
 U_MINUS_X: ; 
     SEC
     LDA  UL
@@ -6573,7 +7040,9 @@ U_MINUS_X_1: ; $DFED
 
 
 
-; $DFEE Calculates the free memory space "MEM" in U-Reg
+;------------------------------------------------------------------------------
+; $DFEE - Calculates the free memory space "MEM" in U-Reg
+;------------------------------------------------------------------------------
 MEM_IN_UREG: ; 
     VEJ  (CC) \ ABYTL(BASPRG_END_H) ; $7867
     INC  X
@@ -6581,26 +7050,36 @@ MEM_IN_UREG: ;
 
 
 
-; U-Reg= STATUS 1-2. Program start after X-Reg; length according to U.
+;------------------------------------------------------------------------------
+; $DFF3 - U-Reg= STATUS 1-2. Program start after X-Reg; length according to U.
+;------------------------------------------------------------------------------
 PRGST2XREG: ; $DFF3
     VMJ  ($12)
 
 
+
+;------------------------------------------------------------------------------
 ; (16) $DFF5 U-Reg= U-Reg - X-Reg. Determines the difference between 
 ; the X-Reg and the end of the program memory (STATUS 1-2).
+;------------------------------------------------------------------------------
 PRGST2XREG_1: ; $DFF5
     VEJ  (F4) \ AWRD(BASPRG_END_H)
     BCH ARX2STRBUF_4 ; $DFE1
 
+;------------------------------------------------------------------------------
 ; (14) $DFFA U-Reg= STATUS 1-2 . Loads X with program start, U with length.
+;------------------------------------------------------------------------------
     VEJ  (CC) \ ABYTL(BASPRG_ST_H) ; $7865
     BCH PRGST2XREG_1 ; $DFF5
     VEJ  (E4)
     VEJ  (E4)
 
 
-; Reset-Routine
-RESET: ; $E000
+
+;------------------------------------------------------------------------------
+; $E000 - Reset-Routine
+;------------------------------------------------------------------------------
+RESET: ; 
     RIE
     LDI  A,$00
     AM0
@@ -6845,9 +7324,10 @@ IO_INT_1: ; $E15F
     RTN
 
 
-
-; Parameters for initializing the I/0 ports
-IO_TBL: ; $E168
+;------------------------------------------------------------------------------
+; $E168 - Parameters for initializing the I/0 ports
+;------------------------------------------------------------------------------
+IO_TBL: ; 
     .BYTE $23 ; #F007
     .BYTE $C0 ; #F008
     .BYTE $D7 ; #F009
@@ -6860,8 +7340,10 @@ IO_TBL: ; $E168
 
 
 
-; (F8) Maskable interrupt routine
-ISR_HANDLER: ; $E171
+;------------------------------------------------------------------------------
+; (F8) $E171 - Maskable interrupt routine
+;------------------------------------------------------------------------------
+ISR_HANDLER: ; 
     PSH  A
     PSH  X
     PSH  Y
@@ -6963,15 +7445,18 @@ ISR_HANDLER_10: ; $E229
     POP  A
 
 
-
-; (FC) Non-Maskable Interrupt
-NMI_HANDLER: ; $E22B
+;------------------------------------------------------------------------------
+; (FC) $E22B - Non-Maskable Interrupt
+;------------------------------------------------------------------------------
+NMI_HANDLER: ; 
     RTI
 
 
 
-; (FA) Timer Interrupt
-TIMER_ISR:  ; $E22C
+;------------------------------------------------------------------------------
+; (FA) $E22C - Timer Interrupt
+;------------------------------------------------------------------------------
+TIMER_ISR:  ; 
     PSH  A
     LDI  A,$00
     AM0
@@ -6979,8 +7464,10 @@ TIMER_ISR:  ; $E22C
 
 
 
-; (A0) PV-banking according to status of Bit 0 in $7900. If 0, PV=1.
-PVBANK: ; $E234
+;------------------------------------------------------------------------------
+; (A0) $E234 - PV-banking according to status of Bit 0 in $7900. If 0, PV=1.
+;------------------------------------------------------------------------------
+PVBANK: 
     RPV
     BII  (PU_PV),$01
     BZS PVBANK_1 ;$E23C
@@ -6991,16 +7478,20 @@ PVBANK_1: ; $E23C
 
 
 
-; $E23D Waits until no more keys are pressed
+;------------------------------------------------------------------------------
+; $E23D - Waits until no more keys are pressed
+;------------------------------------------------------------------------------
 WAITNOKEYS: 
     ORI  (CURS_CTRL),$03
     BCH WAIT4KB_2 ; $E24E
 
 
 
-; Entering a Character Using the Keyboard (Page 324:Keyboard Status)
+;------------------------------------------------------------------------------
+; $E243 - Entering a Character Using the Keyboard (Page 324:Keyboard Status)
 ; Waiting for input from keyboard. Character is in accumulator
-WAIT4KB: ; $E243
+;------------------------------------------------------------------------------
+WAIT4KB:
     LDA  ($79D4)
 
 WAIT4KB_1: ; $E246
@@ -7168,8 +7659,10 @@ WAIT4KB_5: ; $E33A
 
 
 
-; Auto-Power-Off Routine
-AUTO_OFF: ; $E33F
+;------------------------------------------------------------------------------
+; $E33F - Auto-Power-Off Routine
+;------------------------------------------------------------------------------
+AUTO_OFF: ; 
     LDI  A,$A0
     LDI  XH,$7A
     LDI  XL,$10
@@ -7327,7 +7820,9 @@ AUTO_OFF_20: ; $E413
 
 
 
-; $E418 Checks whether key is pressed. If not, Z=1.
+;------------------------------------------------------------------------------
+; $E418 - Checks whether key is pressed. If not, Z=1.
+;------------------------------------------------------------------------------
 ISKEY:
     LDI  A,$FF
 
@@ -7345,7 +7840,9 @@ ISKEY_2: ; $E425
 
 
 
-; $E42C Keyboard query: ASCII code in accumulator. If no key pressed: C=1.
+;------------------------------------------------------------------------------
+; $E42C - Keyboard query: ASCII code in accumulator. If no key pressed: C=1.
+;------------------------------------------------------------------------------
 KEY2ASCII:
     LDI  XL,$80
     LDI  A,$01
@@ -7382,15 +7879,19 @@ KEY2ASCII_4: ; $E44C
 
 
 
- ; (A6) $E451 Checks if Break was pressed. If so, Z=0; if no Z=1.
+;------------------------------------------------------------------------------
+; (A6) $E451 - Checks if Break was pressed. If so, Z=0; if no Z=1.
+;------------------------------------------------------------------------------
 CHK_BRK:
     BII  #(PC1500_IF_REG),$02
     RTN
 
 
 
-; Basic command OPN
-    VEJ  (C8) \ ABRF(CHK_BRK_1) ; $E466
+;------------------------------------------------------------------------------
+; $E466 - Basic command OPN
+;------------------------------------------------------------------------------
+    VEJ  (C8) \ ABRF(CHK_BRK_1) ; 
     PSH  Y
 
 CHK_BRK_2: ; $E45B
@@ -7463,8 +7964,10 @@ STR_COMP: ; $E4A0 (9E)
 
 
 
+;------------------------------------------------------------------------------
 ; (BE) Searches 1st token table below C000
 ; Searches token table if CE-158 or CE-150 connected C=1. With CE-150 UH=2 CE-158 UH=1.
+;------------------------------------------------------------------------------
 TOK_TABL_SRCH: ; $E4A8
     RIE
     RPV
@@ -7481,8 +7984,11 @@ TOK_TABL_SRCH_3: ; $E4B0
     BZS TOK_TABL_SRCH_1 ; $E4CD
 
 
+
+;------------------------------------------------------------------------------
 ; (BC) $E4B7 Searches for the next lower token table (8000-BFFF) based on the
 ; address area pointed to by X-Reg.
+;------------------------------------------------------------------------------
     LDA  UH
     CPI  XH,$88
     BCR TOK_TABL_SRCH_2 ; $E4C2
@@ -7506,9 +8012,12 @@ TOK_TABL_SRCH_1: ; $E4CD
     RTN
 
 
+
+;------------------------------------------------------------------------------
 ; $E4CE Searches for token table whose number is in UL
 ; Searches for the start address of the token table, the number of which is in
 ;the accumulator. C=0 if not found. If available C=1.
+;------------------------------------------------------------------------------
     VMJ  ($BE) ; ($BE)($5F)
     BCR TOK_TABL_SRCH_6 ; $E4DB
 
@@ -7531,19 +8040,26 @@ TOK_TABL_SRCH_7: ; $E4DC
 
 
 
-; Text for comparison OPN "LCD"
+;------------------------------------------------------------------------------
+; $E4E3 - Text for comparison OPN "LCD"
+;------------------------------------------------------------------------------
     .BYTE $4C,$43,$44,$0D ; LCD/CR
 
 
 
-; INPUT# - Routine
-BCMD_INPUTNUM: ; $E427
+;------------------------------------------------------------------------------
+; $E427 - INPUT# - Routine
+;------------------------------------------------------------------------------
+BCMD_INPUTNUM: ; 
     LDI  A,$84
     BCH BCMD_PRINT_2 ; $E4F0
 
 
-; Basic-Command PRINT
-BCMD_PRINT: ; $E4EB
+
+;------------------------------------------------------------------------------
+; $E4EB - Basic-Command PRINT
+;------------------------------------------------------------------------------
+BCMD_PRINT: ; 
     VEJ  (C2) \ ACHR($23) \ ABRF(BCMD_PRINT_3) ; $E513
     LDI  A,$04
 
@@ -7591,8 +8107,10 @@ BCMD_PRINT_1: ; $E52A
 
 
 
-; Writes to clock chip
-WRITE2CLOCK: ; $E52B
+;------------------------------------------------------------------------------
+; $E52B - Writes to clock chip
+;------------------------------------------------------------------------------
+WRITE2CLOCK: ; 
     TTA
     PSH  A
     RIE
@@ -7626,6 +8144,8 @@ WRITE2CLOCK_4: ; $E54D
     SDE  X
     DEC  UH
     BCS WRITE2CLOCK_3 ; $E541
+    
+WRITE2CLOCK_5: ; $E566 
     POP  A
     ATT
     RTN
@@ -7679,12 +8199,14 @@ TIMEMODE: ; $E573
 
 TIMEMODE_1: ; $E596
     LOP  UL,TIMEMODE_1 ; $E596
-    BCH $E566
+    BCH WRITE2CLOCK_5 ; $E566
 
 
 
- ; Transfers TIME from AR-X to clock module
-ARX2TIME: ; $ E59A
+;------------------------------------------------------------------------------
+; $E59A - Transfers TIME from AR-X to clock module
+;------------------------------------------------------------------------------
+ARX2TIME: ; 
     PSH  Y
     PSH  X
     SJP  (WRITE2CLOCK)
@@ -7704,8 +8226,10 @@ ARX2TIME_2: ; $ E5AF
 
 
 
- ; Reads clock chip to AR-X
-TIME2ARX: ; $ E5B4
+;------------------------------------------------------------------------------
+; $E5B4 - Reads clock chip to AR-X
+;------------------------------------------------------------------------------
+TIME2ARX: ; 
     PSH  Y
     PSH  X
     LDI  A,$18
@@ -7714,8 +8238,10 @@ TIME2ARX: ; $ E5B4
 
 
 
-; Basic command BEEP $E5C1
-    BCH ARX2TIME_1 ; $E5A5
+;------------------------------------------------------------------------------
+; $E5C1 - Basic command BEEP
+;------------------------------------------------------------------------------
+    BCH ARX2TIME_1 ; 
     VEJ  (C2) \ AWRD($F19C) \ ABRF(TIME2ARX_1) ; $E5CC
     ANI  (BEEP_PTR),$FE
 
@@ -7840,15 +8366,18 @@ BEEP_ON_OFF_1: ; $E662
     RTN
 
 
-; $E669 Standard Beep
+
+;------------------------------------------------------------------------------
+; $E669 - Standard Beep
+;------------------------------------------------------------------------------
 BCMD_BEEP_STD:
     LDI  UL,$08
     LDI  XH,$01
     LDI  XL,$A0
 
-
-
-; $E66F Beep with duration in X-Reg and pitch in UL
+;------------------------------------------------------------------------------
+; $E66F - Beep with duration in X-Reg and pitch in UL
+;------------------------------------------------------------------------------
 BCMD_BEEP: ; 
     PSH  Y
     PSH  X
@@ -7894,8 +8423,10 @@ BCMD_BEEP_2: ; $E69E
 
 
 
- ; Basic command PAUSE
-BCMD_PAUSE: ; $E6A5
+;------------------------------------------------------------------------------
+; $E6A5 - Basic command PAUSE
+;------------------------------------------------------------------------------
+BCMD_PAUSE: ; 
     LDI  A,$FF
     BCH BCMD_PAUSE_2 ; $E6B8
 
@@ -8073,8 +8604,10 @@ BCMD_PAUSE_23: ; $E7A9
 
 
 
- ; Basic command GPRINT
-BCMD_GPRINT: ; $E7AC
+;------------------------------------------------------------------------------
+; $E7AC - Basic command GPRINT
+;------------------------------------------------------------------------------
+BCMD_GPRINT: ; 
     VEJ  (C8) \ ABRF(BCMD_GPRINT_1) ; $E7B0
     BCH $E80B
 
@@ -8184,8 +8717,10 @@ BCMD_GPRINT_10: ; $E82C
 
 
 
- ; Basic command GCURSOR
-BCMD_GCURSOR: ; $E83E
+;------------------------------------------------------------------------------
+; $E83E - Basic command GCURSOR
+;------------------------------------------------------------------------------
+BCMD_GCURSOR: ; 
     VEJ  (DE) \ ABRF(BCMD_WAIT_1) ; $E88A
     VEJ  (D0) \ ABYT($0A) \ ABRF(BCMD_WAIT_1) ; $E88A
     LDA  UL
@@ -8193,9 +8728,10 @@ BCMD_GCURSOR: ; $E83E
 
 
 
-
-; Basic command CURSOR
-BCMD_CURSOR_1: ; $E846
+;------------------------------------------------------------------------------
+; $E846 - Basic command CURSOR
+;------------------------------------------------------------------------------
+BCMD_CURSOR_1: ; 
     VEJ  (C8) \ ABRF(BCMD_CURSOR_3) ; $E852
     ANI  (CURSOR_PTR),$00
     ANI  (CURSOR_ENA),$FE
@@ -8219,15 +8755,20 @@ BCMD_CURSOR_2: ; $E85D
 
 
 
-; Basic Command CLS
-BCMD_CLS: ; $E865
+;------------------------------------------------------------------------------
+; $E865 - Basic Command CLS
+;------------------------------------------------------------------------------
+BCMD_CLS: ; 
     VEJ  (F2)
     SJP  (INIT_CURS)
     VEJ  (E2)
 
 
-; Basic Command WAIT
-BCMD_WAIT: ; $E86A
+
+;------------------------------------------------------------------------------
+; $E86A - Basic Command WAIT
+;------------------------------------------------------------------------------
+BCMD_WAIT: ; 
     VEJ  (C8) \ ABRF(BCMD_WAIT_2) ; $E871
     DEC  Y
     LDI  A,$00
@@ -8256,14 +8797,14 @@ BCMD_WAIT_1: ; $E86A
 
 
 ;------------------------------------------------------------------------------
-; Time delay by 15.625 ms * U-Reg
+; $E88C - Time delay by 15.625 ms * U-Reg
 ;            Address: E88C (AC)
 ;   Entry parameters: U-Reg contains the number of delay loops.
 ; 
 ; Modified registers: U-Reg
 ;   Error conditions: It is possible to abort with the break key
 ;------------------------------------------------------------------------------
-TIMEDELAY: ; $E88C
+TIMEDELAY: ; 
     PSH  Y
     PSH  U
     LDI  A,$20
@@ -8306,8 +8847,10 @@ TIMEDELAY_4: ; $E8BC
 
 
 
- ; Display Program
-PRGMDISP: ; $E8CA
+;------------------------------------------------------------------------------
+; $E8CA - Display Program
+;------------------------------------------------------------------------------
+PRGMDISP: ; 
     LDA  (DISPARAM)
     BII  A,$31
     BZR PRGMDISP_1 ; $E967
@@ -8525,7 +9068,9 @@ PRGMDISP_27: ; $E9E6
 
 
 
- ; $E9EB Checks display and input status. Checks computer status.
+;------------------------------------------------------------------------------
+; $E9EB - Checks display and input status. Checks computer status.
+;------------------------------------------------------------------------------
 STATUSCHK: ; 
     BII  (DISPARAM),$10
     BZR STATUSCHK_3 ; $E9F8
@@ -8624,8 +9169,10 @@ STATUSCHK_9: ; $EA67
 
 
 
- ; (96) Using formatting. If error C=1.
-USING_FRMT: ; $EA78
+;------------------------------------------------------------------------------
+; (96) $EA78 - Using formatting. If error C=1.
+;------------------------------------------------------------------------------
+USING_FRMT: ; 
     PSH  A
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$10
@@ -8773,7 +9320,9 @@ USING_FRMT_4: ; $EB3C
 
 
 
- ; (86) $EB40 Converts AR-X to ASCII according to USING parameters
+;------------------------------------------------------------------------------
+; (86) $EB40 - Converts AR-X to ASCII according to USING parameters
+;------------------------------------------------------------------------------
 ARX2ASCII: ; 
     REC
     ADI  A,$1E
@@ -8961,9 +9510,11 @@ ARX2ASCII_3: ; $EC2B
 
 
 
-; $EC2F Determines the address at which the rightmost character is located
+;------------------------------------------------------------------------------
+; $EC2F - Determines the address at which the rightmost character is located
 ; from the ASCII number string below 7A28 in the Y-Reg. (Truncation of the 
 ; decimal places).
+;------------------------------------------------------------------------------
 TRUNCDEC: ; $EC2F
     LDI  YL,$28
 
@@ -8979,7 +9530,9 @@ TRUNCDEC_2: ;$EC3B
     RTN
 
 
-; $EC3C Checks whether the value in AR-X can be completely represented with 9 decimal places. If not, C=1.
+;------------------------------------------------------------------------------
+; $EC3C - Checks whether the value in AR-X can be completely represented with 9 decimal places. If not, C=1.
+;------------------------------------------------------------------------------
 BCMD_DEC9: ; 
     LDA  (ARX)
     BII  A,$80
@@ -9008,9 +9561,11 @@ BCMD_DEC9_2: ; $EC59
 
 
 
-; (94) Transfers the string whose address is in the X-Reg (lengh in UL) to the
+;------------------------------------------------------------------------------
+; (94) $EC5C - Transfers the string whose address is in the X-Reg (lengh in UL) to the
 ;  free area of the output buffer. If error C=1.
-X_STROUT: ; $EC5C
+;------------------------------------------------------------------------------
+X_STROUT: ; 
     LDA  ($788F)
     STA  YL
     LDI  YH,$7B
@@ -9029,8 +9584,10 @@ X_STROUT_2: ; $EC6B
 
 
 
-; $EC6C If AR-X contains numeric value, if necessary. Convert integer to BCD:
+;------------------------------------------------------------------------------
+; $EC6C - If AR-X contains numeric value, if necessary. Convert integer to BCD:
 ; C=0. If CSI available: Address from X-Reg; load length from to UL; C=1.
+;------------------------------------------------------------------------------
 ARX2BCD:
     VEJ  (D2) \ ABRF(ARX2BCD_2) \ ABYT($80)
     REC
@@ -9045,7 +9602,9 @@ ARX2BCD_1: ; $EC72
 
 
 
-; (98) $EC74 Converts AR-X from BCD to ASCII and transfers to Output buffer
+;------------------------------------------------------------------------------
+; (98) $EC74 - Converts AR-X from BCD to ASCII and transfers to Output buffer
+;------------------------------------------------------------------------------
 ARXBCD2ASCII: ; 
     SJP  (ARX2BCD)
     BCR $EC96
@@ -9053,12 +9612,12 @@ ARXBCD2ASCII: ;
     LDA  (USING_CHR)
     BZS $EC98
     CPA  UL
-    BCR $EC97
+    BCR XP_STROUT_4 ; $EC97
 
-
-
-; $EC82 Transfers string pointed to by X-Reg into output buffer. Then writes
+;------------------------------------------------------------------------------
+; $EC82 - Transfers string pointed to by X-Reg into output buffer. Then writes
 ; A-UL spaces to the output buffer. Sets C=1 if the output buffer is full
+;------------------------------------------------------------------------------
 XP_STROUT:
     SBC  UL
     PSH  A
@@ -9074,19 +9633,22 @@ XP_STROUT:
 XP_STROUT_3: ; $EC93
     LOP  UL,$EC8E
 
-
 XP_STROUT_1: ; $EC82
     SEC
 
 XP_STROUT_2: ; $EC96
     RTN
+
+XP_STROUT_4: ; $EC97 
     STA  UL
     VMJ  ($94) ; ($94)($4A)
     BCH XP_STROUT_1 ; $EC95
 
 
 
-; $EC9C Clears LCD if cursor is not allowed and sets matrix pointer to 00
+;------------------------------------------------------------------------------
+; $EC9C - Clears LCD if cursor is not allowed and sets matrix pointer to 00
+;------------------------------------------------------------------------------
 CLRNOCURSOR: ; 
     BII  (CURSOR_ENA),$01
     BZR $ECA7
@@ -9116,7 +9678,9 @@ INIT_MTRX: ; $ECB2
 
 
 
-; (97) $ECB7 Transfers value to output buffer
+;------------------------------------------------------------------------------
+; (97) $ECB7 - Transfers value to output buffer
+;------------------------------------------------------------------------------
 ARX2OUTBUF: 
     SJP  (ARX2BCD)
     BCR ARX2OUTBUF_1 ; $ECD4
@@ -9143,10 +9707,10 @@ ARX2OUTBUF_4: ; $ECCC
 ARX2OUTBUF_1: ; $ECD4
     LDI  A,$00
 
-
-
-; Transfer AR-X formatted to Output Buffer
-ARX2OUTBUF_F: ; $ECD6
+;------------------------------------------------------------------------------
+; $ECD6 - Transfer AR-X formatted to Output Buffer
+;------------------------------------------------------------------------------
+ARX2OUTBUF_F: ; 
     VMJ  ($96) ; ($96)($4B)
     BCS ARX2OUTBUF_F_2 ; $ECE2
     STA  UL
@@ -9162,7 +9726,9 @@ ARX2OUTBUF_F_2: ; $ECE2
 
 
 
-; $ECE3 Transfers value (string or numeric) to output buffer and resets output buffer pointer.
+;------------------------------------------------------------------------------
+; $ECE3 - Transfers value (string or numeric) to output buffer and resets output buffer pointer.
+;------------------------------------------------------------------------------
 ARXASCII2OUTBUF: 
     VMJ  ($98) ; ($98)($4C)
     BCS ARX2OUTBUF_F_1 ; $ECDD
@@ -9171,8 +9737,10 @@ ARXASCII2OUTBUF:
 
 
 
-; (9A) Executes using command pointed to by Y-Reg. If an error occurs C=1.
-USING_PARAM: ; $ECEB
+;------------------------------------------------------------------------------
+; (9A) $ECEB - Executes using command pointed to by Y-Reg. If an error occurs C=1.
+;------------------------------------------------------------------------------
+USING_PARAM: ; 
     VEJ  (C4) \ AWRD($F085) \ ABRF($ECF5)
     SJP  (EVAL_USING)
     LDA  (X)
@@ -9186,16 +9754,18 @@ USING_PARAM: ; $ECEB
 
 
 
-; Output of 26 characters of the output buffer
-OUTBUF2LCD: ; $ECFA
+;------------------------------------------------------------------------------
+; $ECFA - Output of 26 characters of the output buffer
+;------------------------------------------------------------------------------
+OUTBUF2LCD: ; 
     LDI  A,$1A
     LDI  UH,$7B
     LDI  UL,$60
 
-
-
-; (92) Output of text on the LCD. U-Reg contains start address; A the length.
-TEXTUREG_A: ; $ED00
+;------------------------------------------------------------------------------
+; (92) $ED00 - Output of text on the LCD. U-Reg contains start address; A the length.
+;------------------------------------------------------------------------------
+TEXTUREG_A: ; 
     PSH  A
     VMJ  ($8C) ; ($8C)($46)
     POP  A
@@ -9237,8 +9807,11 @@ TEXTUREG_A2: ; $ED38
     RTN
 
 
-; $ED3B Outputs XL characters of text starting from U-Reg. The output is 
+
+;------------------------------------------------------------------------------
+; $ED3B - Outputs text from U-Reg on LCD, # characters in XL. The output is 
 ; independent of the value of the matrix pointer. Its old value is then restored.
+;------------------------------------------------------------------------------
 TEXTUREG_XL:
     LDA  (CURSOR_PTR)
     ANI  (CURSOR_PTR),$00
@@ -9251,8 +9824,10 @@ TEXTUREG_XL:
 
 
 
-; Output a character at the next matrix column
-CHAR2COL: ; $ED4D
+;------------------------------------------------------------------------------
+; $ED4D - Output a character at the next matrix column
+;------------------------------------------------------------------------------
+CHAR2COL: ; 
     SJP  (CHARA2COL)
     BCS INIT_MTRX
     ADI  (CURSOR_PTR),$06
@@ -9260,17 +9835,19 @@ CHAR2COL: ; $ED4D
 
 
 
-; $ED57 Output of the character in accumulator at next matrix column. 
+;------------------------------------------------------------------------------
+; $ED57 - Output of the character in accumulator at next matrix column. 
 ; The output address is calculated automatically.
+;------------------------------------------------------------------------------
 CHARA2COL: ; $ED57
     STA  UH
     VMJ  ($8C) ; ($8C)($46)
     LDA  UH
 
-
-
-; (8A) $ED5B Output of ASCII character in accumulator starting at matrix
+;------------------------------------------------------------------------------
+; (8A) $ED5B - Output of ASCII character in accumulator starting at matrix
 ; column address pointed to by X-Reg. Second character set is recognized.
+;------------------------------------------------------------------------------
 CHARA2COLX: ; 
     PSH  Y
     SJP  (CHAR2ADDR)
@@ -9358,7 +9935,9 @@ ASCII2HEX_1: ; $EDA8
 
 
 
-; (90) $EDAB Checks whether the matrix pointer is still in the permissible range 0-155. Set C=1 if not.
+;------------------------------------------------------------------------------
+; (90) $EDAB - Checks whether the matrix pointer is still in the permissible range 0-155. Set C=1 if not.
+;------------------------------------------------------------------------------
 MTRXNRANGE: 
     LDA  (CURSOR_PTR)
     CPI  A,$9C
@@ -9366,7 +9945,9 @@ MTRXNRANGE:
 
 
 
-; (8E) $EDB1 Increases matrix pointer if still in the permissible range 0-155 C=1 if not.
+;------------------------------------------------------------------------------
+; (8E) $EDB1 - Increases matrix pointer if still in the permissible range 0-155 C=1 if not.
+;------------------------------------------------------------------------------
 MTRXINC: 
     LDA  (CURSOR_PTR)
     INC  A
@@ -9383,8 +9964,10 @@ MTRXINC_2: ; $EDBD
 
 
 
-; Cache LCD display of 7810-7BFF
-LCDCACHE: ; $EDC1
+;------------------------------------------------------------------------------
+; $EDC1 - Cache LCD display of 7810-7BFF
+;------------------------------------------------------------------------------
+LCDCACHE: ; 
     PSH  Y
 
 LCDCACHE_3: ; $EDC3
@@ -9407,8 +9990,10 @@ LCDCACHE_1: ; $EDCE
 
 
 
-; Retrieve LCD display from 7610-7BFF
-BCMD_BFF: ; $EDD8
+;------------------------------------------------------------------------------
+; $EDD8 - Retrieve LCD display from $7610-$7BFF
+;------------------------------------------------------------------------------
+BCMD_BFF: ; 
     PSH  Y
 
 BCMD_BFF_3: ; $EDDA
@@ -9431,7 +10016,9 @@ BCMD_BFF_1: ; $EDD8
 
 
 
-; $EDEF Output characters from accumulator to next matrix column address.
+;------------------------------------------------------------------------------
+; $EDEF - Output characters from accumulator to next matrix column address.
+;------------------------------------------------------------------------------
 HEX2COL: 
     STA  UH
     VMJ  ($8C) ; ($8C)($46)
@@ -9439,10 +10026,10 @@ HEX2COL:
     BCH GPRNT_A_2LCD
     LIN  Y
 
-
-
-; (88) $EDF6 Output of accumulator as "GPRINT" value on LCD
+;------------------------------------------------------------------------------
+; (88) $EDF6 - Output of accumulator as "GPRINT" value on LCD
 ; Output of the accumulator as a bit pattern on the LCD (X-Reg and f.).
+;------------------------------------------------------------------------------
 GPRNT_A_2LCD:
     STA  UH
     ANI  A,$0F
@@ -9480,14 +10067,16 @@ GPRNT_A_2LCD_1: ; $EE13
 
 
 
-; (8C) $EE1F Calculates in X-Reg matrix column address from matrix pointer
+;------------------------------------------------------------------------------
+; (8C) $EE1F - Calculates in X-Reg matrix column address from matrix pointer
 ; Calculates the matrix column address from the matrix pointer $7875 in the X-Reg.
+;------------------------------------------------------------------------------
 MATRIX_PTR2XREG:
     LDA  (CURSOR_PTR)
 
-
-
-; $EE22 Calculated from the accumulator matrix column address in the X-Reg.
+;------------------------------------------------------------------------------
+; $EE22 - Calculated from the accumulator matrix column address in the X-Reg.
+;------------------------------------------------------------------------------
 MATRIX_A2XREG: 
     CPI  A,$4E
     BCS MATRIX_A2XREG_1 ; $EE36
@@ -9523,9 +10112,11 @@ MATRIX_A2XREG_3: ; $EE41
 
 
 
-; $EE48 Retrieves address in character set table for character in accumulator
+;------------------------------------------------------------------------------
+; $EE48 - Retrieves address in character set table for character in accumulator
 ; Retrieves the address in the character set table for characters in the
 ; accumulator. 2. Character set is taken into account. Table address is passed to Y-Reg.
+;------------------------------------------------------------------------------
 CHAR2ADDR: 
     SHL
     BCS CHAR2ADDR_1 ; $EE5A
@@ -9580,10 +10171,10 @@ LCDCLR: ; $EE71
     SJP  (LCDCLRRNG)
     LDI  UH,$77
 
-
-
-; Clears area from (UH00)-(UH4D)
-LCDCLRRNG: ; $EE78
+;------------------------------------------------------------------------------
+; $EE78 - Clears area from (UH00)-(UH4D)
+;------------------------------------------------------------------------------
+LCDCLRRNG: ; 
     LDI  UL,$4D
     LDI  A,$00
 
@@ -9594,7 +10185,10 @@ LCDCLRRNG_1: ; $EE7C
 
 
 
-; $EE80 Saves cursor parameters in cache from $786C. Transfers the display to the buffer area.
+;------------------------------------------------------------------------------
+; $EE80 - Saves cursor parameters in cache from $786C. 
+; Transfers the display to the buffer area.
+;------------------------------------------------------------------------------
 SAVELCD2BUF: ; 
     ANI  (ARX + $07),$00
     ORI  (CURSOR_ENA),$80
@@ -9612,7 +10206,9 @@ SAVELCD2BUF_1: ; $EE94
 
 
 
-; $EE99 Transfer back cursor parameters and display.
+;------------------------------------------------------------------------------
+; $EE99 - Transfer back cursor parameters and display.
+;------------------------------------------------------------------------------
 BUF2LCD:
     BII  (CURSOR_ENA),$80
     BZS LCDCHRLEFT_1 ; $EEC0
@@ -9630,8 +10226,10 @@ BUF2LCD_1: ; $EEAB
 
 
 
-; $EEB0 Determines from accumulator number of characters that can be displayed. 
+;------------------------------------------------------------------------------
+; $EEB0 - Determines from accumulator number of characters that can be displayed. 
 ; If output not possible C=1.
+;------------------------------------------------------------------------------
 LCDCHRLEFT: ; 
     LDI  UL,$19
     LDA  (CURSOR_PTR)
@@ -9664,8 +10262,10 @@ LCDCHRLEFT_5: ; $EEC6
 
 
 
-; Basic command POINT
-BCMD_POINT: ; $EECB
+;------------------------------------------------------------------------------
+; $EECB - Basic command POINT
+;------------------------------------------------------------------------------
+BCMD_POINT: ; 
     VEJ  (D0) \ ABYT($0A) \ ABRF($EF19) ; ***
     SJP  (MATRIX_A2XREG)
     CPI  XH,$76
@@ -9705,7 +10305,9 @@ BCMD_POINT_4: ; $EEF7
 
 
 
-; (84) $EF00 Turns off the blinking cursor.
+;------------------------------------------------------------------------------
+; (84) $EF00 - Turns off the blinking cursor.
+;------------------------------------------------------------------------------
 CURSOR_OFF: ;
     ANI  (CURSOR_BLNK),$FC
 
@@ -9714,7 +10316,9 @@ CURSOR_OFF_1: ; $EF04
 
 
 
-; $EF05 Saves USING parameters on processor stack ($7895-$7897) and deletes USING parameters.
+;------------------------------------------------------------------------------
+; $EF05 - Saves USING parameters on processor stack ($7895-$7897) and deletes USING parameters.
+;------------------------------------------------------------------------------
 USING2STK: ; 
     LDI  XH,$78
     LDI  XL,$95
@@ -9737,8 +10341,10 @@ USING2STK_2: ; $EF18
 
 
 
-; Convert AR-X to string
-ARX2STRNG: ; $EF1B
+;------------------------------------------------------------------------------
+; $EF1B - Convert AR-X to string
+;------------------------------------------------------------------------------
+ARX2STRNG: ; 
     SJP  (USING2STK)
     LDI  A,$01
     VMJ  ($96) ; ($96)($4B)
@@ -9758,7 +10364,9 @@ ARX2STRNG_1: ; $EF2A
 
 
 
-; $EF35 Gets USING parameters from stack
+;------------------------------------------------------------------------------
+; $EF35 - Gets USING parameters from stack
+;------------------------------------------------------------------------------
 STK2USING: ; 
     LDI  XH,$78
     LDI  XL,$97
@@ -9773,7 +10381,9 @@ STK2USING_1: ; $EF3D
 
 
 
-; $EF44 Outputs text on LCD display
+;------------------------------------------------------------------------------
+; $EF44 - Outputs text on LCD display
+;------------------------------------------------------------------------------
 TXT2LCD: ; 
     PSH  X
     LDI  A,$00
@@ -9792,8 +10402,11 @@ TXT2LCD_1: ; $EF52
     BCH CURSOR_OFF
 
 
-; Text output on LCD from (AR-Y)
-TXT2LCD_ARY: ; $EF5B
+
+;------------------------------------------------------------------------------
+; $EF5B - Text output on LCD from (AR-Y)
+;------------------------------------------------------------------------------
+TXT2LCD_ARY: ; 
     REC
     LDI  A,$F0
     ADC  XL
@@ -9804,7 +10417,9 @@ TXT2LCD_ARY: ; $EF5B
 
 
 
-; $EF67 Prepare the LCD output
+;------------------------------------------------------------------------------
+; $EF67 - Prepare the LCD output
+;------------------------------------------------------------------------------
 PREPLCDOUT:
     ORI  (BREAKPARAM),$10
     BII  (CURSOR_ENA),$01
@@ -9874,14 +10489,15 @@ OUTBUFCLR_3: ; $EFB1
     BCH OUTBUFCLR_6 ; $EF9D
 
 
-
-; $EFB6 Subtraction: AR-X = ARX – AR-Y
+;------------------------------------------------------------------------------
+; $EFB6 - Subtraction: AR-X = ARX – AR-Y
+;------------------------------------------------------------------------------
 SUBTR: ; 
     ADI  (ARY + $01),$80
 
-
-
-; (F0) $EFBA Addition: AR-X = AR-X + AR-Y
+;------------------------------------------------------------------------------
+; (F0) $EFBA - Addition: AR-X = AR-X + AR-Y
+;------------------------------------------------------------------------------
 ADDIT: ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$02
@@ -9959,13 +10575,15 @@ ADDIT_5: ; $F003
 
 
 
-; ; $F019 AR-X = AR-X * AR-X
+;------------------------------------------------------------------------------
+; $F019 - AR-X = AR-X * AR-X
+;------------------------------------------------------------------------------
 SQUARE: 
     VEJ  (E6)
 
-
-
-; $F01A (7E) Multiplication: AR-X = AR-X* AR-Y
+;------------------------------------------------------------------------------
+; $F01A - (7E) Multiplication: AR-X = AR-X* AR-Y
+;------------------------------------------------------------------------------
 MULTIPLY: ;
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$01
@@ -10027,9 +10645,12 @@ MULTIPLY_1: ; $F065
     RTN
 
 
-; $F067 Adds the mantissas of those AR to the AR-X that are preselected by 
+
+;------------------------------------------------------------------------------
+; $F067 - Adds the mantissas of those AR to the AR-X that are preselected by 
 ; the value in the accumulator. If bit# is set 7:AR-W, 6:AR-V, 5:AR-U,
 ; 4:AR-Y, 3:AR-Z are added.
+;------------------------------------------------------------------------------
 ADDMANY: ; 
     STA  UH
     LDI  A,$2F
@@ -10056,14 +10677,16 @@ ADDMANY_1: ; $F07B
 
 
 
-; (6E) $F080 Reciprocal of AR-X AR-X=1/AR-X (if error C=1).
+;------------------------------------------------------------------------------
+; (6E) $F080 - Reciprocal of AR-X AR-X=1/AR-X (if error C=1).
+;------------------------------------------------------------------------------
 RECIPRICAL: ; 
     VMJ  ($6A) ; ($6A)($35)
     VMJ  ($66) ; ($66)($33)
 
-
-
-; (58) $F084 Division: AR-X = AR-X / AR- Y
+;------------------------------------------------------------------------------
+; (58) $F084 - Division: AR-X = AR-X / AR- Y
+;------------------------------------------------------------------------------
 DIVISION: ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$01
@@ -10137,7 +10760,9 @@ DIVISION_1: ; $F0E3
 
 
 
-; $F0E9 AR-X = SQR (AR-X)
+;------------------------------------------------------------------------------
+; $F0E9 -  AR-X = SQR (AR-X)
+;------------------------------------------------------------------------------
 SQR_ROOT: ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$01
@@ -10235,15 +10860,17 @@ SQR_ROOT_1: ; $F15D
 
 
 
-; Basic command LN
-BCMD_LN: ; $F161
+;------------------------------------------------------------------------------
+; $F161 - Basic command LN
+;------------------------------------------------------------------------------
+BCMD_LN: ; 
     LDI  A,$02
     BCH BCMD_LOG_3 ; $F167
 
-
-
-; Basic command LOG
-BCMD_LOG: ; $F165
+;------------------------------------------------------------------------------
+; $F165 - Basic command LOG
+;------------------------------------------------------------------------------
+BCMD_LOG: ; 
     LDI  A,$00
 
 BCMD_LOG_3: ; $F167
@@ -10319,8 +10946,10 @@ BCMD_LOG_4: ; $F1C2
 
 
 
-; Basic command EXP
-BCMD_EXP: ; $F1CB
+;------------------------------------------------------------------------------
+; $F1CB - Basic command EXP
+;------------------------------------------------------------------------------
+BCMD_EXP: ; 
     VMJ  ($54) ; ($54)($2A)
     SJP  (ADD_ARU_ARX_7) ; $F87B
     VMJ  ($7E) ; ($7E)($3F)
@@ -10328,7 +10957,9 @@ BCMD_EXP: ; $F1CB
 
 
 
-; $F1D4 AR-X = 10 to the power of AR-X
+;------------------------------------------------------------------------------
+; $F1D4 - AR-X = 10 to the power of AR-X
+;------------------------------------------------------------------------------
 EXPONENT: ; 
     VMJ  ($54) ; ($54)($2A)
     VMJ  ($6C) ; ($6C)($36)
@@ -10635,8 +11266,10 @@ EXPONENT_42: ; $F38E
 
 
 
-; Basic command COS
-BCMD_COS: ; $F391
+;------------------------------------------------------------------------------
+; $F391 - Basic command COS
+;------------------------------------------------------------------------------
+BCMD_COS: ; 
     ANI  (ARX + $01),$00
     LDI  A,$00
     STA  (ARU)
@@ -10645,15 +11278,19 @@ BCMD_COS: ; $F391
 
 
 
-; Basic command TAN
-BCMD_TAN: ; $F39E
+;------------------------------------------------------------------------------
+; $F39E - Basic command TAN
+;------------------------------------------------------------------------------
+BCMD_TAN: ; 
     LDI  A,$40
     BCH BCMD_SIN_4 ; $F3A4
 
 
 
-; Basic command SIN
-BCMD_SIN: ; $F3A2
+;------------------------------------------------------------------------------
+; $F3A2 - Basic command SIN
+;------------------------------------------------------------------------------
+BCMD_SIN: ; 
     LDI  A,$00
 
 BCMD_SIN_4: ; $F3A4
@@ -10802,22 +11439,24 @@ BCMD_SIN_6: ; $F48E
 
 
 
-; Basic command ACS
-BCMD_ACS: ; $F492
+;------------------------------------------------------------------------------
+; $F492 - Basic command ACS
+;------------------------------------------------------------------------------
+BCMD_ACS: ; 
     LDI  A,$20
     BCH BCMD_ASN_3 ; $F49C
 
-
-
-; Basic command ATN
-BCMD_ATN: ; $F496
+;------------------------------------------------------------------------------
+; $F496 - Basic command ATN
+;------------------------------------------------------------------------------
+BCMD_ATN: ; 
     LDI  A,$40
     BCH BCMD_ASN_3 ; $F49C
 
-
-
-; Basic command ASN
-BCMD_ASN: ; $F49A
+;------------------------------------------------------------------------------
+; $F49A - Basic command ASN
+;------------------------------------------------------------------------------
+BCMD_ASN: ; 
     LDI  A,$00
 
 BCMD_ASN_3: ; $F49C
@@ -10904,8 +11543,10 @@ BCMD_ASN_2: ; $F52E
 
 
 
-; Basic command DEG
-BCMD_DEG: ; $F531
+;------------------------------------------------------------------------------
+; $F531 - Basic command DEG
+;------------------------------------------------------------------------------
+BCMD_DEG: ; 
     VMJ  ($54) ; ($54)($2A)
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
@@ -10936,8 +11577,11 @@ BCMD_DEG: ; $F531
     JMP  ARX2BCD2 ; $F663
 
 
-; Basic command DMS
-BCMD_DMS: ; $F564
+
+;------------------------------------------------------------------------------
+; $F564 - Basic command DMS
+;------------------------------------------------------------------------------
+BCMD_DMS: ; 
     VMJ  ($54) ; ($54)($2A)
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
@@ -10964,21 +11608,23 @@ BCMD_DMS: ; $F564
     VEJ  (F0)
     BCS BCMD_ASN_9 ; $F52C
 
-
-
-BCMD_SGN: ; $F590 *** valid??
+;BCMD_SGN: $F590
     POP  A
     VMJ  ($52) ; ($52)($29
     JMP  ARXX ; $F63C
 
 
-
+;------------------------------------------------------------------------------
 ; Basic command ABS
+;------------------------------------------------------------------------------
 BCMD_ABS: ; $F597
     ANI  (ARX + $01),$00
     BCH BCMD_PI_1 ; $F5BC
 
-; Basic command SGN
+;------------------------------------------------------------------------------
+; $F59D - Basic command SGN
+;------------------------------------------------------------------------------
+BCMD_SGN:
     LDI  XH,$7A
     LDI  XL,$01
     LIN  X
@@ -10997,7 +11643,9 @@ BCMD_ABS: ; $F597
 
 
 
-; $F5B5 Basic command PI, Loads PI to AR-Y.
+;------------------------------------------------------------------------------
+; $F5B5 - Basic command PI, Loads PI to AR-Y.
+;------------------------------------------------------------------------------
 BCMD_PI: ; 
     VMJ  ($54) ; ($54)($2A)
     SJP  ($F875)
@@ -11008,8 +11656,10 @@ BCMD_PI_1: ; $F5BC
 
 
 
-; Basic command INT
-BCMD_INT: ; $F5BE
+;------------------------------------------------------------------------------
+; $F5BE - Basic command INT
+;------------------------------------------------------------------------------
+BCMD_INT: ; 
     VMJ  ($54) ; ($54)($2A)
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
@@ -11037,7 +11687,11 @@ BCMD_INT_2: ; $F5D8
     BCH BCMD_INT_4 ; $F5D3
 
 
-; Basic command RND
+
+;------------------------------------------------------------------------------
+; $F5DD - Basic command RND
+;------------------------------------------------------------------------------
+BCMD_RND:
     VMJ  ($54) ; ($54)($2A)
     BII  (ARX + $01),$80
     BZR RANDGEN_1 ; $F5F5
@@ -11046,7 +11700,9 @@ BCMD_INT_2: ; $F5D8
 
 
 
-; $F5EB Determines random number in AR-X
+;------------------------------------------------------------------------------
+; $F5EB - Determines random number in AR-X
+;------------------------------------------------------------------------------
 RANDGEN: ; 
     VMJ  ($5E) ; ($5E)($2F)
 
@@ -11080,10 +11736,11 @@ RANDGEN_4: ; $F618
     JMP  SQR_ROOT_1 ; $F15D
 
 
-; $F618 Generates RANDOM number and updates RND pointer
-    VMJ  ($82) ; ($82)($41)
 
-; $F61B (5C) Generates RANDOM number and updates RND pointers.
+;------------------------------------------------------------------------------
+; $F61B (5C) - Generates RANDOM number and updates RND pointer
+;------------------------------------------------------------------------------
+    VMJ  ($82) ; ($82)($41)
     VEJ  (EE)
     VEJ  (EA)
     VEJ  (EE)
@@ -11114,8 +11771,10 @@ ARXX: ;
 
 
 
-; Basic command RANDOM
-BCMD_RANDOM: ; $F641
+;------------------------------------------------------------------------------
+; $F641 - Basic command RANDOM
+;------------------------------------------------------------------------------
+BCMD_RANDOM: ; 
     PSH  Y
     VMJ  ($54) ; ($54)($2A)
     SJP  (CLR_SM_ARX)
@@ -11131,21 +11790,25 @@ BCMD_RANDOM: ; $F641
     VEJ  (E2)
 
 
-; $F65D Converts AR-X into BCD form (absolute value).
+
+;------------------------------------------------------------------------------
+; $F65D - Converts AR-X into BCD form. AR-X to A. (absolute value).
+;------------------------------------------------------------------------------
 ARX2BCD_ABS: 
     VMJ  ($6C) ; ($6C)($36)
     BCH ARX2BCD2
 
-
-; (E8) $F661 Converts AR-X to BCD form (absolute value) 
+;------------------------------------------------------------------------------
+; (E8) $F661 Converts AR-X to BCD form. Value already in A. (absolute value) 
 ; Converts AR-X into BCD format, whereby the absolute value (positive number) is formed.  
+;------------------------------------------------------------------------------    
     LDI  A,$00
 
-
-
+;------------------------------------------------------------------------------ 
 ; (52) $F663 Converts AR-X to BCD form
 ; Converts the result in the AR-X into the correct BCD format. With overflow 
 ; C=1. AR-X is set to 0 if below the permissible value range.
+;------------------------------------------------------------------------------ 
 ARX2BCD2: ; $F663
     PSH  A
     LDI  XL,$01
@@ -11203,8 +11866,11 @@ ARX2BCD2_9: ; $F6A5
     RTN
 
 
-; Limit result to 2 decimal places
-ARX2BCD2_2: ; $F6A9
+
+;------------------------------------------------------------------------------ 
+; $F6A9 - Limit result to 2 decimal places
+;------------------------------------------------------------------------------ 
+ARX2BCD2_2: ; 
     SJP  (CLR_SM_ARX)
     LDI  XL,$00
     LDA  (X)
@@ -11214,8 +11880,10 @@ ARX2BCD2_2: ; $F6A9
 
 
 
-; $F6B4 TTransfers decimal places from AR-X to AR-Y, whereby their position 
+;------------------------------------------------------------------------------ 
+; $F6B4 - Transfers decimal places from AR-X to AR-Y, whereby their position 
 ; from AR-X is retained.
+;------------------------------------------------------------------------------ 
 XFER_DEC_ARX2ARY: ; 
     SJP  (CLR_SM_ARX)
     LDI  XL,$00
@@ -11262,9 +11930,11 @@ XFER_DEC_ARX2ARY_4: ; $F6DF
 
 
 
-; (7C) $F6E6 Determines the sign of the result and puts it on the stack
+;------------------------------------------------------------------------------
+; (7C) $F6E6 - Determines the sign of the result and puts it on the stack
 ; Sign test. Put the result of a sign combination (AR-X and AR-Y) on the stack.
 ; Ditto for sign of AR-Y. For further calculations set AR to 00.
+;------------------------------------------------------------------------------
 SIGN_TEST: ; 
     POP  U
     LDI  XL,$01
@@ -11282,7 +11952,9 @@ SIGN_TEST: ;
 
 
 
-; (6C) $F6FB Loads signs from AR-X into Accumulator and clears signs from AR-X.
+;------------------------------------------------------------------------------
+; (6C) $F6FB - Loads signs from AR-X into Accumulator and clears signs from AR-X.
+;------------------------------------------------------------------------------
 LDA_SGN_ARX: ; 
     LDI  XL,$01
     LDA  (X)
@@ -11291,7 +11963,9 @@ LDA_SGN_ARX: ;
 
 
 
-; $F701 Transfers AR-Y to AR-S
+;------------------------------------------------------------------------------
+; $F701 - Transfers AR-Y to AR-S
+;------------------------------------------------------------------------------
 XFER_ARY2ARS:  ; 
     LDI  XL,$10
     LDI  YL,$30
@@ -11299,14 +11973,19 @@ XFER_ARY2ARS:  ;
 
 
 
-; $F707 (80) Transfers AR-X to AR-S
+;------------------------------------------------------------------------------
+; $F707 (80) - Transfers AR-X to AR-S
+;------------------------------------------------------------------------------
 XFER_ARX2ARS:  ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  YL,$30
     BCH XFER_ARX2ARY_1 ; $F711
 
 
-; (E6) $F70D Transfers AR-X to AR-Y
+
+;------------------------------------------------------------------------------
+; (E6) $F70D - Transfers AR-X to AR-Y
+;------------------------------------------------------------------------------
 XFER_ARX2ARY: ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  YL,$10
@@ -11317,7 +11996,9 @@ XFER_ARX2ARY_1: ; $F711
 
 
 
-; (68) $F715 Transfers AR-S to AR-Y
+;------------------------------------------------------------------------------
+; (68) $F715 - Transfers AR-S to AR-Y
+;------------------------------------------------------------------------------
 XFER_ARS2ARY: ; 
     LDI  XL,$30
     LDI  YL,$10
@@ -11325,15 +12006,19 @@ XFER_ARS2ARY: ;
 
 
 
-; $F71B Transfers sign and mantissa from AR-Y to AR-X
+;------------------------------------------------------------------------------
+; $F71B - Transfers sign and mantissa from AR-Y to AR-X
+;------------------------------------------------------------------------------
 XFER_SM_ARY2ARX: ;
     LDI  XL,$11
     BCH XFER_SM_ARZ2ARX_1 ; $F721
 
 
 
-; Transfers sign and mantissa from AR-Z to AR-X
-XFER_SM_ARZ2ARX: ; $F71F
+;------------------------------------------------------------------------------
+; $F71F - Transfers sign and mantissa from AR-Z to AR-X
+;------------------------------------------------------------------------------
+XFER_SM_ARZ2ARX: ; 
     LDI  XL,$09
 
 XFER_SM_ARZ2ARX_1: ; $F721
@@ -11342,14 +12027,18 @@ XFER_SM_ARZ2ARX_1: ; $F721
 
 
 
-; $F725 Transfers sign and mantissa from AR-Z to AR-X
+;------------------------------------------------------------------------------
+; $F725 - Transfers sign and mantissa from AR-Z to AR-X
+;------------------------------------------------------------------------------
 XFER_SM_ARY2ARZ: ; 
     LDI  XL,$11
     BCH XFER_SM_ARX2ARZ_1 ; $F731
 
 
 
-; (82) $F729 The sign and mantissa of the BCD value in AR-X are transferred to AR-Y.
+;------------------------------------------------------------------------------
+; (82) $F729 - The sign and mantissa of the BCD value in AR-X are transferred to AR-Y.
+;------------------------------------------------------------------------------
 XFER_SM_ARX2ARY: ; 
     LDI  XL,$01
     LDI  YL,$11
@@ -11357,8 +12046,9 @@ XFER_SM_ARX2ARY: ;
 
 
 
-; $F733 Block shift: 7 bytes from (X-Reg) to (Y-Reg)
-; Save UL+1 bytes from X-Reg to Y-Reg.
+;------------------------------------------------------------------------------
+; $F72F (78) - Transfers sign and mantissa from AR-X to AR-Z
+;------------------------------------------------------------------------------
 XFER_SM_ARX2ARZ: ; 
     LDI  XL,$01
 
@@ -11367,12 +12057,18 @@ XFER_SM_ARX2ARZ_1: ; $F731
 
 
 
-; Transfers AR-S to AR-X
+;------------------------------------------------------------------------------
+; $F733 - Block shift: 7 bytes from (X-Reg) to (Y-Reg)
+;------------------------------------------------------------------------------
 XREG2YREG2:
     LDI  UL,$06
     BCH XFER_ARY2ARX2_2 ; $F743
 
-; $F737 Transfer AR-S to AR-X.
+
+
+;------------------------------------------------------------------------------
+; $F737 - Transfer AR-S to AR-X.
+;------------------------------------------------------------------------------
 XFER_ARY2ARX:
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$30
@@ -11380,7 +12076,9 @@ XFER_ARY2ARX:
 
 
 
-; $F73D Transfers AR-S to AR-X
+;------------------------------------------------------------------------------
+; $F73D - Transfers AR-S to AR-X
+;------------------------------------------------------------------------------
 XFER_ARY2ARX2: ; 
     LDI  XL,$10
 
@@ -11429,6 +12127,7 @@ CLR_SM_ARX: ; $F753
     BCH CLR_SM_ARX3
 
 
+
 ;------------------------------------------------------------------------------
 ; Clears arithmetic registers
 ;            Address: AR-X: F757 (EC)
@@ -11475,35 +12174,45 @@ CLR_N_XREG_1: ; $F765
 
 
 
-; AR-W shift one nibble to the right (/10)
-ARW_SHR_4BITS: ; $F769
+;------------------------------------------------------------------------------
+; $F769 - AR-W shift one nibble to the right (/10)
+;------------------------------------------------------------------------------
+ARW_SHR_4BITS: ; 
     LDI  XL,$28
     BCH X_REG_SHR_4BITS
 
 
 
-; Push AR-Z right one nibble (/10)
-ARZ_SHR_4BITS: ; $F76D
+;------------------------------------------------------------------------------
+; $F76D - Push AR-Z right one nibble (/10)
+;------------------------------------------------------------------------------
+ARZ_SHR_4BITS: ; 
     LDI  XL,$08
     BCH X_REG_SHR_4BITS
 
 
 
-; Shift AR-Y one nibble to the right (/10)
-ARY_SHR_4BITS: ; $F771
+;------------------------------------------------------------------------------
+; Shift $F771 - AR-Y one nibble to the right (/10)
+;------------------------------------------------------------------------------
+ARY_SHR_4BITS: ; 
     LDI  XL,$10
     BCH X_REG_SHR_4BITS
 
 
 
-; (74) Push AR-X one nibble to the right (/10)
-ARX_SHR_4BITS: ; $F775
+;------------------------------------------------------------------------------
+; (74) $F775 - Push AR-X one nibble to the right (/10)
+;------------------------------------------------------------------------------
+ARX_SHR_4BITS: ; 
     LDI  XL,$00
 
 
 
-; Shift 7 bytes from (X-Reg) one nibble to the right (/10)
-X_REG_SHR_4BITS: ; $F777
+;------------------------------------------------------------------------------
+; $F777 - Shift 7 bytes from (X-Reg) one nibble to the right (/10)
+;------------------------------------------------------------------------------
+X_REG_SHR_4BITS: ; 
     LDI  UL,$06
     LDI  A,$00
 
@@ -11525,8 +12234,10 @@ X_REG_SHR_4BITS_2: ; $F784
 
 
 
-; Push AR-S left one nibble (*10)
-ARS_SHL_4BITS: ; $F78C
+;------------------------------------------------------------------------------
+; $F78C - Push AR-S left one nibble (*10)
+;------------------------------------------------------------------------------
+ARS_SHL_4BITS: ; 
     LDI  XH,$7A
     LDI  XL,$37
     LDI  UL,$04
@@ -11534,22 +12245,28 @@ ARS_SHL_4BITS: ; $F78C
 
 
 
-; Push AR-W one nibble to the left (*10)
-ARW_SHL_4BITS: ; $F794
+;------------------------------------------------------------------------------
+; $F794 - Push AR-W one nibble to the left (*10)
+;------------------------------------------------------------------------------
+ARW_SHL_4BITS: ; 
     LDI  XL,$30
     BCH ARX_SHL_4BITS_2 ; $F79E
 
 
 
-; Push AR-Z left one nibble (*10)
-ARZ_SHL_4BITS: ; $F798
+;------------------------------------------------------------------------------
+; $F798 - Push AR-Z left one nibble (*10)
+;------------------------------------------------------------------------------
+ARZ_SHL_4BITS: ; 
     LDI  XL,$10
     BCH ARX_SHL_4BITS_2 ; $F79E
 
 
 
-; (EA) Push AR-X left one nibble (*10)
-ARX_SHL_4BITS: ; $F79C
+;------------------------------------------------------------------------------
+; (EA) $F79C - Push AR-X left one nibble (*10)
+;------------------------------------------------------------------------------
+ARX_SHL_4BITS: ; 
     LDI  XL,$08
 
 ARX_SHL_4BITS_2: ; $F79E
@@ -11566,8 +12283,10 @@ ARX_SHL_4BITS_3: ; $F7A2
 
 
 
-; (5E) Transfer random number from RND pointer to AR-X
-RND2ARX: ; $F7A7
+;------------------------------------------------------------------------------
+; (5E) $F7A7 - Transfer random number from RND pointer to AR-X
+;------------------------------------------------------------------------------
+RND2ARX: ; 
     LDI  YL,$01
     LDI  XH,$7B
     LDI  XL,$01
@@ -11591,25 +12310,29 @@ SET_HB_XYREGS: ; $F7B0
 
 
 
-; (64) Swaps AR-X with AR-S
-SWAP_AARX_ARY: ; $F7B5
+;------------------------------------------------------------------------------
+; (64) $F7B5 - Swaps AR-X with AR-S
+;------------------------------------------------------------------------------
+SWAP_AARX_ARY: ; 
     LDI  YL,$30
     BCH SWAP_ARX_ARY_1 ; $F7BB
 
 
 
-; (66) Swaps AR-X with AR-Y
-SWAP_ARX_ARY: ; $F7B9
+;------------------------------------------------------------------------------
+; (66) $F7B9 - Swaps AR-X with AR-Y
+;------------------------------------------------------------------------------
+SWAP_ARX_ARY: ; 
     LDI  YL,$10
 
 SWAP_ARX_ARY_1: ; $F7BB
     LDI  XL,$00
     LDI  UL,$07
 
-
-
-; (UL+1) Swap Bytes
-SWAP_BYTES: ; $F7BF
+;------------------------------------------------------------------------------
+; (UL+1) $F7BF - Swap Bytes
+;------------------------------------------------------------------------------
+SWAP_BYTES: ; 
     LDA  (X)
     STA  UH
     LDA  (Y)
@@ -11621,15 +12344,21 @@ SWAP_BYTES: ; $F7BF
 
 
 
-; Add AR-U to AR-X
-ADD_ARU_ARX: ; $F7C8
+;------------------------------------------------------------------------------
+; $F7C8 - Add AR-U to AR-X
+;------------------------------------------------------------------------------
+ADD_ARU_ARX: ; 
     LDI  YL,$1F
     BCH ADD_ARU_ARX_16 ; $F7CE
 
-; (EE) $F7CC Add the sign and mantissa of AR-X and AR-Y and store them in AR-X.
+;------------------------------------------------------------------------------
+; (EE) $F7CC - Add the sign and mantissa of AR-X and AR-Y and store them in AR-X.
+;------------------------------------------------------------------------------
     LDI  YL,$17
 
-; (72) $F7CE Adds the mantissa of the AR-Y to the AR-X.
+;------------------------------------------------------------------------------
+; (72) $F7CE - Adds the mantissa of the AR-Y to the AR-X.
+;------------------------------------------------------------------------------
 ADD_ARU_ARX_16: ; 
     LDI  XL,$07
 
@@ -11644,13 +12373,16 @@ ADD_ARU_ARX_17: ; $F7D3
     LOP  UL,ADD_ARU_ARX_17 ; $F7D3
     RTN
 
-
-; $F7D9 AR-X=AR-X-AR-V.
+;------------------------------------------------------------------------------
+; $F7D9 - AR-X=AR-X-AR-V.
+;------------------------------------------------------------------------------
 ADD_ARU_ARX_6: ; 
     LDI  YL,$27
     BCH ADD_ARU_ARX_8 ; $F7DF
 
-; (7A) $F7DD AR-X=AR-X-AR-V.
+;------------------------------------------------------------------------------
+; (7A) $F7DD - AR-X=AR-X-AR-V.
+;------------------------------------------------------------------------------
     LDI  YL,$17
 
 ; $F7DF Subtract from AR-X the AR pointed to by Y-Reg on entry.
@@ -11820,11 +12552,15 @@ ADD_ARU_ARX_15: ; $F887
     LDI  A,$F2
     BCH ADD_ARU_ARX_32 ; $F891
 
+;------------------------------------------------------------------------------
 ; (62) $F88B Transfers 0.6 to AR-V (FF 00 60 ...).
+;------------------------------------------------------------------------------
     LDI  A,$F5
     BCH ADD_ARU_ARX_32 ; $F891
 
+;------------------------------------------------------------------------------
 ; (6A) $F88F Transfers numerical value 1 to AR-Y.
+;------------------------------------------------------------------------------
     LDI  A,$EC
 
 ADD_ARU_ARX_32: ; $F891
@@ -12009,7 +12745,9 @@ TOKENIZE_INBUF_3: ; $F978
 
 
 
-; $F97B ; $F87B Convert input line into tokens and use formula interpreter
+;------------------------------------------------------------------------------
+; $F97B - Convert input line into tokens and use formula interpreter
+;------------------------------------------------------------------------------
 VAR_TYPE: ; $F97B
     LDI  UH,$00
     BII  (CURVARTYPE),$80 ; $7885
@@ -12192,8 +12930,10 @@ VAR_TYPE_21: ; $FA51
 
 
 
-; Decrements accumulator (OPN byte) in 2K steps
-DEC_OPN: ; $FA58
+;------------------------------------------------------------------------------
+; $FA58 - Decrements accumulator (OPN byte) in 2K steps
+;------------------------------------------------------------------------------
+DEC_OPN: ; 
     BII  A,$3C
     BZS DEC_OPN_1 ; $FA61
     SEC
@@ -12208,8 +12948,10 @@ DEC_OPN_1: ; $FA61
 
 
 
-; Sets PV bit and PV byte according to Carry bit 0 or 1.
-SET_PV: ; $FA65
+;------------------------------------------------------------------------------
+; $FA65 - Sets PV bit and PV byte according to Carry bit 0 or 1.
+;------------------------------------------------------------------------------
+SET_PV: ; 
     ANI  A,$FE
     RIE
     RPV
@@ -12224,9 +12966,10 @@ SET_PV_1: ; $FA6E
 
 
 
-
-; (3C) $FA74 Checks whether a certain token table (whose right-shifted 
+;------------------------------------------------------------------------------
+; (3C) $FA74 - Checks whether a certain token table (whose right-shifted 
 ; high-byte address is in the accumulator, exists. If not, C=0.
+;------------------------------------------------------------------------------
 TOKEN_CHECK: ; $FA74
     SHL
 
@@ -12246,7 +12989,9 @@ TOKEN_CHECK_1: ; $FA75
 
 
 
-; (1C) $FA89 Processes tokens corresponding to data bytes
+;------------------------------------------------------------------------------
+; (1C) $FA89 - Processes tokens corresponding to data bytes
+;------------------------------------------------------------------------------
 TOKEN_PROCESS: ; $FA89
     POP  X
     LIN  X
@@ -12376,7 +13121,9 @@ TOKEN_PROCESS_16: ; $FB25
 
 
 
-; (1E) $FB2A Performs PV banking according to PV byte $79D0.
+;------------------------------------------------------------------------------
+; (1E) $FB2A - Performs PV banking according to PV byte $79D0.
+;------------------------------------------------------------------------------
 PVBANK2: ; $FB2A
     ROR
     LDI  A,$EF
@@ -12469,7 +13216,9 @@ PVBANK2_8: ; $FB9C
 
 
 
-; (3E) $FB9D Determine and run through the trace routine.
+;------------------------------------------------------------------------------
+; (3E) $FB9D - Determine and run through the trace routine.
+;------------------------------------------------------------------------------
 TRACE2: ; 
     STA  (TRACE)
     CPI  A,$02
@@ -12507,7 +13256,9 @@ TRACE2_1: ; $FBC8
 
 
 
-; $FBCB Transfer string to output buffer or output to string buffer
+;------------------------------------------------------------------------------
+; $FBCB - Transfer string to output buffer or output to string buffer
+;------------------------------------------------------------------------------
 STRXFR: ; $FBCB
     PSH  Y
     LDI  XH,$7B
@@ -12533,8 +13284,10 @@ STRXFR_1: ; $FBDB
 
 
 
-; Auxiliary constants for arithmetic routines
-AUX_CONST: ; $FBE9
+;------------------------------------------------------------------------------
+; $FBE9 - Auxiliary constants for arithmetic routines
+;------------------------------------------------------------------------------
+AUX_CONST: ; 
     .BYTE  $FF,$00,$90                      ; 0.9
     .BYTE  $00,$00,$10                      ; 1
     .BYTE  $01,$00,$90                      ; 90
@@ -12564,6 +13317,9 @@ AUX_CONST: ; $FBE9
 
 
 
+;------------------------------------------------------------------------------
+; $FCA0 - Character set table
+;------------------------------------------------------------------------------
 CHARSET: ; $FCA0
     .BYTE  $00,$00,$00,$00,$00  ; Space
     .BYTE  $00,$00,$5F,$00,$00  ; !
@@ -12664,8 +13420,10 @@ CHARSET: ; $FCA0
 
 
 
-; Keyboard layout (basic function)
-KB_LAYOUT_NORM: ; $FE80
+;------------------------------------------------------------------------------
+; $FE80 - Keyboard layout (basic function)
+;------------------------------------------------------------------------------
+KB_LAYOUT_NORM: ; 
     .BYTE  $0B,$4E,$59,$01,$48,$38,$35,$32
     .BYTE  $09,$58,$57,$11,$53,$0F,$2D,$2E
     .BYTE  $30,$4D,$55,$15,$4A,$37,$34,$31
@@ -12677,8 +13435,10 @@ KB_LAYOUT_NORM: ; $FE80
 
 
 
-; Keyboard layout (shift function)
-KB_LAYOUT_SH: ; $FEC0
+;------------------------------------------------------------------------------
+; $FEC0 - Keyboard layout (shift function)
+;------------------------------------------------------------------------------
+KB_LAYOUT_SH: ; 
     .BYTE  $5B,$6E,$79,$01,$68,$38,$35,$32
     .BYTE  $09,$78,$77,$21,$73,$0F,$2C,$2E
     .BYTE  $30,$6D,$75,$25,$6A,$37,$34,$31
@@ -12690,7 +13450,9 @@ KB_LAYOUT_SH: ; $FEC0
 
 
 
-; Table for CALL vectors
+;------------------------------------------------------------------------------
+; $FF00 - Table for CALL vectors
+;------------------------------------------------------------------------------
 CALL_VECTORS: ; $FF00                        Vector>Target, Vector>Target, Vector>Target, Vector>Target
     .BYTE  $DC,$B7,$DC,$B6,$DC,$C6,$D0,$65 ; $FF(00)>$DCB7, $FF(02)>$DCB6, $FF(04)>$DCC6, $FF(06)>$D065
     .BYTE  $DD,$D9,$DE,$5E,$DE,$97,$D4,$61 ; $FF(08)>$DDD9, $FF(0A)>$DE5E, $FF(0C)>$DE97, $FF(0E)>$D461
