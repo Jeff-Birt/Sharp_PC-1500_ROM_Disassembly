@@ -35,4 +35,5 @@ CE158_UART_DATAW  = $D200 ; UART_DATA_W
 CE158_UART_REGW   = $D201 ; UART_REG_W
 CE158_UART_DATAR  = $D202 ; UART_DATA_R
 CE158_UART_REGR   = $D203 ; UART_REG_R
+CE158_IR_PING     = $DC00 ; PC-1500 pings this address every ISR cycle (does nothing)
 CE158_IR_REG      = $DE00 ; Interrupt ID register, Bit 7 0 = INT, 1 = No INT.
