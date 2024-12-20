@@ -33,7 +33,7 @@
 ; $C000 - BASIC Command Table $C000. This is not a normal token table though.
 ; 
 ; $C001~$C01C are two small OS functions
-; $C01D~$C01F is the normal TRACE vector 
+; $C01D~$C01F is the normal TRACE_PARAM vector 
 ; $C020~$C053 Token table pointers for for built in commands
 ; $C054~$C34E Token table for built in commands
 ;------------------------------------------------------------------------------
@@ -458,7 +458,7 @@ BASIC_INT_5: ; $C413
     BCR  BASIC_INT_6 ; $C42A
     CPI  A,$C0       ; B7 C0
     BCR  BCMD_LET_8  ; 81 82 $C4A5
-    SJP  (KEY2ASCII)
+    SJP  (KEY_2_ASCII)
     CPI  A,$0A
     BZR BCMD_LET_8  ; $C4A5
 
@@ -597,7 +597,7 @@ BCMD_LET_10: ; $C4AD
 ;------------------------------------------------------------------------------
 TRCROUTINE:
     VEJ  (CC) \ 
-        ABYTL(TRACE) ; $788E
+        ABYTL(TRACE_PARAM) ; $788E
     BZS BCMD_LET_9 ; $C4AB
     LDI  UH,$00
     RTN
@@ -642,7 +642,7 @@ BCMD_STOP_7: ; $C4D9
     ORI  (BREAKPARAM),$80
     ANI  (BREAKPARAM),$EF
     PSH  U
-    SJP  (SAVELCD2BUF)
+    SJP  (SAVE_LCD_CURS)
     POP  U
     LDI  A,$01
     STA  (DISPARAM)
@@ -736,7 +736,7 @@ DEFKEY_EVAL:
     BII  A,$40
     BZS DEFKEY_EVAL_4 ; $C57D
     PSH  Y
-    SJP  (VAR_TYPE)
+    SJP  (TOK_INBUF_5)
     BCR DEFKEY_EVAL_7 ; $C597
     POP  Y
     BZR DEFKEY_EVAL_2 ; $C575
@@ -1688,7 +1688,7 @@ BCMD_INPUT_6: ; $C933
     STA  YL
     LDI  YH,$7B
     ANI  (CURS_CTRL),$9F
-    SJP  (PREPLCDOUT)
+    SJP  (PREP_LCD_OUT)
     LDI  UH,$20
     VCS  ($E0)
     JMP  EDITOR_1 ; $CA7D
@@ -1963,12 +1963,12 @@ EDITOR:
 ; $CA7D (46) - Editor Jump
 ;------------------------------------------------------------------------------
 EDITOR_1:
-    SJP  (PRGMDISP)
+    SJP  (PRGM_DISP)
     ANI  (CURR_LINE_L),$00
     ANI  (CURR_LINE_H),$00
     ANI  (DISP_BUFF + $4E),$FE
     LDI  S,(CPU_STACK + $4F)
-    SJP  (WAIT4KB)
+    SJP  (WAIT_4_KB)
     STA  UL
     VEJ  (CC) \ 
         ABYTL(DISPARAM) ; $7880
@@ -1981,7 +1981,7 @@ EDITOR_1:
     BCR EDITOR_2 ; $CAAE
     DEC  UH
     PSH  U
-    SJP  (BUF2LCD)
+    SJP  (RESTORE_LCD_CURS)
     POP  U
     ANI  (DISPARAM),$FE
 
@@ -2112,7 +2112,7 @@ BTN_RCL:
     BCS RSV_CHNG_3 ; $CB93
 
 BTN_RCL_1: ; $CB64
-    SJP  (SAVELCD2BUF)
+    SJP  (SAVE_LCD_CURS)
     BCH RSV_CHNG_2 ; $CB87
 
 
@@ -2144,12 +2144,12 @@ RSV_CHNG_1: ; $CB77
 RSV_CHNG_2: ; $CB87
     ORI  (DISPARAM),$01
     SJP  (RSRV_TXT) ; $CEAF
-    SJP  (TXT2LCD)
+    SJP  (TXT_2_LCD)
     VMJ  ($46) ; orig ($46)($23) 23 bogus
 
 RSV_CHNG_3: ; $CB93
     ANI  (DISPARAM),$FE
-    SJP  (BUF2LCD)
+    SJP  (RESTORE_LCD_CURS)
     VMJ  ($46) ; orig ($46)($23) 23 bogus
 
 
@@ -2497,7 +2497,7 @@ INIT_IBUF_R_2: ; $CCEC
     VEJ  (CC) \ 
         ABYTL($7888)
     SJP  (SAVEVARPTR_1)
-    SJP  (VAR_TYPE)
+    SJP  (TOK_INBUF_5)
     BCR ERRN
     CPA  XL
     BZS INIT_IBUF_R_3 ; $CD10
@@ -2515,7 +2515,7 @@ INIT_IBUF_R_3: ; $CD10
     JMP  BCMD_REM ; $C676
 
 INIT_IBUF_R_4: ; $CD19
-    SJP  (TOKENIZE_INBUF)
+    SJP  (TOK_INBUF)
     BZS ERRN
     CPI  XL,$B0
     VZS  ($42) ; ($42)($21)
@@ -2684,7 +2684,7 @@ ERRN_5: ; $CDDB
     ANI  (Y),$00
     LDX  Y
     POP  Y
-    SJP  (TXT2LCD_ARY)
+    SJP  (TXT_2_LCD_2)
     VMJ  ($46) ; ($46)($23)
 
 
@@ -2828,7 +2828,7 @@ DEFEVAL:
     VEJ  (D2) \ 
         ABRF($CE7A) \ 
         ABYT($80)
-    SJP  (ARX2STRNG)
+    SJP  (ARX_2_STRNG)
     VEJ  (DC)
     LDI  YL,$B0
     LDI  YH,$7B
@@ -3218,7 +3218,7 @@ PRGLINE_TDI_7: ; $CFC8
 
 
 ;------------------------------------------------------------------------------
-; $CFCC - Initializes system addresses and turn off TRACE
+; $CFCC - Initializes system addresses and turn off TRACE_PARAM
 ;------------------------------------------------------------------------------
 INIT_SYS_ADDR:
     ANI  (TRACE_ON),$00
@@ -5178,7 +5178,7 @@ GET_VAR_INDEX:
     ADI  (NUMARGS),$FD
     LDI  UH,$08
     VCS  ($48) ; ($48)($24)
-    SJP  (ADD_ARU_ARX_1) ; $F92B
+    SJP  (ARX_INT_2_BCD) ; $F92B
     VCS  ($48) ; ($48)($24)
     VEJ  (D0) \ 
         ABYT($08) \ 
@@ -5187,7 +5187,7 @@ GET_VAR_INDEX:
     VCR  ($4C) ; ($4C)($26)
     PSH  U
     VMJ  ($30)
-    SJP  (ADD_ARU_ARX_1) ; $F92B
+    SJP  (ARX_INT_2_BCD) ; $F92B
     VCS  ($48) ; ($48)($24)
     VEJ  (D0) \ 
         ABYT($08) \ 
@@ -5280,7 +5280,7 @@ GET_VAR_INDEX_14:  ; $D858
 GET_VAR_INDEX_15:  ; $D859
     VMJ  ($28) \ 
         ABRF(GET_VAR_INDEX_34) ; $D8F7
-    SJP  (ADD_ARU_ARX_1) ; $F92B
+    SJP  (ARX_INT_2_BCD) ; $F92B
     VCS  ($48) ; ($48)($24)
     VMJ  ($4C) ; ($4C)($26)
     NOP
@@ -5478,15 +5478,15 @@ STR_CONCAT_3:  ; $D949
     BHR STR_CONCAT_3 ; $D949
     DEC  A
     BHS STR_CONCAT_4 ; $D964
-    JMP  OUTBUFCLR_1 ; $EF94
+    JMP  OUTBUF_CLR_3 ; $EF94
 
 STR_CONCAT_4:  ; $D964
     DEC  A
     BHS STR_CONCAT_5 ; $D96A
-    JMP  OUTBUFCLR_2 ; $EFA5
+    JMP  OUTBUF_CLR_6 ; $EFA5
 
 STR_CONCAT_5:  ; $D96A
-    JMP  OUTBUFCLR_3 ; $EFB1
+    JMP  OUTBUF_CLR_8 ; $EFB1
     POP  Y
 
 STR_CONCAT_6:  ; $D96F
@@ -5560,7 +5560,7 @@ BCMD_NOT:
 ; $D9AA - Basic INKEY$ command
 ;------------------------------------------------------------------------------
 BCMD_INKY:
-    SJP  (KEY2ASCII)
+    SJP  (KEY_2_ASCII)
     LDI  XH,$D0
     BCH BCMD_CHR_1 ; $D9B6
 
@@ -5606,7 +5606,7 @@ BCMD_STR:
     VEJ  (D2) \ 
         ABRF(ARUINT2ARX_1) \ 
         ABYT($80)
-    SJP  (ARX2STRNG)
+    SJP  (ARX_2_STRNG)
     BCH BCMD_RLM_STR_10 ; $DA3D
 
 
@@ -6287,15 +6287,15 @@ ARX_FRM_BSTK_9: ; $ DC5E
     LDI  A,$54
     BII  (DISP_BUFF + $4F),$20
     VZR  ($44) ; ($44)($22)
-    SJP  (SAVELCD2BUF)
+    SJP  (SAVE_LCD_CURS)
     VEJ  (CC) \ ABYTL(DISPARAM) ; $7880)
     PSH  A
     LDI  A,$54
     STA  (DISPARAM)
-    SJP  (PRGMDISP)
+    SJP  (PRGM_DISP)
     ANI  (CURS_CTRL),$BF
     SJP  (WAITNOKEYS)
-    SJP  (BUF2LCD)
+    SJP  (RESTORE_LCD_CURS)
     POP  A
     ANI  A,$DF
     STA  (DISPARAM)
@@ -6600,7 +6600,7 @@ CONV_UREG_1:
     PSH  A
     PSH  X
     VEJ  (EC)
-    SJP  (CLR_SM_ARX3)
+    SJP  (CLR_ARITHMETIC_REGS_1)
     ORI  (ARZ + $04),$10
     POP  U
     POP  A
@@ -6622,7 +6622,7 @@ CONV_UREG_2: ; $DD58
     BZR CONV_UREG_8 ; $DD98
     LDA  XL
     STA  (ARX)
-    SJP  (ARX2BCD_ABS)
+    SJP  (ARX_2_BCD_ABS)
     LDA  (ARX)
     STA  UL
     POP  A
@@ -6862,7 +6862,7 @@ ARX_2_VAR_13: ; $DE53
     ANI  A,$0F
     AEX
     STA  (X)
-    SJP  (ARX2TIME)
+    SJP  (ARX_2_TIME)
     VMJ  ($56) ; ($56)($2B)
     VMJ  ($4E) ; ($4E)($27)
 
@@ -7538,7 +7538,7 @@ RESET_6: ; $E05D
     SDE  X
     DEC  X
     BII  (X),$01
-    BZR RESET_7 ; $E147
+    BZR RESET_22 ; $E147
     LDI  S,(CPU_STACK + $4F)
     ORI  (KATAFLAGS),$FF
     ANI  (CURS_CTRL),$01
@@ -7551,7 +7551,7 @@ RESET_6: ; $E05D
     LDI  UL,$0C
     VMJ  ($BA) ; ($BA)($5D)
 
-RESET_22: ; $E088
+RESET_7: ; $E088
     SJP  (IO_INT)
     LDI  YH,$7A
     LDI  YL,$14
@@ -7563,18 +7563,18 @@ RESET_8: ; $E093
     LOP  UL,RESET_8 ; $E093
     LDI  XH,$00
 
-RESET_11: ; $E098
+RESET_9: ; $E098
     LDI  XL,$00
     LDA  (X)
     STA  UL
     LDI  A,$5A
     STA  (X)
     CPA  (X)
-    BZR RESET_9 ; $E0C4
+    BZR RESET_13 ; $E0C4
     LDI  A,$A5
     STA  (X)
     CPA  (X)
-    BZR RESET_9 ; $E0C4
+    BZR RESET_13 ; $E0C4
     LDA  UL
     STA  (X)
     LDI  YL,$13
@@ -7587,10 +7587,10 @@ RESET_11: ; $E098
 RESET_10: ; $E0B2
     INC  XH
     CPI  XH,$70
-    BCR RESET_11 ; $E098
+    BCR RESET_9 ; $E098
     LDI  YL,$14
 
-RESET_15: ; $E0BA
+RESET_11: ; $E0BA
     LDA  XH
     SDE  Y
     LDA  (Y)
@@ -7600,27 +7600,27 @@ RESET_15: ; $E0BA
     STA  (Y)
 
 RESET_12: ; $E0C2
-    BCH RESET_13 ; $E0ED
+    BCH RESET_16 ; $E0ED
 
-RESET_9: ; $E0C4
+RESET_13: ; $E0C4
     LDI  YL,$13
     LIN  X
     CPI  A,$55
-    BZR RESET_14 ; $E0E7
+    BZR RESET_15 ; $E0E7
     LIN  Y
     INC  A
-    BCR RESET_15 ; $E0BA
+    BCR RESET_11 ; $E0BA
     LDI  YL,$10
     LDA  (Y)
     INC  A
     BCR RESET_10 ; $E0B2
     LIN  X
     INC  A
-    BCS RESET_16 ; $E0DB
+    BCS RESET_14 ; $E0DB
     DEC  A
     STA  XH
 
-RESET_16: ; $E0DB
+RESET_14: ; $E0DB
     LDA  XH
     SIN  Y
     LDA  (X)
@@ -7632,46 +7632,46 @@ RESET_16: ; $E0DB
     TIN
     BCH RESET_10 ; $E0B2
 
-RESET_14: ; $E0E8
+RESET_15: ; $E0E8
     LIN  Y
     INC  A
-    BCR RESET_15 ; $E0BA
+    BCR RESET_11 ; $E0BA
     BCH RESET_10 ; $E0B2
 
-RESET_13: ; $E0ED
+RESET_16: ; $E0ED
     LDI  XH,$78
     LDI  XL,$64
     INC  Y
     LDI  UL,$04
 
-RESET_18: ; $E0F4
+RESET_17: ; $E0F4
     LDE  Y
     CPA  (X)
-    BZS RESET_17 ; $E0FC
+    BZS RESET_18 ; $E0FC
     ORI  (ARV),$04
 
-RESET_17: ; $E0FC
+RESET_18: ; $E0FC
     SDE  X
-    LOP  UL,RESET_18 ; $E0F4
+    LOP  UL,RESET_17 ; $E0F4
     LDI  A,$00
     VMJ  ($5A) ; ($5A)($2D)
     ORI  (CURS_CTRL),$01
     VMJ  ($BE) ; ($BE)($5F)
-    BCR RESET_19 ; $E120
+    BCR RESET_20 ; $E120
 
-RESET_20: ; $E10B
+RESET_19: ; $E10B
     PSH  A
     PSH  X
     LDI  XL,$0A
     LDI  UH,$E1
     LDI  UL,$18
-    JMP  ISR_HANDLER_1 ; $E20E
+    JMP  ISR_HANDLER_8 ; $E20E
     POP  X
     POP  A
     VMJ  ($BC) ; ($BC)($5E)
-    BCS RESET_20 ; $E10B
+    BCS RESET_19 ; $E10B
 
-RESET_19: ; $E120
+RESET_20: ; $E120
     ORI  #(PC1500_MSK_REG),$01
     ORI  #(CE150_MSK_REG),$01 ; $B00A
     SDP
@@ -7687,21 +7687,24 @@ RESET_19: ; $E120
     BZR RESET_21 ; $E144
     POP  U
     POP  Y
-    JMP  WAIT4KB ; $E243
+    JMP  WAIT_4_KB ; $E243
 
 RESET_21: ; $E144
     JMP  COLD_START ; $C9E4
 
-RESET_7: ; $E147
+RESET_22: ; $E147
     LDA  (ARS)
     STA  XH
     LDA  (ARS + $01)
     STA  XL
     STX  S
-    BCH RESET_22 ; $E088
+    BCH RESET_7 ; $E088
 
 
+
+;------------------------------------------------------------------------------
 ; $E153 Initializes I/O module with table from E168.
+;------------------------------------------------------------------------------
 IO_INT:
     PSH  Y
     LDI  XH,$E1
@@ -7753,46 +7756,46 @@ ISR_HANDLER: ;
     ANI  #(CE150_IF_REG),$FE ; #B00B
     STA  #(CE158_IR_PING) ; $DC00
     EAI  $FF
-    BZS ISR_HANDLER_2 ; $E1CE
+    BZS ISR_HANDLER_6 ; $E1CE
 
-ISR_HANDLER_8: ; $E1A0
+ISR_HANDLER_1: ; $E1A0
     RPV
 
-ISR_HANDLER_6:  ;$E1A1
+ISR_HANDLER_2:  ;$E1A1
     LDI  XH,$B0
     LDI  XL,$00
 
-ISR_HANDLER_5: ; $E1A5
+ISR_HANDLER_3: ; $E1A5
     PSH  X
     SHR
     PSH  A
-    BCR ISR_HANDLER_3 ; $E1B9
+    BCR ISR_HANDLER_4 ; $E1B9
     LDI  A,$55
     CPA  (X)
-    BZR ISR_HANDLER_3 ; $E1B9
+    BZR ISR_HANDLER_4 ; $E1B9
     LDI  UH,$E1
     LDI  UL,$B9
     LDI  XL,$13
-    BCH ISR_HANDLER_1 ; $E20E
+    BCH ISR_HANDLER_8 ; $E20E
 
-ISR_HANDLER_3: ; $E189
+ISR_HANDLER_4: ; $E189
     POP  A
     POP  X
-    BZS ISR_HANDLER_2 ; $E1CE
+    BZS ISR_HANDLER_6 ; $E1CE
     CPI  XH,$90
-    BCR ISR_HANDLER_4 ; $E1CB
+    BCR ISR_HANDLER_5 ; $E1CB
     STA  YL
     LDI  A,$EF
     ADC  XH
     STA  XH
     LDA  YL
-    BCH ISR_HANDLER_5 ; $E1A5
+    BCH ISR_HANDLER_3 ; $E1A5
 
-ISR_HANDLER_4: ; $E1CB
+ISR_HANDLER_5: ; $E1CB
     SPV
-    BCH ISR_HANDLER_6 ; $E1A1
+    BCH ISR_HANDLER_2 ; $E1A1
 
-ISR_HANDLER_2: ; $E1CE
+ISR_HANDLER_6: ; $E1CE
     BII  #(PC1500_IF_REG),$01
     BZS ISR_HANDLER_7 ; $E1EA
     ANI  #(PC1500_IF_REG),$FE
@@ -7801,7 +7804,7 @@ ISR_HANDLER_2: ; $E1CE
     ANI  A,$0E
     BZS ISR_HANDLER_7 ; $E1EA
     LDI  A,$01
-    BCH ISR_HANDLER_8 ; $E1A0
+    BCH ISR_HANDLER_1 ; $E1A0
 
 ISR_HANDLER_7: ; $E1EA
     LDA  ($79DA)
@@ -7819,10 +7822,10 @@ ISR_HANDLER_7: ; $E1EA
     STA  XL
     SHR
     RPV
-    BCR ISR_HANDLER_1 ; $E20E
+    BCR ISR_HANDLER_8 ; $E20E
     SPV
 
-ISR_HANDLER_1: ; $E20E
+ISR_HANDLER_8: ; $E20E
     PSH  U
     STX  P
 
@@ -7840,8 +7843,9 @@ ISR_HANDLER_10: ; $E229
     POP  A
 
 
+
 ;------------------------------------------------------------------------------
-; (FC) $E22B - Non-Maskable Interrupt
+; $E22B (FC) - Non-Maskable Interrupt
 ;------------------------------------------------------------------------------
 NMI_HANDLER: ; 
     RTI
@@ -7849,7 +7853,7 @@ NMI_HANDLER: ;
 
 
 ;------------------------------------------------------------------------------
-; (FA) $E22C - Timer Interrupt
+; $E22C (FA) - Timer Interrupt
 ;------------------------------------------------------------------------------
 TIMER_ISR:  ; 
     PSH  A
@@ -7860,7 +7864,7 @@ TIMER_ISR:  ;
 
 
 ;------------------------------------------------------------------------------
-; (A0) $E234 - PV-banking according to status of Bit 0 in $7900. If 0, PV=1.
+; $E234 (A0) - PV-banking according to status of Bit 0 in $7900. If 0, PV=1.
 ;------------------------------------------------------------------------------
 PVBANK: 
     RPV
@@ -7878,7 +7882,7 @@ PVBANK_1: ; $E23C
 ;------------------------------------------------------------------------------
 WAITNOKEYS: 
     ORI  (CURS_CTRL),$03
-    BCH WAIT4KB_2 ; $E24E
+    BCH WAIT_4_KB_2 ; $E24E
 
 
 
@@ -7886,23 +7890,23 @@ WAITNOKEYS:
 ; $E243 - Entering a Character Using the Keyboard (Page 324:Keyboard Status)
 ; Waiting for input from keyboard. Character is in accumulator
 ;------------------------------------------------------------------------------
-WAIT4KB:
+WAIT_4_KB:
     LDA  ($79D4)
 
-WAIT4KB_1: ; $E246
+WAIT_4_KB_1: ; $E246
     CPI  A,$55
-    BZS WAIT4KB_3 $E2B7
+    BZS WAIT_4_KB_8 $E2B7
     ANI  (CURS_CTRL),$FD
 
-WAIT4KB_2: ; $E24E
+WAIT_4_KB_2: ; $E24E
     LDI  XH,$7B
     BII  (CURS_CTRL),$40
-    BZR WAIT4KB_4 ; $E25B
+    BZR WAIT_4_KB_3 ; $E25B
     LDI  XL,$09
     LDI  A,$60
     SIN  X
 
-WAIT4KB_4: ; $E25B
+WAIT_4_KB_3: ; $E25B
     LDI  XL,$0A
     LDI  A,$FE
     SIN  X
@@ -7913,140 +7917,140 @@ WAIT4KB_4: ; $E25B
     SIN  X
     LDI  UH,$F8
 
-WAIT4KB_11: ; $E269
+WAIT_4_KB_4: ; $E269
     VMJ  ($A6) ; ($A6)($53)
-    BZR WAIT4KB_5 ; $E33A
+    BZR WAIT_4_KB_21 ; $E33A
     SJP  (ISKEY)
-    BZS WAIT4KB_6 ; $E2C4
-    SJP  (KEY2ASCII)
-    BCS WAIT4KB_6 ; $E2C4
+    BZS WAIT_4_KB_10 ; $E2C4
+    SJP  (KEY_2_ASCII)
+    BCS WAIT_4_KB_10 ; $E2C4
     NOP
     BII  (CURS_CTRL),$01
-    BZS WAIT4KB_7 ; $E2AC
+    BZS WAIT_4_KB_7 ; $E2AC
     BII  (CURS_CTRL),$40
-    BZS WAIT4KB_8 ; $E2FF
+    BZS WAIT_4_KB_16 ; $E2FF
     LDA  XL
     CPA  (KEY_LAST)
-    BZR WAIT4KB_9 ; $E2F6
+    BZR WAIT_4_KB_15 ; $E2F6
     LDI  XH,$7B
     LDI  XL,$09
     LDA  (X)
     INC  A
-    BCR WAIT4KB_10 ; $E29D
+    BCR WAIT_4_KB_5 ; $E29D
     LDI  A,$F2
     STA  (X)
     LDI  XH,$FE
     LDA  (KEY_LAST)
     STA  XL
-    BCH AUTO_OFF_1 ; $E366
+    BCH AUTO_OFF_2 ; $E366
 
-WAIT4KB_10: ; $E29D
+WAIT_4_KB_5: ; $E29D
     STA  (X)
 
-WAIT4KB_20: ; $E29E
+WAIT_4_KB_6: ; $E29E
     ANI  ($79D9),$00
     LDI  A,$57
     AM0
     SIE
     HLT
-    BCH WAIT4KB_11 ; $E269
+    BCH WAIT_4_KB_4 ; $E269
 
-WAIT4KB_7: ; $E2AC
-    SJP  (KEY2ASCII)
-    BCS WAIT4KB_6 ; $E2C4
+WAIT_4_KB_7: ; $E2AC
+    SJP  (KEY_2_ASCII)
+    BCS WAIT_4_KB_10 ; $E2C4
     LDA  XL
     STA  (KEY_LAST)
-    BCH AUTO_OFF_1 ; $E366
+    BCH AUTO_OFF_2 ; $E366
 
-WAIT4KB_3: ; $E2B7
+WAIT_4_KB_8: ; $E2B7
     VEJ  (CC) \ ABYTL($785B)
     NOP
     LDA  XL
     SHR
     RIE
     RPV
-    BCR WAIT4KB_12 ; $E2C2
+    BCR WAIT_4_KB_9 ; $E2C2
     SPV
 
-WAIT4KB_12: ; $E2C2
+WAIT_4_KB_9: ; $E2C2
     STX  P
 
-WAIT4KB_6: ; $E2C4
+WAIT_4_KB_10: ; $E2C4
     BII  (CURS_CTRL),$01
-    BZS WAIT4KB_13 ; $E2D8
+    BZS WAIT_4_KB_11 ; $E2D8
     BII  (CURS_CTRL),$40
-    BZR WAIT4KB_9 ; $E2F6
+    BZR WAIT_4_KB_15 ; $E2F6
     INC  UH
-    BCR WAIT4KB_14 ; $E2DE
+    BCR WAIT_4_KB_12 ; $E2DE
     ANI  (CURS_CTRL),$FE
 
-WAIT4KB_13: ; $E2D8
+WAIT_4_KB_11: ; $E2D8
     BII  (CURS_CTRL),$02
-    BZR WAIT4KB_15 ; $E2F2
+    BZR WAIT_4_KB_14 ; $E2F2
 
-WAIT4KB_14: ; $E2DE
+WAIT_4_KB_12: ; $E2DE
     LDI  UL,$02
     LDI  XH,$7B
     LDI  XL,$0D
 
-WAIT4KB_17: ; $E2E4
+WAIT_4_KB_13: ; $E2E4
     DEC  X
     ADI  (X),$01
-    BCR WAIT4KB_16 ; $E303
-    LOP  UL,WAIT4KB_17 ; $E2E4
+    BCR WAIT_4_KB_17 ; $E303
+    LOP  UL,WAIT_4_KB_13 ; $E2E4
     LDI  A,$FF
     SIN  X
     SIN  X
     STA  (X)
     BCH AUTO_OFF
 
-WAIT4KB_15: ; $E2F2
+WAIT_4_KB_14: ; $E2F2
     LDI  A,$00
     REC
     RTN
 
-WAIT4KB_9: ; $E2F6
+WAIT_4_KB_15: ; $E2F6
     LDI  A,$60
     STA  (KEY_REPEAT)
     ANI  (CURS_CTRL),$9F
 
-WAIT4KB_8: ; $E2FF
+WAIT_4_KB_16: ; $E2FF
     LDI  UH,$F8
-    BCH WAIT4KB_14 ; $E2DE
+    BCH WAIT_4_KB_12 ; $E2DE
 
-WAIT4KB_16: ; $E303
+WAIT_4_KB_17: ; $E303
     LDI  XL,$0B
     LIN  X
     BII  A,$07
-    BZR WAIT4KB_18 ; $E315
+    BZR WAIT_4_KB_19 ; $E315
     LDA  (X)
-    BZR WAIT4KB_18 ; $E315
+    BZR WAIT_4_KB_19 ; $E315
     RDP
     LDI  UL,$BC
 
-WAIT4KB_19: ; $E311
-    LOP  UL,WAIT4KB_19 ; $E311
+WAIT_4_KB_18: ; $E311
+    LOP  UL,WAIT_4_KB_18 ; $E311
     SDP
 
-WAIT4KB_18: ; $E315
+WAIT_4_KB_19: ; $E315
     BII  (CURSOR_BLNK),$01
-    BZS WAIT4KB_20 ; $E29E
+    BZS WAIT_4_KB_6 ; $E29E
     ADI  (CURS_BLNK_CTR),$01
-    BCR WAIT4KB_20 ; $E29E
+    BCR WAIT_4_KB_6 ; $E29E
     ORI  (CURS_BLNK_CTR),$80
     PSH  U
     VEJ  (CC) \ ABYTL(CURS_POS_NBUF_H) ; $787E
     ADI  (CURSOR_BLNK),$80
     LDI  A,$7F
-    BCR WAIT4KB_21 ; $E334
+    BCR WAIT_4_KB_20 ; $E334
     LDA  (BLNKD_CHAR_CODE)
 
-WAIT4KB_21: ; $E334
+WAIT_4_KB_20: ; $E334
     VMJ  ($8A) ; ($8A)($45) ; ($8A)($45)
     POP  U
-    BCH WAIT4KB_20 ; $E29E
+    BCH WAIT_4_KB_6 ; $E29E
 
-WAIT4KB_5: ; $E33A
+WAIT_4_KB_21: ; $E33A
     LDI  A,$0E
     SEC
     RTN
@@ -8063,10 +8067,10 @@ AUTO_OFF: ;
     LDI  XL,$10
     LDI  UL,$0F
 
-AUTO_OFF_2: ; $E347
+AUTO_OFF_1: ; $E347
     SIN  X
     INC  A
-    LOP  UL,AUTO_OFF_2 ; $E347
+    LOP  UL,AUTO_OFF_1 ; $E347
     PSH  Y
     PSH  U
     LDX  S
@@ -8079,104 +8083,104 @@ AUTO_OFF_2: ; $E347
     OFF
     POP  U
     POP  Y
-    JMP  WAIT4KB_11 ; $E269
+    JMP  WAIT_4_KB_4 ; $E269
 
-AUTO_OFF_1: ; $E366
+AUTO_OFF_2: ; $E366
     LDI  UH,$76
     LDI  UL,$4E
     ORI  (CURS_CTRL),$01
     LDA  (X)
     CPI  A,$3E
-    BCR AUTO_OFF_3 ; $E3C8
+    BCR AUTO_OFF_14 ; $E3C8
     CPI  A,$41
-    BCS AUTO_OFF_4 ; $E38D
+    BCS AUTO_OFF_5 ; $E38D
     BII  (U),$04
-    BZS AUTO_OFF_5 ; $E3B1
+    BZS AUTO_OFF_10 ; $E3B1
 
-AUTO_OFF_9: ; $E37B
+AUTO_OFF_3: ; $E37B
     RIE
     LDA  (KATAFLAGS)
     SHL
     RPV
-    BCR AUTO_OFF_6 ; $E385
+    BCR AUTO_OFF_4 ; $E385
     SPV
 
-AUTO_OFF_6: ; $E385
+AUTO_OFF_4: ; $E385
     LDA  (KATACHAR)
     DEC  A
     STA  XH
     LDA  (X)
-    BCH AUTO_OFF_7 ; $E3B3
+    BCH AUTO_OFF_11 ; $E3B3
 
-AUTO_OFF_4: ; $E38D
+AUTO_OFF_5: ; $E38D
     BII  (U),$80
     BZR AUTO_OFF_8 ; $E3A7
     BII  (U),$04
-    BZR AUTO_OFF_9 ; $E37B
+    BZR AUTO_OFF_3 ; $E37B
     BII  (U),$08
-    BZR AUTO_OFF_10 ; $E3A1
+    BZR AUTO_OFF_7 ; $E3A1
     BII  (U),$02
-    BZR AUTO_OFF_11 ; $E3AC
+    BZR AUTO_OFF_9 ; $E3AC
 
-AUTO_OFF_12: ; $E39D
+AUTO_OFF_6: ; $E39D
     REC
     ANI  (U),$7D
     RTN
 
-AUTO_OFF_10: ; $E3A1
+AUTO_OFF_7: ; $E3A1
     BII  (U),$02
-    BZS AUTO_OFF_11 ; $E3AC
-    BCH AUTO_OFF_12 ; $E39D
+    BZS AUTO_OFF_9 ; $E3AC
+    BCH AUTO_OFF_6 ; $E39D
 
 AUTO_OFF_8: ; $E3A7
     REC
     ADI  A,$40
-    BCH AUTO_OFF_12 ; $E39D
+    BCH AUTO_OFF_6 ; $E39D
 
-AUTO_OFF_11: ; $E3AC
+AUTO_OFF_9: ; $E3AC
     REC
     ADI  A,$20
-    BCH AUTO_OFF_12 ; $E39D
+    BCH AUTO_OFF_6 ; $E39D
 
-AUTO_OFF_5: ; $E3B1
+AUTO_OFF_10: ; $E3B1
     RIE
 
-AUTO_OFF_7: ; $E3B3
+AUTO_OFF_11: ; $E3B3
     BII  (U),$02
-    BZS AUTO_OFF_13 ; $E3BC
+    BZS AUTO_OFF_12 ; $E3BC
     LDI  A,$40
     ADR  X
     LDA  (X)
 
-AUTO_OFF_13: ; $E3BC
+AUTO_OFF_12: ; $E3BC
     VMJ  ($A0) ; ($A0)($50)
     SIE
-    BCH AUTO_OFF_12 ; $E39D
+    BCH AUTO_OFF_6 ; $E39D
 
-AUTO_OFF_17: ; $E3C2
+AUTO_OFF_13: ; $E3C2
     BII  (U),$04
-    BZR AUTO_OFF_9 ; $E37B
-    BCH AUTO_OFF_5 ; $E3B1
+    BZR AUTO_OFF_3 ; $E37B
+    BCH AUTO_OFF_10 ; $E3B1
 
-AUTO_OFF_3: ; $E3C8
+AUTO_OFF_14: ; $E3C8
     CPI  A,$01
-    BZS AUTO_OFF_14 ; $E3E8
+    BZS AUTO_OFF_15 ; $E3E8
     CPI  A,$02
-    BZS AUTO_OFF_15 ; $E3F6
+    BZS AUTO_OFF_17 ; $E3F6
     CPI  A,$1B
     BZS AUTO_OFF_16 ; $E3EF
     BII  (U),$80
-    BZS AUTO_OFF_17 ; $E3C2
+    BZS AUTO_OFF_13 ; $E3C2
     CPI  A,$20
     BZS $E3E4
     CPI  A,$3D
-    BZR AUTO_OFF_17 ; $E3C2
+    BZR AUTO_OFF_13 ; $E3C2
     LDI  A,$9D
-    BCH AUTO_OFF_12 ; $E39D
+    BCH AUTO_OFF_6 ; $E39D
     LDI  A,$80
-    BCH AUTO_OFF_12 ; $E39D
+    BCH AUTO_OFF_6 ; $E39D
 
-AUTO_OFF_14: ; $E3E8
+AUTO_OFF_15: ; $E3E8
     LDA  (U)
     EAI  $02
     ANI  A,$7F
@@ -8188,7 +8192,7 @@ AUTO_OFF_16: ; $E3EF
     ANI  A,$FD
     BCH AUTO_OFF_18 ; $E408
 
-AUTO_OFF_15: ; $E3F6
+AUTO_OFF_17: ; $E3F6
     BII  #(PC1500_PRT_B),$08
     BZR AUTO_OFF_19 ; $E40C
     LDA  (KATAFLAGS)
@@ -8200,7 +8204,7 @@ AUTO_OFF_15: ; $E3F6
 
 AUTO_OFF_18: ; $E408
     STA  (U)
-    JMP  WAIT4KB ; $E243
+    JMP  WAIT_4_KB ; $E243
 
 AUTO_OFF_19: ; $E40C
     LDA  (U)
@@ -8238,35 +8242,35 @@ ISKEY_2: ; $E425
 ;------------------------------------------------------------------------------
 ; $E42C - Keyboard query: ASCII code in accumulator. If no key pressed: C=1.
 ;------------------------------------------------------------------------------
-KEY2ASCII:
+KEY_2_ASCII:
     LDI  XL,$80
     LDI  A,$01
 
-KEY2ASCII_3: ; $E430
+KEY_2_ASCII_1: ; $E430
     STA  XH
     SJP  (ISKEY_1) ; $E41A
-    BZR KEY2ASCII_1 ; $E444
+    BZR KEY_2_ASCII_3 ; $E444
     REC
     LDI  A,$08
     ADC  XL
     STA  XL
     LDA  XH
     SHL
-    BCS KEY2ASCII_2 ; $E441
-    BZR KEY2ASCII_3 ; $E430
+    BCS KEY_2_ASCII_2 ; $E441
+    BZR KEY_2_ASCII_1 ; $E430
 
-KEY2ASCII_2: ; $E441
+KEY_2_ASCII_2: ; $E441
     LDI  A,$00
     RTN
 
-KEY2ASCII_1: ; $E444
+KEY_2_ASCII_3: ; $E444
     SHL
-    BCS KEY2ASCII_4 ; $E44C
+    BCS KEY_2_ASCII_4 ; $E44C
     INC  XL
-    BCR KEY2ASCII_1 ; $E444
-    BCH KEY2ASCII_2 ; $E441
+    BCR KEY_2_ASCII_3 ; $E444
+    BCH KEY_2_ASCII_2 ; $E441
 
-KEY2ASCII_4: ; $E44C
+KEY_2_ASCII_4: ; $E44C
     LDI  XH,$FE
     LDA  (X)
     REC
@@ -8275,7 +8279,7 @@ KEY2ASCII_4: ; $E44C
 
 
 ;------------------------------------------------------------------------------
-; (A6) $E451 - Checks if Break was pressed. If so, Z=0; if no Z=1.
+; $E451 (A6) - Checks if Break was pressed. If so, Z=0; if no Z=1.
 ;------------------------------------------------------------------------------
 CHK_BRK:
     BII  #(PC1500_IF_REG),$02
@@ -8286,24 +8290,25 @@ CHK_BRK:
 ;------------------------------------------------------------------------------
 ; $E466 - Basic command OPN
 ;------------------------------------------------------------------------------
-    VEJ  (C8) \ ABRF(CHK_BRK_1) ; 
+BCMD_OPN:   
+    VEJ  (C8) \ ABRF(BCMD_OPN_3) ; 
     PSH  Y
 
-CHK_BRK_2: ; $E45B
+BCMD_OPN_1: ; $E45B
     LDI  A,$60
 
-CHK_BRK_6: ; $E45D
+BCMD_OPN_2: ; $E45D
     STA  (OPN)
     POP  Y
     SIE
     DEC  Y
     VEJ  (E2)
 
-CHK_BRK_1: ; $E466
+BCMD_OPN_3: ; $E466
     VEJ  (C6)
     VMJ  ($36)
-    BCR BCMD_PRINT_1 ; $E52A
-    VEJ  (C8) \ ABRF(BCMD_PRINT_1) ; $E52A
+    BCR BCMD_PRINT_8 ; $E52A
+    VEJ  (C8) \ ABRF(BCMD_PRINT_8) ; $E52A
     PSH  Y
     LDI  XH,$7A
     LDI  YH,$7A
@@ -8311,11 +8316,11 @@ CHK_BRK_1: ; $E466
     LDI  YH,$E4
     LDI  YL,$E3
     VMJ  ($9E) ; ($9E)($4F)
-    BZR CHK_BRK_2 ; $E45B
+    BZR BCMD_OPN_1 ; $E45B
     VMJ  ($BE) ; ($BE)($5F)
-    BCR CHK_BRK_3 ; $E495
+    BCR BCMD_OPN_5 ; $E495
 
-CHK_BRK_5: ; $E481
+BCMD_OPN_4: ; $E481
     PSH  U
     PSH  X
     LDI  XL,$02
@@ -8323,26 +8328,26 @@ CHK_BRK_5: ; $E481
     VMJ  ($9E) ; ($9E)($4F)
     POP  X
     POP  U
-    BZR CHK_BRK_4 ; $E49A
+    BZR BCMD_OPN_6 ; $E49A
     VMJ  ($BC) ; ($BC)($5E)
-    BCS CHK_BRK_5 ; $E481
+    BCS BCMD_OPN_4 ; $E481
 
-CHK_BRK_3: ; $E495
+BCMD_OPN_5: ; $E495
     POP  Y
     LDI  UH,$22
     VEJ  (E0)
 
-CHK_BRK_4: ; $E49A
+BCMD_OPN_6: ; $E49A
     LDA  UH
     SHR
     LDA  XH
     ROR
-    BCH CHK_BRK_6 ; $E45D
+    BCH BCMD_OPN_2 ; $E45D
 
 
 
 ;------------------------------------------------------------------------------
-; (9E) Comparison of two strings
+; $E4A0 (9E) - Comparison of two strings
 ; Checks string 1st byte Y-Reg points to matches string CSI is stored in AR-Y.
 ; Address:	E4A0 (9E)
 ; 
@@ -8361,22 +8366,22 @@ STR_COMP: ; $E4A0 (9E)
 
 ;------------------------------------------------------------------------------
 ; (BE) Searches 1st token table below C000
-; Searches token table if CE-158 or CE-150 connected C=1. With CE-150 UH=2 CE-158 UH=1.
+;      If CE-158 or CE-150 connected C = 1. With CE-150 UH =2, CE-158 UH = 1.
 ;------------------------------------------------------------------------------
 TOK_TABL_SRCH: ; $E4A8
     RIE
     RPV
     LDI  A,$02
 
-TOK_TABL_SRCH_5: ; $E4AD
+TOK_TABL_SRCH_1: ; $E4AD
     LDI  XH,$B8
     STA  UH
 
-TOK_TABL_SRCH_3: ; $E4B0
+TOK_TABL_SRCH_2: ; $E4B0
     LDI  A,$55
     LDI  XL,$00
     CPA  (X)
-    BZS TOK_TABL_SRCH_1 ; $E4CD
+    BZS TOK_TABL_SRCH_6 ; $E4CD
 
 
 
@@ -8384,26 +8389,27 @@ TOK_TABL_SRCH_3: ; $E4B0
 ; (BC) $E4B7 Searches for the next lower token table (8000-BFFF) based on the
 ; address area pointed to by X-Reg.
 ;------------------------------------------------------------------------------
+TOK_TABL_SRCH_3:   
     LDA  UH
     CPI  XH,$88
-    BCR TOK_TABL_SRCH_2 ; $E4C2
+    BCR TOK_TABL_SRCH_4 ; $E4C2
     LDA  XH
     ADI  A,$F7
     STA  XH
-    BCH TOK_TABL_SRCH_3 ; $E4B0
+    BCH TOK_TABL_SRCH_2 ; $E4B0
 
-TOK_TABL_SRCH_2: ; $E4C2
+TOK_TABL_SRCH_4: ; $E4C2
     SHR
-    BCS TOK_TABL_SRCH_4 ; $E4C8
+    BCS TOK_TABL_SRCH_5 ; $E4C8
     SPV
-    BCH TOK_TABL_SRCH_5 ; $E4AD
+    BCH TOK_TABL_SRCH_1 ; $E4AD
 
-TOK_TABL_SRCH_4: ; $E4C8
+TOK_TABL_SRCH_5: ; $E4C8
     VMJ  ($A0) ; ($A0)($50)
     REC
     SIE
 
-TOK_TABL_SRCH_1: ; $E4CD
+TOK_TABL_SRCH_6: ; $E4CD
     RTN
 
 
@@ -8411,23 +8417,24 @@ TOK_TABL_SRCH_1: ; $E4CD
 ;------------------------------------------------------------------------------
 ; $E4CE Searches for token table whose number is in UL
 ; Searches for the start address of the token table, the number of which is in
-;the accumulator. C=0 if not found. If available C=1.
+; the accumulator. C=0 if not found. If available C=1.
 ;------------------------------------------------------------------------------
+TOK_TABL_SRCH_7:   
     VMJ  ($BE) ; ($BE)($5F)
-    BCR TOK_TABL_SRCH_6 ; $E4DB
+    BCR TOK_TABL_SRCH_9 ; $E4DB
 
 TOK_TABL_SRCH_8: ; $E4D2
     INC  X
     LDA  UL
     CPA  (X)
-    BZS TOK_TABL_SRCH_7 ; $E4DC
+    BZS TOK_TABL_SRCH_10 ; $E4DC
     VMJ  ($BC) ; ($BC)($5E)
     BCS TOK_TABL_SRCH_8 ; $E4D2
 
-TOK_TABL_SRCH_6: ; $E4DB
+TOK_TABL_SRCH_9: ; $E4DB
     RTN
 
-TOK_TABL_SRCH_7: ; $E4DC
+TOK_TABL_SRCH_10: ; $E4DC
     LDA  UH
     STA  (PU_PV)
     SIE
@@ -8447,7 +8454,7 @@ TOK_TABL_SRCH_7: ; $E4DC
 ;------------------------------------------------------------------------------
 BCMD_INPUTNUM: ; 
     LDI  A,$84
-    BCH BCMD_PRINT_2 ; $E4F0
+    BCH BCMD_PRINT_1 ; $E4F0
 
 
 
@@ -8458,46 +8465,46 @@ BCMD_PRINT: ;
     VEJ  (C2) \ ACHR($23) \ ABRF(BCMD_PRINT_3) ; $E513
     LDI  A,$04
 
-BCMD_PRINT_2: ; $E4F0
+BCMD_PRINT_1: ; $E4F0
     STA  (CASS_FLAG)
-    VEJ  (C2) \ ACHR($2D) \ ABRF(BCMD_PRINT_4) ; $E51E
-    VEJ  (DE) \ ABRF(BCMD_PRINT_5) ; $E529
-    VEJ  (C2) \ ACHR($2C) \ ABRF(BCMD_PRINT_1) ; $E52A
-    VEJ  (D0) \ ABYT($08) \ ABRF(BCMD_PRINT_5) ; $E529
+    VEJ  (C2) \ ACHR($2D) \ ABRF(BCMD_PRINT_5) ; $E51E
+    VEJ  (DE) \ ABRF(BCMD_PRINT_7) ; $E529
+    VEJ  (C2) \ ACHR($2C) \ ABRF(BCMD_PRINT_8) ; $E52A
+    VEJ  (D0) \ ABYT($08) \ ABRF(BCMD_PRINT_7) ; $E529
     CPI  A,$02
-    BCR BCMD_PRINT_6 ; $E517
+    BCR BCMD_PRINT_4 ; $E517
     SJP  ($E4CE)
-    BCR BCMD_PRINT_7 ; $E527
+    BCR BCMD_PRINT_6 ; $E527
     LDI  XL,$10
     BII  (CASS_FLAG),$80
-    BZS BCMD_PRINT_8 ; $E511
+    BZS BCMD_PRINT_2 ; $E511
     LDI  XL,$0D
 
-BCMD_PRINT_8: ; $E511
+BCMD_PRINT_2: ; $E511
     STX  P
 
 BCMD_PRINT_3: ; $E513
     VEJ  (C6)
-    JMP  BCMD_PAUSE_1 ; $E6B6
+    JMP  BCMD_PAUSE_2 ; $E6B6
 
-BCMD_PRINT_6: ; $E517
+BCMD_PRINT_4: ; $E517
     SHR
-    BCR BCMD_PRINT_4 ; $E51E
+    BCR BCMD_PRINT_5 ; $E51E
     ORI  (CASS_FLAG),$10
 
-BCMD_PRINT_4: ; $E51E
+BCMD_PRINT_5: ; $E51E
     LDI  A,$5C
     VMJ  ($3C)
-    BCR BCMD_PRINT_7 ; $E527
+    BCR BCMD_PRINT_6 ; $E527
     JMP  PCJUMP01 ; CE-150
 
-BCMD_PRINT_7: ; $E527
+BCMD_PRINT_6: ; $E527
     LDI  UH,$23
 
-BCMD_PRINT_5: ; $E529
+BCMD_PRINT_7: ; $E529
     VEJ  (E0)
 
-BCMD_PRINT_1: ; $E52A
+BCMD_PRINT_8: ; $E52A
     VEJ  (E4)
 
 
@@ -8505,7 +8512,7 @@ BCMD_PRINT_1: ; $E52A
 ;------------------------------------------------------------------------------
 ; $E52B - Writes to clock chip
 ;------------------------------------------------------------------------------
-WRITE2CLOCK: ; 
+WRITE_2_CLOCK: ; 
     TTA
     PSH  A
     RIE
@@ -8517,45 +8524,45 @@ WRITE2CLOCK: ;
     LDI  XL,$06
     LDI  UH,$04
 
-WRITE2CLOCK_3: ; $E541
+WRITE_2_CLOCK_1: ; $E541
     LDA  (X)
     LDI  UL,$07
 
-WRITE2CLOCK_6: ; $E544
+WRITE_2_CLOCK_2: ; $E544
     BII  #(PC1500_PRT_B),$40
     REC
-    BZS WRITE2CLOCK_1 ; $E54D
+    BZS WRITE_2_CLOCK_3 ; $E54D
     SEC
 
-WRITE2CLOCK_1: ; $E54D
+WRITE_2_CLOCK_3: ; $E54D
     ROR
     BCS $E56B
     ANI  #(Y),$FE
     ANI  #(Y),$FE
 
-WRITE2CLOCK_4: ; $E54D
+WRITE_2_CLOCK_4: ; $E54D
     ORI  #(Y),$04
     ORI  #(Y),$04
     ANI  #(Y),$FB
-    LOP  UL,WRITE2CLOCK_6 ; $E544
+    LOP  UL,WRITE_2_CLOCK_2 ; $E544
     SDE  X
     DEC  UH
-    BCS WRITE2CLOCK_3 ; $E541
+    BCS WRITE_2_CLOCK_1 ; $E541
     
-WRITE2CLOCK_5: ; $E566 
+WRITE_2_CLOCK_5: ; $E566 
     POP  A
     ATT
     RTN
 
-WRITE2CLOCK_2: ; $E56B
+WRITE_2_CLOCK_6: ; $E56B
     ORI  #(Y),$01
     ORI  #(Y),$01
-    BCH WRITE2CLOCK_4 ; $E556
+    BCH WRITE_2_CLOCK_4 ; $E556
 
 
 
 ;------------------------------------------------------------------------------
-; (5A) Timer-mode-select routine. The PD 1990AC timer module is switched to 
+; $E573 - (5A) Timer-mode-select routine. PD 1990AC timer module is switched to 
 ; its various operating modes via its inputs C0, C1, C2, which are fed via I/O 
 ; ports PC3, PC4 and PC5 (#F008).
 ;          Address:	E573 (5A)
@@ -8573,7 +8580,7 @@ WRITE2CLOCK_2: ; $E56B
 ;                     Accumulator
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-TIMEMODE: ; $E573
+TIMER_MODE: ; $E573
     LDI  YH,$F0
     LDI  YL,$08
     STA  UH
@@ -8594,29 +8601,29 @@ TIMEMODE: ; $E573
     STA  #(Y)
     LDI  UL,$02
 
-TIMEMODE_1: ; $E596
-    LOP  UL,TIMEMODE_1 ; $E596
-    BCH WRITE2CLOCK_5 ; $E566
+TIMER_MODE_1: ; $E596
+    LOP  UL,TIMER_MODE_1 ; $E596
+    BCH WRITE_2_CLOCK_5 ; $E566
 
 
 
 ;------------------------------------------------------------------------------
 ; $E59A - Transfers TIME from AR-X to clock module
 ;------------------------------------------------------------------------------
-ARX2TIME: ; 
+ARX_2_TIME: ; 
     PSH  Y
     PSH  X
-    SJP  (WRITE2CLOCK)
+    SJP  (WRITE_2_CLOCK)
     LDI  A,$10
     VMJ  ($5A) ; ($5A)($2D)
 
-ARX2TIME_1: ; $ E5A5
+ARX_2_TIME_1: ; $ E5A5
     LDI  A,$00
     VMJ  ($5A) ; ($5A)($2D)
     ANI  #(Y),$C7
     ORI  #(Y),$08
 
-ARX2TIME_2: ; $ E5AF
+ARX_2_TIME_2: ; $ E5AF
     POP  X
     POP  Y
     RTN
@@ -8631,117 +8638,118 @@ TIME2ARX: ;
     PSH  X
     LDI  A,$18
     VMJ  ($5A) ; ($5A)($2D)
-    SJP  (WRITE2CLOCK)
+    SJP  (WRITE_2_CLOCK)
 
 
 
 ;------------------------------------------------------------------------------
 ; $E5C1 - Basic command BEEP
 ;------------------------------------------------------------------------------
-    BCH ARX2TIME_1 ; 
-    VEJ  (C2) \ AWRD($F19C) \ ABRF(TIME2ARX_1) ; $E5CC
+BCMD_BEEP:   
+    BCH ARX_2_TIME_1 ; 
+    VEJ  (C2) \ AWRD($F19C) \ ABRF(BCMD_BEEP_2) ; $E5CC
     ANI  (BEEP_PTR),$FE
 
-TIME2ARX_3: ; $ E5C9
+BCMD_BEEP_1: ; $ E5C9
     VMJ  ($A2) ; ($A2)($51)
     VEJ  (E2)
 
-TIME2ARX_1: ; $ E5CC
-    VEJ  (C4) \ AWRD($F19E) \ ABRF(TIME2ARX_2) ; $E5D6
+BCMD_BEEP_2: ; $ E5CC
+    VEJ  (C4) \ AWRD($F19E) \ ABRF(BCMD_BEEP_3) ; $E5D6
     ORI  (BEEP_PTR),$01
-    BCH TIME2ARX_3 ; $E5C9
+    BCH BCMD_BEEP_1 ; $E5C9
 
-TIME2ARX_2: ; $ E5D6
+BCMD_BEEP_3: ; $ E5D6
     VEJ  (C6)
     BII  (BEEP_PTR),$01
-    BZR TIME2ARX_4 ; $E650
-    VEJ  (DE) \ ABRF(TIME2ARX_12) ; $E653
-    VEJ  (D2) \ ABRF(TIME2ARX_12) \ ABYT($80)
+    BZR BCMD_BEEP_13 ; $E650
+    VEJ  (DE) \ ABRF(BCMD_BEEP_14) ; $E653
+    VEJ  (D2) \ ABRF(BCMD_BEEP_14) \ ABYT($80)
     BII  (ARX + $01),$80
-    BZR TIME2ARX_4 ; $E650
+    BZR BCMD_BEEP_13 ; $E650
     BII  (ARX + $02),$F0
-    BZS TIME2ARX_4 ; $E650
-    VEJ  (D0) \ ABYT($00) \ ABRF(TIME2ARX_12) ; $E653
+    BZS BCMD_BEEP_13 ; $E650
+    VEJ  (D0) \ ABYT($00) \ ABRF(BCMD_BEEP_14) ; $E653
     PSH  U
-    VEJ  (C8) \ ABRF(TIME2ARX_5) ; $E622
+    VEJ  (C8) \ ABRF(BCMD_BEEP_9) ; $E622
     LDI  A,$FF
 
-TIME2ARX_15: ; $ E5F7
+BCMD_BEEP_4: ; $ E5F7
     POP  U
     PSH  Y
     STA  YL
     PSH  U
 
-TIME2ARX_9: ; $ E5FE
+BCMD_BEEP_5: ; $ E5FE
     LDA  YL
-    BZS TIME2ARX_6 ; $E619
-    SJP  (BCMD_BEEP_STD)
+    BZS BCMD_BEEP_8 ; $E619
+    SJP  (BEEP_STD)
 
-TIME2ARX_10: ; $ E604
+BCMD_BEEP_6: ; $ E604
     POP  U
-    BZR TIME2ARX_7 ; $E64A
+    BZR BCMD_BEEP_12 ; $E64A
     DEC  U
     LDA  UL
-    BZR TIME2ARX_8 ; $E60F
+    BZR BCMD_BEEP_7 ; $E60F
     LDA  UH
-    BZS TIME2ARX_7 ; $E64A
+    BZS BCMD_BEEP_12 ; $E64A
 
-TIME2ARX_8: ; $ E60F
+BCMD_BEEP_7: ; $ E60F
     PSH  U
     LDI  UH,$00
     LDI  UL,$06
     VMJ  ($AC) ; ($AC)($56)
-    BCH TIME2ARX_9 ; $E5FE
+    BCH BCMD_BEEP_5 ; $E5FE
 
-TIME2ARX_6: ; $ E619
+BCMD_BEEP_8: ; $ E619
     LDA  (BEEP_FREQ)
     STA  UL
-    SJP  (BCMD_BEEP)
-    BCH TIME2ARX_10 ; $E604
+    SJP  (BEEP)
+    BCH BCMD_BEEP_6 ; $E604
 
-TIME2ARX_5: ; $ E622
-    VEJ  (C4) \ ACHR($2C) \ ABRF(TIME2ARX_11) ; $E654
-    VEJ  (DE) \ ABRF(TIME2ARX_12) ; $E653
-    VEJ  (D0) \ ABYT($08) \ ABRF(TIME2ARX_12) ; $E653
+BCMD_BEEP_9: ; $ E622
+    VEJ  (C4) \ ACHR($2C) \ ABRF(BCMD_BEEP_15) ; $E654
+    VEJ  (DE) \ ABRF(BCMD_BEEP_14) ; $E653
+    VEJ  (D0) \ ABYT($08) \ ABRF(BCMD_BEEP_14) ; $E653
     LDA  UL
     STA  (BEEP_FREQ)
-    VEJ  (C8) \ ABRF(TIME2ARX_13) ; $E636
+    VEJ  (C8) \ ABRF(BCMD_BEEP_10) ; $E636
     LDI  XH,$01
     LDI  XL,$A0
-    BCH TIME2ARX_14 ; $E646
+    BCH BCMD_BEEP_11 ; $E646
 
-TIME2ARX_13: ; $ E636
-    VEJ  (C4) \ ACHR($2C) \ ABRF(TIME2ARX_11) ; $E654
-    VEJ  (DE) \ ABRF(TIME2ARX_12) ; $E653
-    VEJ  (D0) \ ABYT($02) \ ABRF(TIME2ARX_12) ; $E653
+BCMD_BEEP_10: ; $ E636
+    VEJ  (C4) \ ACHR($2C) \ ABRF(BCMD_BEEP_15) ; $E654
+    VEJ  (DE) \ ABRF(BCMD_BEEP_14) ; $E653
+    VEJ  (D0) \ ABYT($02) \ ABRF(BCMD_BEEP_14) ; $E653
     PSH  U
-    VEJ  (C8) \ ABRF(TIME2ARX_11) ; $E654
+    VEJ  (C8) \ ABRF(BCMD_BEEP_15) ; $E654
     POP  X
     INC  XH
 
-TIME2ARX_14: ; $ E646
+BCMD_BEEP_11: ; $ E646
     LDI  A,$00
-    BCH TIME2ARX_15 ; $E5F7
+    BCH BCMD_BEEP_4 ; $E5F7
 
-TIME2ARX_7: ; $ E64A
+BCMD_BEEP_12: ; $ E64A
     POP  Y
     VMJ  ($A2) ; ($A2)($51)
     DEC  Y
     VEJ  (E2)
 
-TIME2ARX_4: ; $ E650
+BCMD_BEEP_13: ; $ E650
     JMP  BCMD_DATA ; $C684
 
-TIME2ARX_12: ; $ E653
+BCMD_BEEP_14: ; $ E653
     VEJ  (E0)
 
-TIME2ARX_11: ; $ E654
+BCMD_BEEP_15: ; $ E654
     VEJ  (E4)
 
 
 
 ;------------------------------------------------------------------------------
-; (A2) Beep-On/Off
+; $E655 (A2) - Beep-On/Off
 ;            Address: (A2) E655
 ;   Entry parameters: (7868) contains in bit 0 the information whether beep ON 
 ;                     (bit 0=1) or beep OFF (bit 0=1) should be switched.
@@ -8767,7 +8775,7 @@ BEEP_ON_OFF_1: ; $E662
 ;------------------------------------------------------------------------------
 ; $E669 - Standard Beep
 ;------------------------------------------------------------------------------
-BCMD_BEEP_STD:
+BEEP_STD:
     LDI  UL,$08
     LDI  XH,$01
     LDI  XL,$A0
@@ -8775,7 +8783,7 @@ BCMD_BEEP_STD:
 ;------------------------------------------------------------------------------
 ; $E66F - Beep with duration in X-Reg and pitch in UL
 ;------------------------------------------------------------------------------
-BCMD_BEEP: ; 
+BEEP: ; 
     PSH  Y
     PSH  X
     PSH  U
@@ -8784,36 +8792,36 @@ BCMD_BEEP: ;
     LDA  UL
     STA  UH
 
-BCMD_BEEP_5: ; $E67B
+BEEP_5: ; $E67B
     LDI  A,$C8
     STA  #(Y)
     LDA  UH
     STA  UL
 
-BCMD_BEEP_1: ; $E681
-    LOP  UL,BCMD_BEEP_1 ; $E681
+BEEP_1: ; $E681
+    LOP  UL,BEEP_1 ; $E681
     BII  #(PC1500_IF_REG),$03
-    BZR BCMD_BEEP_2 ; $E69E
+    BZR BEEP_2 ; $E69E
     DEC  X
     LDA  XH
-    BZS BCMD_BEEP_2 ; $E69E
+    BZS BEEP_2 ; $E69E
     LDI  A,$88
     STA  #(Y)
     LDA  UH
     STA  UL
 
-BCMD_BEEP_3: ; $E694
-    LOP  UL,BCMD_BEEP_3 ; $E694
+BEEP_3: ; $E694
+    LOP  UL,BEEP_3 ; $E694
     LDI  UL,$01
 
-BCMD_BEEP_4: ; $E698
-    LOP  UL,BCMD_BEEP_4 ; $E698
+BEEP_4: ; $E698
+    LOP  UL,BEEP_4 ; $E698
     ANI  (X),$FF
-    BCH BCMD_BEEP_5 ; $E67B
+    BCH BEEP_5 ; $E67B
 
-BCMD_BEEP_2: ; $E69E
+BEEP_2: ; $E69E
     POP  U
-    BCH ARX2TIME_2 ; $E5AF
+    BCH ARX_2_TIME_2 ; $E5AF
     VEJ  (E4)
     VEJ  (E4)
     VEJ  (E4)
@@ -8825,177 +8833,177 @@ BCMD_BEEP_2: ; $E69E
 ;------------------------------------------------------------------------------
 BCMD_PAUSE: ; 
     LDI  A,$FF
-    BCH BCMD_PAUSE_2 ; $E6B8
+    BCH BCMD_PAUSE_3 ; $E6B8
 
-BCMD_PAUSE_25: ; $E6A9
+BCMD_PAUSE_1: ; $E6A9
     LDI  A,$AA
     PSH  A
     LDI  A,$60
     STA  ($788F)
     PSH  Y
-    BCH BCMD_PAUSE_3 ; $E70D
+    BCH BCMD_PAUSE_14 ; $E70D
 
-BCMD_PAUSE_1: ; $E6B6
+BCMD_PAUSE_2: ; $E6B6
     LDI  A,$00
 
-BCMD_PAUSE_2: ; $E6B8
+BCMD_PAUSE_3: ; $E6B8
     PSH  A
     LDI  A,$60
     STA  ($788F)
-    VEJ  (C8) \ ABRF(BCMD_PAUSE_4); $E6FD
+    VEJ  (C8) \ ABRF(BCMD_PAUSE_13); $E6FD
 
-BCMD_PAUSE_16: ; $E6C1
+BCMD_PAUSE_4: ; $E6C1
     SJP  (INIT_CURS)
 
-BCMD_PAUSE_21: ; $E6C4
+BCMD_PAUSE_5: ; $E6C4
     VMJ  ($84) ; ($84)($84)($42)
     POP  A
     SHL
-    BCS BCMD_PAUSE_5 ; $E6E2
+    BCS BCMD_PAUSE_10 ; $E6E2
 
-BCMD_PAUSE_24: ; $E6CB
+BCMD_PAUSE_6: ; $E6CB
     VEJ  (D8)
-    BZR BCMD_PAUSE_6 ; $E6D2
+    BZR BCMD_PAUSE_7 ; $E6D2
     LDI  A,$20
-    BCH BCMD_PAUSE_7 ; $E6F6
+    BCH BCMD_PAUSE_12 ; $E6F6
 
-BCMD_PAUSE_6: ; $E6D2
+BCMD_PAUSE_7: ; $E6D2
     LDA  (WAIT_CFG)
     SHR
-    BCS BCMD_PAUSE_8 ; $E6E0
+    BCS BCMD_PAUSE_9 ; $E6E0
     SHR
-    BCR BCMD_PAUSE_9 ; $E6EC
+    BCR BCMD_PAUSE_11 ; $E6EC
     VEJ  (F4) \ AWRD(WAIT_CTR_H)
 
-BCMD_PAUSE_10: ; $E6DE
+BCMD_PAUSE_8: ; $E6DE
     VMJ  ($AC) ; ($AC)($56)
 
-BCMD_PAUSE_8: ; $E6E0
+BCMD_PAUSE_9: ; $E6E0
     DEC  Y
     VEJ  (E2)
 
-BCMD_PAUSE_5: ; $E6E2
+BCMD_PAUSE_10: ; $E6E2
     SHL
     LDI  UH,$00
     LDI  UL,$36
-    BCS  BCMD_PAUSE_10 ; $E6DE
+    BCS  BCMD_PAUSE_8 ; $E6DE
     JMP  BCMD_POINT_4 ; $EEF7
 
-BCMD_PAUSE_9: ; $E6EC
+BCMD_PAUSE_11: ; $E6EC
     ORI  (BREAKPARAM),$20
     VEJ  (D4) \ ABYT($AC)
     VEJ  (D4) \ ABYT($A0)
     LDI  A,$02
 
-BCMD_PAUSE_7: ; $E6F6
+BCMD_PAUSE_12: ; $E6F6
     STA  (DISPARAM)
     VMJ  ($84) ; ($84)($42)
     VMJ  ($46)
 
-BCMD_PAUSE_4: ; $E6FD
+BCMD_PAUSE_13: ; $E6FD
     VMJ  ($9A) ; ($9A)($4D)
     VCS  ($E0)
-    VEJ  (DE) \ ABRF(BCMD_PAUSE_11) ; $E7A8
-    VEJ  (C8) \ ABRF(BCMD_PAUSE_12) ; $E744
+    VEJ  (DE) \ ABRF(BCMD_PAUSE_24) ; $E7A8
+    VEJ  (C8) \ ABRF(BCMD_PAUSE_19) ; $E744
     PSH  Y
     BII  (CURSOR_ENA),$01
-    BZR BCMD_PAUSE_13 ; $E733
+    BZR BCMD_PAUSE_17 ; $E733
 
-BCMD_PAUSE_3: ; $E70D
-    SJP  (OUTBUFCLR)
+BCMD_PAUSE_14: ; $E70D
+    SJP  (OUTBUF_CLR)
     VMJ  ($98) ; ($98)($4C
-    BCS BCMD_PAUSE_14 ; $E724
+    BCS BCMD_PAUSE_15 ; $E724
     LDI  A,$02
     VMJ  ($96) ; ($96)($4B)
-    BCS BCMD_PAUSE_15 ; $E7A4
+    BCS BCMD_PAUSE_23 ; $E7A4
     STA  UL
     EAI  $FF
     ADI  A,$7B
     STA  ($788F)
     VMJ  ($94) ; ($94)($4A)
 
-BCMD_PAUSE_14: ; $E724
+BCMD_PAUSE_15: ; $E724
     LDI  A,$1A
     SJP  (INIT_MTRX)
 
-BCMD_PAUSE_18: ; $E729
+BCMD_PAUSE_16: ; $E729
     LDI  UH,$7B
     LDI  UL,$60
     VMJ  ($92) ; ($92)($49)
     POP  Y
-    BCH BCMD_PAUSE_16 ; $E6C1
+    BCH BCMD_PAUSE_4 ; $E6C1
 
-BCMD_PAUSE_13: ; $E733
+BCMD_PAUSE_17: ; $E733
     VMJ  ($98) ; ($98)($4C)
-    BCS BCMD_PAUSE_17 ; $E73E
+    BCS BCMD_PAUSE_18 ; $E73E
     LDI  A,$01
-    SJP  (ARX2OUTBUF_F)
-    BCS BCMD_PAUSE_15 ; $E7A4
+    SJP  (ARX_2_OUTBUF_5)
+    BCS BCMD_PAUSE_23 ; $E7A4
 
-BCMD_PAUSE_17: ; $E73E
+BCMD_PAUSE_18: ; $E73E
     SEC
     LDA  YL
     SBI  A,$60
-    BCH BCMD_PAUSE_18 ; $E729
+    BCH BCMD_PAUSE_16 ; $E729
 
-BCMD_PAUSE_12: ; $E744
-    VEJ  (C4) \ ACHR($2C) \ ABRF(BCMD_PAUSE_19) ; $E785
+BCMD_PAUSE_19: ; $E744
+    VEJ  (C4) \ ACHR($2C) \ ABRF(BCMD_PAUSE_22) ; $E785
     PSH  Y
     VMJ  ($9C); ($9C)($4E)
-    BCS BCMD_PAUSE_15 ; $E7A4
+    BCS BCMD_PAUSE_23 ; $E7A4
     POP  Y
     VEJ  (C8) \ ABRF(BCMD_PAUSE_20) ; $E766
     ANI  (CURSOR_ENA),$FE
-    SJP  (CLRNOCURSOR)
+    SJP  (CLR_NO_CURSOR)
     LDI  UH,$7B
     LDI  UL,$60
     VMJ  ($92) ; ($92)($49)
     ORI  (CURSOR_ENA),$01
-    BCR BCMD_PAUSE_21 ; $E6C4
-    BCH BCMD_PAUSE_16 ; $E6C1
+    BCR BCMD_PAUSE_5 ; $E6C4
+    BCH BCMD_PAUSE_4 ; $E6C1
 
 BCMD_PAUSE_20: ; $E766
     VMJ  ($9A) ; ($9A)($4D)
     VCS  ($E0)
-    VEJ  (DE) \ ABRF(BCMD_PAUSE_11) ; $E7A8
-    VEJ  (C2) \ ACHR($2C) \ ABRF(BCMD_PAUSE_22) ; $E770
+    VEJ  (DE) \ ABRF(BCMD_PAUSE_24) ; $E7A8
+    VEJ  (C2) \ ACHR($2C) \ ABRF(BCMD_PAUSE_21) ; $E770
     VEJ  (E4)
 
-BCMD_PAUSE_22: ; $E770
-    VMJ  ($04) \ ABRF(BCMD_PAUSE_23) ; $E7A9
+BCMD_PAUSE_21: ; $E770
+    VMJ  ($04) \ ABRF(BCMD_PAUSE_25) ; $E7A9
     PSH  Y
     VMJ  ($9C) ; ($9C)($4E)
-    BCS BCMD_PAUSE_15 ; $E7A4
+    BCS BCMD_PAUSE_23 ; $E7A4
     SJP  (INIT_MTRX)
-    BCH BCMD_PAUSE_17 ; $E73E
+    BCH BCMD_PAUSE_18 ; $E73E
     VMJ  ($9A) ; ($9A)($4D)
     VCS  ($E0)
-    VEJ  (DE) \ ABRF(BCMD_PAUSE_11) ; $E7A8
+    VEJ  (DE) \ ABRF(BCMD_PAUSE_24) ; $E7A8
     VEJ  (C0)
 
-BCMD_PAUSE_19: ; $E785
+BCMD_PAUSE_22: ; $E785
     VEJ  (C4) \ ACHR($3B) \ ABRF($E795)
     PSH  Y
-    SJP  (ARXASCII2OUTBUF)
-    BCS BCMD_PAUSE_15 ; $E7A4
+    SJP  (XFER_2_OUTBUF)
+    BCS BCMD_PAUSE_23 ; $E7A4
     POP  Y
     VEJ  (C8) \ ABRF($E7AA)
     BCH $E755
-    VMJ  ($04) \ ABRF(BCMD_PAUSE_23) ; $E7A9
+    VMJ  ($04) \ ABRF(BCMD_PAUSE_25) ; $E7A9
     PSH  Y
-    SJP  (ARXASCII2OUTBUF)
-    BCS BCMD_PAUSE_15 ; $E7A4
-    SJP  (CLRNOCURSOR)
-    BCH BCMD_PAUSE_18 ; $E729
+    SJP  (XFER_2_OUTBUF)
+    BCS BCMD_PAUSE_23 ; $E7A4
+    SJP  (CLR_NO_CURSOR)
+    BCH BCMD_PAUSE_16 ; $E729
 
-BCMD_PAUSE_15: ; $E7A4
+BCMD_PAUSE_23: ; $E7A4
     LDI  UH,$24
     POP  Y
 
-BCMD_PAUSE_11: ; $E7A8
+BCMD_PAUSE_24: ; $E7A8
     VEJ  (E0)
 
-BCMD_PAUSE_23: ; $E7A9
+BCMD_PAUSE_25: ; $E7A9
     VEJ  (E4)
     BCH $E77E
 
@@ -9010,29 +9018,29 @@ BCMD_GPRINT: ;
 
 BCMD_GPRINT_1: ; $E7B0
     PSH  U
-    SJP  (CLRNOCURSOR)
+    SJP  (CLR_NO_CURSOR)
     POP  U
 
-BCMD_GPRINT_19: ; $E7B7
+BCMD_GPRINT_2: ; $E7B7
     VEJ  (C6)
     VEJ  (DE) \ ABRF($E831)
-    SJP  (MTRXNRANGE);($48)
-    BCS BCMD_GPRINT_2 ; $E7F7
+    SJP  (MTRX_IN_RANGE);($48)
+    BCS BCMD_GPRINT_7 ; $E7F7
     PSH  Y
     VMJ  ($8C) ; ($8C)($46)
     PSH  X
     LDA  (ARX + $04)
     CPI  A,$C0
-    BCR BCMD_GPRINT_3 ; $E7E8
+    BCR BCMD_GPRINT_4 ; $E7E8
     VEJ  (DC)
 
-BCMD_GPRINT_7: ; $E7CD
+BCMD_GPRINT_3: ; $E7CD
     CPI  UL,$02
-    BCR BCMD_GPRINT_4 ; $E7F3
-    SJP  (ASCII2HEX)
+    BCR BCMD_GPRINT_5 ; $E7F3
+    SJP  (ASCII_2_HEX)
     STX  Y
     POP  X
-    BCR BCMD_GPRINT_5 ; $E832
+    BCR BCMD_GPRINT_17 ; $E832
     VMJ  ($88) ; ($88)($44)
     DEC  UL
     DEC  UL
@@ -9040,77 +9048,77 @@ BCMD_GPRINT_7: ; $E7CD
     BCS BCMD_GPRINT_6 ; $E7F5
     PSH  X
     LDX  Y
-    BCH BCMD_GPRINT_7 ; $E7CD
+    BCH BCMD_GPRINT_3 ; $E7CD
 
-BCMD_GPRINT_3: ; $E7E8
-    VEJ  (D0) \ ABYT($08) \ ABRF(BCMD_GPRINT_8) ; $E836
+BCMD_GPRINT_4: ; $E7E8
+    VEJ  (D0) \ ABYT($08) \ ABRF(BCMD_GPRINT_18) ; $E836
     POP  X
     VMJ  ($88) ; ($88)($44)
     VMJ  ($8E) ; ($8E)($47)
     BCH BCMD_GPRINT_6 ; $E7F5
 
-BCMD_GPRINT_4: ; $E7F3
+BCMD_GPRINT_5: ; $E7F3
     POP  X
 
 BCMD_GPRINT_6: ; $E7F5
     POP  Y
 
-BCMD_GPRINT_2: ; $E7F7
-    VEJ  (C2) \ ACHR($3B) \ ABRF(BCMD_GPRINT_9) ; $E808
-    VEJ  (C8) \ ABRF(BCMD_GPRINT_10) ; $E83C
+BCMD_GPRINT_7: ; $E7F7
+    VEJ  (C2) \ ACHR($3B) \ ABRF(BCMD_GPRINT_10) ; $E808
+    VEJ  (C8) \ ABRF(BCMD_GPRINT_20) ; $E83C
 
-BCMD_GPRINT_20: ; $E7FC
+BCMD_GPRINT_8: ; $E7FC
     ORI  (CURSOR_ENA),$01
-    SJP  (MTRXNRANGE);($48)
+    SJP  (MTRX_IN_RANGE);($48)
     BCS BCMD_GPRINT_11 ; $E80F
 
-BCMD_GPRINT_13: ; $E805
-    JMP  BCMD_PAUSE_24 ; $E6CB
+BCMD_GPRINT_9: ; $E805
+    JMP  BCMD_PAUSE_6 ; $E6CB
 
-BCMD_GPRINT_9: ; $E808
+BCMD_GPRINT_10: ; $E808
     VMJ  ($04) \ ABRF(BCMD_GPRINT_12) ; $E814
     ANI  (CURSOR_ENA),$FE
 
 BCMD_GPRINT_11: ; $E80F
     SJP  (INIT_MTRX)
-    BCH BCMD_GPRINT_13 ; $E805
+    BCH BCMD_GPRINT_9 ; $E805
 
 BCMD_GPRINT_12: ; $E814
     VEJ  (C4) \ ACHR($2C) \ ABRF(BCMD_GPRINT_14) ; $E827
-    SJP  (MTRXNRANGE);($48)
-    BCS BCMD_GPRINT_15 ; $E823
+    SJP  (MTRX_IN_RANGE);($48)
+    BCS BCMD_GPRINT_13 ; $E823
     LDI  A,$00
-    SJP  (HEX2COL)
+    SJP  (GPRINT_OUT)
     VMJ  ($8E) ; ($8E)($47)
 
-BCMD_GPRINT_15: ; $E823
-    VEJ  (C8) \ ABRF(BCMD_GPRINT_10) ; $E83C
-    BCH BCMD_GPRINT_20 ; $E7FC
+BCMD_GPRINT_13: ; $E823
+    VEJ  (C8) \ ABRF(BCMD_GPRINT_20) ; $E83C
+    BCH BCMD_GPRINT_8 ; $E7FC
 
 BCMD_GPRINT_14: ; $E827
     LDI  UH,$01
 
-BCMD_GPRINT_18: ; $E829
-    SJP  (MTRXNRANGE);($48)
+BCMD_GPRINT_15: ; $E829
+    SJP  (MTRX_IN_RANGE);($48)
     BCR BCMD_GPRINT_16 ; $E831
     SJP  (INIT_MTRX)
 
 BCMD_GPRINT_16: ; $E831
     VEJ  (E0)
 
-BCMD_GPRINT_5: ; $E932
+BCMD_GPRINT_17: ; $E932
     LDI  UH,$24
-    BCH BCMD_GPRINT_17 ; $E838
+    BCH BCMD_GPRINT_19 ; $E838
 
-BCMD_GPRINT_8: ; $E836
+BCMD_GPRINT_18: ; $E836
     POP  X
 
-BCMD_GPRINT_17: ; $E838
+BCMD_GPRINT_19: ; $E838
     POP  Y
-    BCH BCMD_GPRINT_18 ; $E829
+    BCH BCMD_GPRINT_15 ; $E829
 
-BCMD_GPRINT_10: ; $E82C
-    BCH BCMD_GPRINT_19 ; $E7B7
+BCMD_GPRINT_20: ; $E82C
+    BCH BCMD_GPRINT_2 ; $E7B7
 
 
 
@@ -9118,8 +9126,8 @@ BCMD_GPRINT_10: ; $E82C
 ; $E83E - Basic command GCURSOR
 ;------------------------------------------------------------------------------
 BCMD_GCURSOR: ; 
-    VEJ  (DE) \ ABRF(BCMD_WAIT_1) ; $E88A
-    VEJ  (D0) \ ABYT($0A) \ ABRF(BCMD_WAIT_1) ; $E88A
+    VEJ  (DE) \ ABRF(BCMD_WAIT_3) ; $E88A
+    VEJ  (D0) \ ABYT($0A) \ ABRF(BCMD_WAIT_3) ; $E88A
     LDA  UL
     BCH BCMD_CURSOR_2 ; $E85D
 
@@ -9128,17 +9136,17 @@ BCMD_GCURSOR: ;
 ;------------------------------------------------------------------------------
 ; $E846 - Basic command CURSOR
 ;------------------------------------------------------------------------------
-BCMD_CURSOR_1: ; 
-    VEJ  (C8) \ ABRF(BCMD_CURSOR_3) ; $E852
+BCMD_CURSOR: ; 
+    VEJ  (C8) \ ABRF(BCMD_CURSOR_1) ; $E852
     ANI  (CURSOR_PTR),$00
     ANI  (CURSOR_ENA),$FE
     DEC  Y
     VEJ  (E2)
 
-BCMD_CURSOR_3: ; $E852
+BCMD_CURSOR_1: ; $E852
     VEJ  (C6)
-    VEJ  (DE) \ ABRF(BCMD_WAIT_1) ; $E88A
-    VEJ  (D0) \ ABYT($10) \ ABRF(BCMD_WAIT_1) ; $E88A
+    VEJ  (DE) \ ABRF(BCMD_WAIT_3) ; $E88A
+    VEJ  (D0) \ ABYT($10) \ ABRF(BCMD_WAIT_3) ; $E88A
     LDA  UL
     SHL
     REC
@@ -9166,28 +9174,28 @@ BCMD_CLS: ;
 ; $E86A - Basic Command WAIT
 ;------------------------------------------------------------------------------
 BCMD_WAIT: ; 
-    VEJ  (C8) \ ABRF(BCMD_WAIT_2) ; $E871
+    VEJ  (C8) \ ABRF(BCMD_WAIT_1) ; $E871
     DEC  Y
     LDI  A,$00
-    BCH BCMD_WAIT_3 ; $E886
+    BCH BCMD_WAIT_2 ; $E886
 
-BCMD_WAIT_2: ; $E871
+BCMD_WAIT_1: ; $E871
     VEJ  (C6)
-    VEJ  (DE) \ ABRF(BCMD_WAIT_1) ; $E88A
-    VEJ  (D0) \ ABYT($00) \ ABRF(BCMD_WAIT_1) ; $E88A
+    VEJ  (DE) \ ABRF(BCMD_WAIT_3) ; $E88A
+    VEJ  (D0) \ ABYT($00) \ ABRF(BCMD_WAIT_3) ; $E88A
     VEJ  (F6) \ AWRD(WAIT_CTR_H)
     LDI  A,$02
     CPI  UH,$00
-    BZR BCMD_WAIT_3 ; $E886
+    BZR BCMD_WAIT_2 ; $E886
     CPI  UL,$00
-    BZR BCMD_WAIT_3 ; $E886
+    BZR BCMD_WAIT_2 ; $E886
     LDI  A,$03
 
-BCMD_WAIT_3: ; $E886
+BCMD_WAIT_2: ; $E886
     STA  (WAIT_CFG)
     VEJ  (E2)
 
-BCMD_WAIT_1: ; $E86A
+BCMD_WAIT_3: ; $E86A
     VEJ  (E0)
     VEJ  (E4)
 
@@ -9201,7 +9209,7 @@ BCMD_WAIT_1: ; $E86A
 ; Modified registers: U-Reg
 ;   Error conditions: It is possible to abort with the break key
 ;------------------------------------------------------------------------------
-TIMEDELAY: ; 
+TIME_DELAY: ; 
     PSH  Y
     PSH  U
     LDI  A,$20
@@ -9210,242 +9218,242 @@ TIMEDELAY: ;
     LDI  A,$00
     STA  #(PC1500_PRT_B_DIR)
 
-TIMEDELAY_2: ; $E89C
+TIME_DELAY_1: ; $E89C
     BII  #(PC1500_PRT_B),$20
-    BZS TIMEDELAY_1 ; $E8A9
+    BZS TIME_DELAY_2 ; $E8A9
     VMJ  ($A6) ; ($A6)($53)
-    BZS TIMEDELAY_2 ; $E89C
-    BCH TIMEDELAY_3 ; $E8B4
+    BZS TIME_DELAY_1 ; $E89C
+    BCH TIME_DELAY_3 ; $E8B4
 
-TIMEDELAY_1: ; $E8A9
+TIME_DELAY_2: ; $E8A9
     BII  #(PC1500_PRT_B),$20
-    BZR TIMEDELAY_4 ; $E8BC
+    BZR TIME_DELAY_5 ; $E8BC
     VMJ  ($A6) ; ($A6)($53)
-    BZS TIMEDELAY_1 ; $E8A9
+    BZS TIME_DELAY_2 ; $E8A9
 
-TIMEDELAY_3: ; $E8B4
+TIME_DELAY_3: ; $E8B4
     LDI  A,$00
     VMJ  ($5A) ; ($5A)($2D)
     SEC
 
-TIMEDELAY_5: ; $E8B9
+TIME_DELAY_4: ; $E8B9
     POP  Y
     RTN
 
-TIMEDELAY_4: ; $E8BC
+TIME_DELAY_5: ; $E8BC
     DEC  UL
-    BCS TIMEDELAY_2 ; $E89C
+    BCS TIME_DELAY_1 ; $E89C
     DEC  UH
-    BCS TIMEDELAY_2 ; $E89C
+    BCS TIME_DELAY_1 ; $E89C
     LDI  A,$00
     VMJ  ($5A) ; ($5A)($2D)
     REC
-    BCH TIMEDELAY_5 ; $E8B9
+    BCH TIME_DELAY_4 ; $E8B9
 
 
 
 ;------------------------------------------------------------------------------
 ; $E8CA - Display Program
 ;------------------------------------------------------------------------------
-PRGMDISP: ; 
+PRGM_DISP: ; 
     LDA  (DISPARAM)
     BII  A,$31
-    BZR PRGMDISP_1 ; $E967
+    BZR PRGM_DISP_16 ; $E967
     PSH  Y
     LDA  YL
     PSH  A
     LDI  XH,$7A
     LDI  XL,$08
     BII  (BREAKPARAM),$10
-    BZR PRGMDISP_2 ; $E8F0
+    BZR PRGM_DISP_2 ; $E8F0
     BII  (DISPARAM),$40
-    BZS PRGMDISP_3 ; $E8F7
+    BZS PRGM_DISP_3 ; $E8F7
     PSH  X
     LDI  A,$E5
 
-PRGMDISP_5: ; $E8EA
+PRGM_DISP_1: ; $E8EA
     LDI  UH,$7B
     LDI  UL,$B0
-    BCH PRGMDISP_4 ; $E918
+    BCH PRGM_DISP_6 ; $E918
 
-PRGMDISP_2: ; $E8F0
+PRGM_DISP_2: ; $E8F0
     PSH  X
     LDA  ($7877)
-    BCH PRGMDISP_5 ; $E8EA
+    BCH PRGM_DISP_1 ; $E8EA
 
-PRGMDISP_3: ; $E8F7
+PRGM_DISP_3: ; $E8F7
     LDI  YH,$7B
     LDI  YL,$B0
-    BCH PRGMDISP_6 ; $E96E
+    BCH PRGM_DISP_17 ; $E96E
 
-PRGMDISP_31: ; $E8FF
+PRGM_DISP_4: ; $E8FF
     BII  (DISPARAM),$40
-    BZS PRGMDISP_6 ; $E96E
+    BZS PRGM_DISP_17 ; $E96E
     POP  A
     PSH  A
     PSH  X
     PSH  Y
     POP  U
     BII  ($787B),$FF
-    BZR PRGMDISP_7 ; $E914
+    BZR PRGM_DISP_5 ; $E914
     STA  YL
 
-PRGMDISP_7: ; $E914
+PRGM_DISP_5: ; $E914
     REC
     LDA  XL
     ADI  A,$DD
 
-PRGMDISP_4: ; $E918
+PRGM_DISP_6: ; $E918
     INC  U
     PSH  A
     PSH  U
     VEJ  (C0)
-    BCR PRGMDISP_8 ; $E936
+    BCR PRGM_DISP_9 ; $E936
     VMJ  ($1C) \ ABYT($04)
-    BZS PRGMDISP_8 ; $E936
+    BZS PRGM_DISP_9 ; $E936
     STA  UL
     POP  X
     REC
     POP  A
     ADC  UL
-    BCS PRGMDISP_9 ; $E930
-    BCH PRGMDISP_10 ; $E941
+    BCS PRGM_DISP_7 ; $E930
+    BCH PRGM_DISP_11 ; $E941
 
-PRGMDISP_9: ; $E930
+PRGM_DISP_7: ; $E930
     VEJ  (C6)
-    BCH PRGMDISP_11 ; $E95B
+    BCH PRGM_DISP_14 ; $E95B
 
-PRGMDISP_15: ; $E933
+PRGM_DISP_8: ; $E933
     VEJ  (C0)
-    BCS PRGMDISP_12 ; $E95F
+    BCS PRGM_DISP_15 ; $E95F
 
-PRGMDISP_8: ; $E936
+PRGM_DISP_9: ; $E936
     LDI  A,$01
 
-PRGMDISP_16: ; $E938
+PRGM_DISP_10: ; $E938
     STA  UL
     POP  X
     REC
     POP  A
     ADC  UL
-    BCS PRGMDISP_11 ; $E95B
+    BCS PRGM_DISP_14 ; $E95B
 
-PRGMDISP_10: ; $E941
+PRGM_DISP_11: ; $E941
     VEJ  (C6)
     PSH  A
     LDA  YL
     CPA  XL
-    BCR PRGMDISP_13 ; $E959
+    BCR PRGM_DISP_13 ; $E959
     PSH  X
-    BZS PRGMDISP_14 ; $E956
+    BZS PRGM_DISP_12 ; $E956
     DEC  Y
     DEC  Y
     LDA  (Y)
     CPI  A,$E0
-    BCS PRGMDISP_15 ; $E933
+    BCS PRGM_DISP_8 ; $E933
     INC  Y
-    BCH PRGMDISP_15 ; $E933
+    BCH PRGM_DISP_8 ; $E933
 
-PRGMDISP_14: ; $E956
+PRGM_DISP_12: ; $E956
     DEC  Y
-    BCH PRGMDISP_15 ;  $E933
+    BCH PRGM_DISP_8 ;  $E933
 
-PRGMDISP_13: ; $E959
+PRGM_DISP_13: ; $E959
     POP  A
 
-PRGMDISP_11: ; $E95B
+PRGM_DISP_14: ; $E95B
     POP  X
-    BCH PRGMDISP_6 ; $E96E
+    BCH PRGM_DISP_17 ; $E96E
 
-PRGMDISP_12: ; $E95F
+PRGM_DISP_15: ; $E95F
     VMJ  ($1C) \ ABYT($04)
-    BZS PRGMDISP_8 ; $E936
+    BZS PRGM_DISP_9 ; $E936
     INC  A
-    BCH PRGMDISP_16 ; $E938
+    BCH PRGM_DISP_10 ; $E938
 
-PRGMDISP_1: ; $E967
+PRGM_DISP_16: ; $E967
     AEX
     SHR
-    BCS STATUSCHK_1 $EA26
-    JMP  BCMD_POINT_2 ; $EEEC
+    BCS STATUS_CHK_7 $EA26
+    JMP  BCMD_POINT_3 ; $EEEC
 
-PRGMDISP_6: ; $E96E
+PRGM_DISP_17: ; $E96E
     POP  A
     PSH  A
     CPA  YL
-    BZR PRGMDISP_17 ; $E979
+    BZR PRGM_DISP_18 ; $E979
     LDA  XL
     STA  ($787B)
 
-PRGMDISP_17: ; $E979
+PRGM_DISP_18: ; $E979
     VEJ  (C0)
-    BCS PRGMDISP_18 ; $E997
+    BCS PRGM_DISP_22 ; $E997
     CPI  A,$0D
-    BZS PRGMDISP_19 ; $E9AC
+    BZS PRGM_DISP_25 ; $E9AC
 
-PRGMDISP_23: ; $E980
+PRGM_DISP_19: ; $E980
     SIN  X
     CPI  XL,$22
-    BCR PRGMDISP_6 ; $E96E
-    SJP  (STATUSCHK)
-    BCS PRGMDISP_20 ; $E9B8
+    BCR PRGM_DISP_17 ; $E96E
+    SJP  (STATUS_CHK)
+    BCS PRGM_DISP_27 ; $E9B8
     LDI  A,$1A
 
-PRGMDISP_30: ; $E98C
+PRGM_DISP_20: ; $E98C
     STA  UH
 
-PRGMDISP_29: ; $E98D
+PRGM_DISP_21: ; $E98D
     POP  A
     LDA  (CURSOR_PTR)
     PSH  A
     LDA  UH
-    BCH PRGMDISP_21 ; $E9C5
+    BCH PRGM_DISP_28 ; $E9C5
 
-PRGMDISP_18: ; $E997
+PRGM_DISP_22: ; $E997
     PSH  Y
     STX  Y
     VMJ  ($1C) \ ABYT($02)
-    BZS PRGMDISP_22 ; $E9A8
+    BZS PRGM_DISP_24 ; $E9A8
     LDI  A,$20
 
-PRGMDISP_24: ; $E9A2
+PRGM_DISP_23: ; $E9A2
     LDX  Y
     POP  Y
-    BCH PRGMDISP_23 ; $E980
+    BCH PRGM_DISP_19 ; $E980
 
-PRGMDISP_22: ; $E9A8
+PRGM_DISP_24: ; $E9A8
     LDI  A,$7E
-    BCH PRGMDISP_24 ; $E9A2
+    BCH PRGM_DISP_23 ; $E9A2
 
-PRGMDISP_19: ; $E9AC
-    SJP  (STATUSCHK)
-    BCR PRGMDISP_25 ; $E9CD
+PRGM_DISP_25: ; $E9AC
+    SJP  (STATUS_CHK)
+    BCR PRGM_DISP_29 ; $E9CD
     LDI  A,$00
 
-PRGMDISP_26: ; $E9B3
+PRGM_DISP_26: ; $E9B3
     SIN  X
     CPI  XL,$22
-    BCR PRGMDISP_26 ; $E9B3
+    BCR PRGM_DISP_26 ; $E9B3
 
-PRGMDISP_20: ; $E9B8
+PRGM_DISP_27: ; $E9B8
     POP  A
     LDA  (CURSOR_PTR)
     PSH  A
     ANI  (CURSOR_PTR),$00
     LDI  A,$1A
 
-PRGMDISP_21: ; $E9C5
+PRGM_DISP_28: ; $E9C5
     LDI  UH,$7A
     LDI  UL,$08
     VMJ  ($92) ; ($92)($49)
-    BCH STATUSCHK_2 ; $E9F9
+    BCH STATUS_CHK_2 ; $E9F9
 
-PRGMDISP_25: ; $E9CD
+PRGM_DISP_29: ; $E9CD
     ANI  (X),$00
     LDA  XL
     SBI  A,$06
     CPA  (CHARPOS_LCD)
-    BCS PRGMDISP_27 ; $E9E6
+    BCS PRGM_DISP_31 ; $E9E6
     STA  UL
     LDA  (CHARPOS_LCD)
     STA  UH
@@ -9454,110 +9462,110 @@ PRGMDISP_25: ; $E9CD
     STA  UL
     LDI  A,$00
 
-PRGMDISP_28: ; $E9E1
+PRGM_DISP_30: ; $E9E1
     SIN  X
-    LOP  UL,PRGMDISP_28 ; $E9E1
-    BCH PRGMDISP_29 ; $E98D
+    LOP  UL,PRGM_DISP_30 ; $E9E1
+    BCH PRGM_DISP_21 ; $E98D
 
-PRGMDISP_27: ; $E9E6
+PRGM_DISP_31: ; $E9E6
     STA  (CHARPOS_LCD)
-    BCH PRGMDISP_30 ; $E98C
+    BCH PRGM_DISP_20 ; $E98C
 
 
 
 ;------------------------------------------------------------------------------
 ; $E9EB - Checks display and input status. Checks computer status.
 ;------------------------------------------------------------------------------
-STATUSCHK: ; 
+STATUS_CHK: ; 
     BII  (DISPARAM),$10
-    BZR STATUSCHK_3 ; $E9F8
+    BZR STATUS_CHK_1 ; $E9F8
     BII  (BREAKPARAM),$10
-    BZS STATUSCHK_3 ; $E9F8
+    BZS STATUS_CHK_1 ; $E9F8
     REC
 
-STATUSCHK_3: ; $E9F8
+STATUS_CHK_1: ; $E9F8
     RTN
 
-STATUSCHK_2: ; $E9F9
+STATUS_CHK_2: ; $E9F9
     BII  (DISPARAM),$40
-    BZS STATUSCHK_4 ; $EA18
+    BZS STATUS_CHK_5 ; $EA18
     VEJ  (CC) \ ABYTL(CURS_POS_NBUF_H) ; $787E
     LDA  (BLNKD_CHAR_CODE)
     CPI  A,$20
-    BCR STATUSCHK_5 ; $EA1E
+    BCR STATUS_CHK_6 ; $EA1E
     LDI  A,$7F
     ORI  (CURSOR_BLNK),$81
 
-STATUSCHK_7: ; $EA0E
+STATUS_CHK_3: ; $EA0E
     VMJ  ($8A) ; ($8A)($45)
 
-STATUSCHK_6: ; $EA10
+STATUS_CHK_4: ; $EA10
     POP  A
     STA  (CURSOR_PTR)
     POP  Y
     RTN
 
-STATUSCHK_4: ; $EA18
+STATUS_CHK_5: ; $EA18
     ANI  (CURSOR_BLNK),$7E
-    BCH STATUSCHK_6 ; $EA10
+    BCH STATUS_CHK_4 ; $EA10
 
-STATUSCHK_5: ; $EA1E
+STATUS_CHK_6: ; $EA1E
     LDI  A,$5F
     ANI  (CURSOR_BLNK),$7E
-    BCH STATUSCHK_7 ; $EA0E
+    BCH STATUS_CHK_3 ; $EA0E
 
-STATUSCHK_1: ; $EA26
+STATUS_CHK_7: ; $EA26
     PSH  Y
     ANI  ($787B),$00
     BII  (DISPARAM),$40
-    BZR STATUSCHK_8 ; $EA34
+    BZR STATUS_CHK_8 ; $EA34
     LDI  YL,$B0
 
-STATUSCHK_8: ; $EA34
+STATUS_CHK_8: ; $EA34
     LDA  YL
     PSH  A
     LDI  XH,$7A
     LDI  XL,$08
     LDI  YL,$B0
 
-STATUSCHK_11: ; $EA3D
+STATUS_CHK_9: ; $EA3D
     POP  A
     PSH  A
     CPA  YL
-    BZS STATUSCHK_9 ; $EA67
+    BZS STATUS_CHK_14 ; $EA67
     VEJ  (C0)
     CPI  A,$3A
-    BCS STATUSCHK_10 ; $EA60
+    BCS STATUS_CHK_13 ; $EA60
     CPI  A,$30
-    BCR STATUSCHK_10 ; $EA60
+    BCR STATUS_CHK_13 ; $EA60
     SIN  X
     CPI  XL,$0E
-    BCR STATUSCHK_11 ; $EA3D
+    BCR STATUS_CHK_9 ; $EA3D
 
-STATUSCHK_14: ; $EA52
+STATUS_CHK_10: ; $EA52
     LDI  A,$20
     BII  (DISPARAM),$04
-    BZS STATUSCHK_12 ; $EA5C
+    BZS STATUS_CHK_11 ; $EA5C
     LDI  A,$3A
 
-STATUSCHK_12: ; $EA5C
+STATUS_CHK_11: ; $EA5C
     SIN  X
 
-STATUSCHK_13: ; $EA5D
-    JMP  PRGMDISP_31 ; $E8FD
+STATUS_CHK_12: ; $EA5D
+    JMP  PRGM_DISP_4 ; $E8FD
 
-STATUSCHK_10: ; $EA60
+STATUS_CHK_13: ; $EA60
     VEJ  (C6)
     CPI  XL,$09
-    BCR STATUSCHK_13 ; $EA5D
-    BCH STATUSCHK_14 ; $EA52
+    BCR STATUS_CHK_12 ; $EA5D
+    BCH STATUS_CHK_10 ; $EA52
 
-STATUSCHK_9: ; $EA67
+STATUS_CHK_14: ; $EA67
     VEJ  (C0)
     CPI  A,$3A
-    BCS STATUSCHK_10 ; $EA60
+    BCS STATUS_CHK_13 ; $EA60
     CPI  A,$30
-    BCR STATUSCHK_10 ; $EA60
+    BCR STATUS_CHK_13 ; $EA60
     STA  (X)
     LDA  XL
     STA  ($787B)
@@ -9567,34 +9575,34 @@ STATUSCHK_9: ; $EA67
 
 
 ;------------------------------------------------------------------------------
-; (96) $EA78 - Using formatting. If error C=1.
+; $EA78 (96) - Using formatting. If error C=1.
 ;------------------------------------------------------------------------------
-USING_FRMT: ; 
+USING_FORMAT: ; 
     PSH  A
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$10
     LDI  UL,$0D
     LDI  A,$20
 
-USING_FRMT_1: ; $EA82
+USING_FORMAT_1: ; $EA82
     SIN  X
-    LOP  UL,USING_FRMT_1 ; $EA82
+    LOP  UL,USING_FORMAT_1 ; $EA82
     BII  (USINGM),$FF
-    BZS USING_FRMT_2 ; $EACE
+    BZS USING_FORMAT_9 ; $EACE
     BII  (USINGF),$80
-    BZR USING_FRMT_3 ; $EB26
+    BZR USING_FORMAT_15 ; $EB26
     LDA  (USINGMD)
     VMJ  ($86) ; ($86)($43)
-    BCS USING_FRMT_4 ; $EB3C
+    BCS USING_FORMAT_17 ; $EB3C
     LDA  UH
     STA  YL
 
-USING_FRMT_12: ; $EA9A
+USING_FORMAT_2: ; $EA9A
     POP  A
     SHR
-    BCR USING_FRMT_5 ; $EAA5
+    BCR USING_FORMAT_4 ; $EAA5
 
-USING_FRMT_7: ; $EA9F
+USING_FORMAT_3: ; $EA9F
     SEC
     LDA  YL
     SBC  XL
@@ -9602,68 +9610,68 @@ USING_FRMT_7: ; $EA9F
     REC
     RTN
 
-USING_FRMT_5: ; $EAA5
+USING_FORMAT_4: ; $EAA5
     SHR
-    BCR USING_FRMT_6 ; $EAB1
+    BCR USING_FORMAT_5 ; $EAB1
     CPI  YL,$2A
-    BCR USING_FRMT_7 ; $EA9F
+    BCR USING_FORMAT_3 ; $EA9F
     LDA  YL
     ADI  A,$E6
-    BCH USING_FRMT_8 ; $EAB4
+    BCH USING_FORMAT_6 ; $EAB4
 
-USING_FRMT_6: ; $EAB1
+USING_FORMAT_5: ; $EAB1
     LDA  YL
     ADI  A,$F4
 
-USING_FRMT_8: ; $EAB4
+USING_FORMAT_6: ; $EAB4
     STA  XL
 
-USING_FRMT_10: ; $EAB5
+USING_FORMAT_7: ; $EAB5
     LDA  (X)
     CPI  A,$20
-    BZS USING_FRMT_7 ; $EA9F
+    BZS USING_FORMAT_3 ; $EA9F
     CPI  A,$2D
-    BZS USING_FRMT_7 ; $EA9F
+    BZS USING_FORMAT_3 ; $EA9F
     CPI  A,$2B
-    BZS USING_FRMT_7 ; $EA9F
-    BCH USING_FRMT_9 ; $EACC
-    BZS USING_FRMT_9 ; $EACC
+    BZS USING_FORMAT_3 ; $EA9F
+    BCH USING_FORMAT_8 ; $EACC
+    BZS USING_FORMAT_8 ; $EACC
     DEC  X
     DEC  YL
     CPI  YL,$1E
-    BCS USING_FRMT_10 ; $EAB5
+    BCS USING_FORMAT_7 ; $EAB5
 
-USING_FRMT_9: ; $EACC
+USING_FORMAT_8: ; $EACC
     SEC
     RTN
 
-USING_FRMT_2: ; $EACE
-    SJP  (BCMD_DEC9)
-    BCS USING_FRMT_11 ; $EADC
+USING_FORMAT_9: ; $EACE
+    SJP  (ARX_9DEC_CHK)
+    BCS USING_FORMAT_10 ; $EADC
     LDI  A,$0A
     VMJ  ($86) ; ($86)($43)
-    SJP  (TRUNCDEC)
-    BCH USING_FRMT_12 ; $EA9A
+    SJP  (TRUNC_DEC)
+    BCH USING_FORMAT_2 ; $EA9A
 
-USING_FRMT_11: ; $EADC
+USING_FORMAT_10: ; $EADC
     LDI  XL,$00
     LDA  (X)
     ANI  (X),$00
     PSH  A
     LDI  A,$0A
     VMJ  ($86) ; ($86)($43)
-    SJP  (TRUNCDEC)
+    SJP  (TRUNC_DEC)
 
-USING_FRMT_17: ; $EAEA
+USING_FORMAT_11: ; $EAEA
     INC  Y
     POP  A
     STA  (ARX)
     STA  UL
     POP  A
     PSH  A
-    BZS USING_FRMT_13 ; $EB1E
+    BZS USING_FORMAT_14 ; $EB1E
 
-USING_FRMT_15: ; $EAF7
+USING_FORMAT_12: ; $EAF7
     LDI  A,$45
     SIN  Y
     PSH  X
@@ -9675,42 +9683,42 @@ USING_FRMT_15: ; $EAF7
     STA  UL
     LDI  UH,$00
     SHL
-    BCR USING_FRMT_14 ; $EB0D
+    BCR USING_FORMAT_13 ; $EB0D
     LDI  UH,$FF
 
-USING_FRMT_14: ; $EB0D
+USING_FORMAT_13: ; $EB0D
     POP  Y
     VMJ  ($10) \ ABYT($E0)
     PSH  Y
-    SJP  (XFER_ARY2ARX)
+    SJP  (XFER_ARS_2_ARX)
     POP  Y
     DEC  Y
     POP  X
-    BCH USING_FRMT_12 ; $EA9A
+    BCH USING_FORMAT_2 ; $EA9A
 
-USING_FRMT_13: ; $EB1E
+USING_FORMAT_14: ; $EB1E
     CPI  YL,$27
-    BCR USING_FRMT_15 ; $EAF7
+    BCR USING_FORMAT_12 ; $EAF7
     LDI  YL,$26
-    BCH USING_FRMT_15 ; $EAF7
+    BCH USING_FORMAT_12 ; $EAF7
 
-USING_FRMT_3: ; $EB26
+USING_FORMAT_15: ; $EB26
     LDI  XL,$00
     LDA  (X)
     ANI  (X),$00
     PSH  A
     LDA  (USINGMD)
     CPI  A,$0E
-    BCR USING_FRMT_16 ; $EB36
+    BCR USING_FORMAT_16 ; $EB36
     LDI  A,$0D
 
-USING_FRMT_16: ; $EB36
+USING_FORMAT_16: ; $EB36
     VMJ  ($86) ; ($86)($43)
     LDA  UH
     STA  YL
-    BCH USING_FRMT_17 ; $EAEA
+    BCH USING_FORMAT_11 ; $EAEA
 
-USING_FRMT_4: ; $EB3C
+USING_FORMAT_17: ; $EB3C
     POP  A
     SEC
     RTN
@@ -9718,9 +9726,9 @@ USING_FRMT_4: ; $EB3C
 
 
 ;------------------------------------------------------------------------------
-; (86) $EB40 - Converts AR-X to ASCII according to USING parameters
+; $EB40 (86) - Converts AR-X to ASCII according to USING parameters
 ;------------------------------------------------------------------------------
-ARX2ASCII: ; 
+ARX_2_ASCII: ; 
     REC
     ADI  A,$1E
     STA  UH
@@ -9732,23 +9740,23 @@ ARX2ASCII: ;
     DEC  X
     LDA  (X)
     BII  A,$80
-    BZR ARX2ASCII_1 ; $EBCC
+    BZR ARX_2_ASCII_15 ; $EBCC
     BII  (USINGF),$10
-    BZR ARX2ASCII_2 ; $EB8B
+    BZR ARX_2_ASCII_8 ; $EB8B
     CPI  A,$0E
-    BCS USING_FRMT_4 ; $EB3C
+    BCS USING_FORMAT_17 ; $EB3C
 
-ARX2ASCII_9: ; $EB5D
+ARX_2_ASCII_1: ; $EB5D
     EAI  $FF
     ADI  A,$1E
     STA  YL
     PSH  A
     INC  Y
 
-ARX2ASCII_15: ; $EB65
+ARX_2_ASCII_2: ; $EB65
     LDI  A,$09
 
-ARX2ASCII_5: ; $EB67
+ARX_2_ASCII_3: ; $EB67
     PSH  A
     SJP  (ARS_SHL_4BITS)
     AEX
@@ -9756,39 +9764,39 @@ ARX2ASCII_5: ; $EB67
     ORI  A,$30
     SIN  Y
 
-ARX2ASCII_8: ; $EB72
+ARX_2_ASCII_4: ; $EB72
     LDA  UH
     CPA  YL
-    BCR ARX2ASCII_3 ; $EC2B
+    BCR ARX_2_ASCII_26 ; $EC2B
     CPI  YL,$1F
-    BZS ARX2ASCII_4 ; $EB88
+    BZS ARX_2_ASCII_7 ; $EB88
     POP  A
     DEC  A
-    BCS ARX2ASCII_5 ; $EB67
+    BCS ARX_2_ASCII_3 ; $EB67
 
-ARX2ASCII_6: ; $EB7F
+ARX_2_ASCII_6: ; $EB7F
     LDI  A,$30
     SIN  Y
     LDA  UH
     CPA  YL
-    BCS ARX2ASCII_6 ; $EB7F
-    BCH ARX2ASCII_7 ; $EBEC
+    BCS ARX_2_ASCII_6 ; $EB7F
+    BCH ARX_2_ASCII_18 ; $EBEC
 
-ARX2ASCII_4: ; $EB88
+ARX_2_ASCII_7: ; $EB88
     INC  Y
-    BCH ARX2ASCII_8 ; $EB72
+    BCH ARX_2_ASCII_4 ; $EB72
 
-ARX2ASCII_2: ; $EB8B
+ARX_2_ASCII_8: ; $EB8B
     CPI  A,$0B
-    BCS USING_FRMT_4 ; $EB3C
+    BCS USING_FORMAT_17 ; $EB3C
     CPI  A,$03
-    BCR ARX2ASCII_9 ; $EB5D
+    BCR ARX_2_ASCII_1 ; $EB5D
     CPI  A,$06
-    BCR ARX2ASCII_10 ; $EC1E
+    BCR ARX_2_ASCII_24 ; $EC1E
     CPI  A,$09
     ADI  A,$02
 
-ARX2ASCII_21: ; $EB9B
+ARX_2_ASCII_9: ; $EB9B
     REC
     EAI  $FF
     ADI  A,$1E
@@ -9797,7 +9805,7 @@ ARX2ASCII_21: ; $EB9B
     INC  Y
     LDI  A,$09
 
-ARX2ASCII_12: ; $EBA6
+ARX_2_ASCII_10: ; $EBA6
     PSH  A
     SJP  (ARS_SHL_4BITS)
     AEX
@@ -9805,36 +9813,36 @@ ARX2ASCII_12: ; $EBA6
     ORI  A,$30
     SIN  Y
 
-ARX2ASCII_13: ; $EBB1
+ARX_2_ASCII_13: ; $EBB1
     LDA  UH
     CPA  YL
-    BCR ARX2ASCII_3 ; $EC2B
+    BCR ARX_2_ASCII_26 ; $EC2B
     CPI  YL,$1F
-    BZS ARX2ASCII_4 ; $EB88
+    BZS ARX_2_ASCII_7 ; $EB88
     LDA  YL
     EAI  $FF
     BII  A,$03
-    BZS ARX2ASCII_11 ; $EBC7
+    BZS ARX_2_ASCII_14 ; $EBC7
     POP  A
     DEC  A
-    BCS ARX2ASCII_12 ; $EBA6
-    BCH ARX2ASCII_6 ; $EB7F
+    BCS ARX_2_ASCII_10 ; $EBA6
+    BCH ARX_2_ASCII_6 ; $EB7F
 
-ARX2ASCII_11: ; $EBC7
+ARX_2_ASCII_14: ; $EBC7
     LDI  A,$2C
     SIN  Y
-    BCH ARX2ASCII_13 ; $EBB1
+    BCH ARX_2_ASCII_13 ; $EBB1
 
-ARX2ASCII_1: ; $EBCC
+ARX_2_ASCII_15: ; $EBCC
     STA  UL
     LDI  YL,$1E
     LDA  (USINGM)
     CPI  A,$01
-    BZS ARX2ASCII_14 ; $EBD9
+    BZS ARX_2_ASCII_16 ; $EBD9
     LDI  A,$30
     SDE  Y
 
-ARX2ASCII_14: ; $EBD9
+ARX_2_ASCII_16: ; $EBD9
     LDA  YL
     PSH  A
     LDA  UL
@@ -9842,68 +9850,68 @@ ARX2ASCII_14: ; $EBD9
     STA  UL
     LDI  YL,$20
 
-ARX2ASCII_16: ; $EBE2
+ARX_2_ASCII_17: ; $EBE2
     DEC  UL
-    BCR ARX2ASCII_15 ; $EB65
+    BCR ARX_2_ASCII_2 ; $EB65
     LDI  A,$30
     SIN  Y
     LDA  UH
     CPA  YL
-    BCS ARX2ASCII_16 ; $EBE2
+    BCS ARX_2_ASCII_17 ; $EBE2
 
-ARX2ASCII_7: ; $EBEC
+ARX_2_ASCII_18: ; $EBEC
     LDI  A,$2E
     STA  (ARU + $07)
     POP  A
     STA  YL
     LDA  (USINGM)
-    BZS ARX2ASCII_17 ; $EC12
+    BZS ARX_2_ASCII_20 ; $EC12
     EAI  $FF
     ADI  A,$20
     STA  XL
     LDA  (X)
     CPI  A,$20
-    BZR USING_FRMT_4 ; $EB3C
+    BZR USING_FORMAT_17 ; $EB3C
     BII  (USINGF),$40
-    BZS ARX2ASCII_18 ; $EC14
+    BZS ARX_2_ASCII_21 ; $EC14
 
-ARX2ASCII_19: ; $EC09
+ARX_2_ASCII_19: ; $EC09
     LDA  XL
     CPA  YL
-    BZS ARX2ASCII_18 ; $EC14
+    BZS ARX_2_ASCII_21 ; $EC14
     LDI  A,$2A
     SDE  Y
-    BCH ARX2ASCII_19 ; $EC09
+    BCH ARX_2_ASCII_19 ; $EC09
 
-ARX2ASCII_17: ; $EC12
+ARX_2_ASCII_20: ; $EC12
     LDX  Y
 
-ARX2ASCII_18: ; $EC14
+ARX_2_ASCII_21: ; $EC14
     POP  A
     SHL
-    BCR ARX2ASCII_20 ; $EC21
+    BCR ARX_2_ASCII_25 ; $EC21
     LDI  A,$2D
 
-ARX2ASCII_23: ; $EC1B
+ARX_2_ASCII_22: ; $EC1B
     STA  (Y)
 
-ARX2ASCII_22: ; $EC1C
+ARX_2_ASCII_23: ; $EC1C
     REC
     RTN
 
-ARX2ASCII_10: ; $EC1E
+ARX_2_ASCII_24: ; $EC1E
     INC  A
-    BCH ARX2ASCII_21 ; $EB9B
+    BCH ARX_2_ASCII_9 ; $EB9B
 
-ARX2ASCII_20: ; $EC21
+ARX_2_ASCII_25: ; $EC21
     BII  (USINGF),$20
-    BZS ARX2ASCII_22 ; $EC1C
+    BZS ARX_2_ASCII_23 ; $EC1C
     LDI  A,$2B
-    BCH ARX2ASCII_23 ; $EC1B
+    BCH ARX_2_ASCII_22 ; $EC1B
 
-ARX2ASCII_3: ; $EC2B
+ARX_2_ASCII_26: ; $EC2B
     POP  A
-    BCH ARX2ASCII_7 ; $EBEC
+    BCH ARX_2_ASCII_18 ; $EBEC
 
 
 
@@ -9912,141 +9920,142 @@ ARX2ASCII_3: ; $EC2B
 ; from the ASCII number string below 7A28 in the Y-Reg. (Truncation of the 
 ; decimal places).
 ;------------------------------------------------------------------------------
-TRUNCDEC: ; $EC2F
+TRUNC_DEC: ; $EC2F
     LDI  YL,$28
 
-TRUNCDEC_1: ; $EC31
+TRUNC_DEC_1: ; $EC31
     LDE  Y
     CPI  A,$30
-    BZS TRUNCDEC_1 ; $EC31
+    BZS TRUNC_DEC_1 ; $EC31
     CPI  A,$2E
-    BZS TRUNCDEC_2 ; $EC3B
+    BZS TRUNC_DEC_2 ; $EC3B
     INC  Y
 
-TRUNCDEC_2: ;$EC3B
+TRUNC_DEC_2: ;$EC3B
     RTN
 
 
 ;------------------------------------------------------------------------------
-; $EC3C - Checks whether the value in AR-X can be completely represented with 9 decimal places. If not, C=1.
+; $EC3C - Checks whether the value in AR-X can be completely represented with 
+;         9 decimal places. If not, C=1.
 ;------------------------------------------------------------------------------
-BCMD_DEC9: ; 
+ARX_9DEC_CHK: ; 
     LDA  (ARX)
     BII  A,$80
-    BZR BCMD_DEC9_1 ; $EC46
+    BZR ARX_9DEC_CHK_1 ; $EC46
     CPI  A,$0A
     RTN
 
-BCMD_DEC9_1: ; $EC46
+ARX_9DEC_CHK_1: ; $EC46
     CPI  A,$F7
-    BCR XP_STROUT_1 ; $EC95
+    BCR XREG_STR_2_OUTBUF_2 ; $EC95
     ADI  A,$0C
     SHR
     STA  YL
     LIN  Y
-    BCS BCMD_DEC9_2 ; $EC59
+    BCS ARX_9DEC_CHK_3 ; $EC59
     BII  A,$0F
 
-BCMD_DEC9_3: ; $EC53
-    BZR XP_STROUT_1 ; $EC95
+ARX_9DEC_CHK_2: ; $EC53
+    BZR XREG_STR_2_OUTBUF_2 ; $EC95
     CPI  YL,$07
-    BCS ARX2ASCII_22 ; $EC1C
+    BCS ARX_2_ASCII_23 ; $EC1C
 
-BCMD_DEC9_2: ; $EC59
+ARX_9DEC_CHK_3: ; $EC59
     LIN  Y
-    BCH BCMD_DEC9_3 ; $EC53
+    BCH ARX_9DEC_CHK_2 ; $EC53
 
 
 
 ;------------------------------------------------------------------------------
-; (94) $EC5C - Transfers the string whose address is in the X-Reg (lengh in UL) to the
-;  free area of the output buffer. If error C=1.
+; $EC5C (94) - Transfers string whose address is in the X-Reg (lengh in UL) to
+;              free area of the output buffer. If error C=1.
 ;------------------------------------------------------------------------------
-X_STROUT: ; 
+STR_2_OUTBUF: ; 
     LDA  ($788F)
     STA  YL
     LDI  YH,$7B
-    BCH X_STROUT_1 ; $EC69
+    BCH STR_2_OUTBUF_2 ; $EC69
 
-X_STROUT_3: ; $EC64
+STR_2_OUTBUF_1: ; $EC64
     CPI  YL,$B0
-    BCS X_STROUT_2 ; $EC6B
+    BCS STR_2_OUTBUF_3 ; $EC6B
     TIN
 
-X_STROUT_1: ; $EC69
-    LOP  UL,X_STROUT_3 ; $EC64
+STR_2_OUTBUF_2: ; $EC69
+    LOP  UL,STR_2_OUTBUF_1 ; $EC64
 
-X_STROUT_2: ; $EC6B
+STR_2_OUTBUF_3: ; $EC6B
     RTN
 
 
 
 ;------------------------------------------------------------------------------
-; $EC6C - If AR-X contains numeric value, if necessary. Convert integer to BCD:
+; $EC6C - If AR-X contains numeric value, convert if needed, integer to BCD:
 ; C=0. If CSI available: Address from X-Reg; load length from to UL; C=1.
 ;------------------------------------------------------------------------------
-ARX2BCD:
-    VEJ  (D2) \ ABRF(ARX2BCD_2) \ ABYT($80)
+ARX_2_BCD:
+    VEJ  (D2) \ ABRF(ARX_2_BCD_1) \ ABYT($80)
     REC
     RTN
 
-ARX2BCD_2: ; $ 
+ARX_2_BCD_1: ; $ 
     VEJ  (DC)
 
-ARX2BCD_1: ; $EC72
+ARX_2_BCD_2: ; $EC72
     SEC
     RTN
 
 
 
 ;------------------------------------------------------------------------------
-; (98) $EC74 - Converts AR-X from BCD to ASCII and transfers to Output buffer
+; $EC74 (98) - Converts AR-X from BCD to ASCII and transfers to Output buffer
 ;------------------------------------------------------------------------------
-ARXBCD2ASCII: ; 
-    SJP  (ARX2BCD)
+BCD_2_ASCII_OUTBUF: ; 
+    SJP  (ARX_2_BCD)
     BCR $EC96
     STA  UL
     LDA  (USING_CHR)
     BZS $EC98
     CPA  UL
-    BCR XP_STROUT_4 ; $EC97
+    BCR XREG_STR_2_OUTBUF_4 ; $EC97
 
 ;------------------------------------------------------------------------------
 ; $EC82 - Transfers string pointed to by X-Reg into output buffer. Then writes
 ; A-UL spaces to the output buffer. Sets C=1 if the output buffer is full
 ;------------------------------------------------------------------------------
-XP_STROUT:
+XREG_STR_2_OUTBUF:
     SBC  UL
     PSH  A
     VMJ  ($94) ; ($94)($4A)
     POP  A
     STA  UL
     LDI  A,$20
-    BCH XP_STROUT_3 ; $EC93
+    BCH XREG_STR_2_OUTBUF_1 ; $EC93
     CPI  YL,$B0
-    BCS XP_STROUT_2 ; $EC96
+    BCS XREG_STR_2_OUTBUF_3 ; $EC96
     SIN  Y
 
-XP_STROUT_3: ; $EC93
+XREG_STR_2_OUTBUF_1: ; $EC93
     LOP  UL,$EC8E
 
-XP_STROUT_1: ; $EC82
+XREG_STR_2_OUTBUF_2: ; $EC82
     SEC
 
-XP_STROUT_2: ; $EC96
+XREG_STR_2_OUTBUF_3: ; $EC96
     RTN
 
-XP_STROUT_4: ; $EC97 
+XREG_STR_2_OUTBUF_4: ; $EC97 
     STA  UL
     VMJ  ($94) ; ($94)($4A)
-    BCH XP_STROUT_1 ; $EC95
+    BCH XREG_STR_2_OUTBUF_2 ; $EC95
 
 
 
 ;------------------------------------------------------------------------------
 ; $EC9C - Clears LCD if cursor is not allowed and sets matrix pointer to 00
 ;------------------------------------------------------------------------------
-CLRNOCURSOR: ; 
+CLR_NO_CURSOR: ; 
     BII  (CURSOR_ENA),$01
     BZR $ECA7
     VEJ  (F2)
@@ -10059,7 +10068,7 @@ CLRNOCURSOR: ;
 
 
 ;------------------------------------------------------------------------------
-; Deletes cursor flag and matrix pointer
+; $ECAE - Deletes cursor flag and matrix pointer
 ;            Address: ECAE
 ;          Parameter: None
 ;
@@ -10076,66 +10085,66 @@ INIT_MTRX: ; $ECB2
 
 
 ;------------------------------------------------------------------------------
-; (97) $ECB7 - Transfers value to output buffer
+; $ECB7 (97) - Transfers value to output buffer
 ;------------------------------------------------------------------------------
-ARX2OUTBUF: 
-    SJP  (ARX2BCD)
-    BCR ARX2OUTBUF_1 ; $ECD4
+ARX_2_OUTBUF: 
+    SJP  (ARX_2_BCD)
+    BCR ARX_2_OUTBUF_4 ; $ECD4
     STA  UL
     LDA  (USING_CHR)
-    BZS ARX2OUTBUF_2 ; $ECC6
+    BZS ARX_2_OUTBUF_1 ; $ECC6
     CPI  A,$0E
-    BCR ARX2OUTBUF_3 ; $ECC8
+    BCR ARX_2_OUTBUF_2 ; $ECC8
 
-ARX2OUTBUF_2: ; $ECC6
+ARX_2_OUTBUF_1: ; $ECC6
     LDI  A,$0D
 
-ARX2OUTBUF_3: ; $ECC8
+ARX_2_OUTBUF_2: ; $ECC8
     CPA  UL
-    BCS ARX2OUTBUF_4 ; $ECCC
+    BCS ARX_2_OUTBUF_3 ; $ECCC
     STA  UL
 
-ARX2OUTBUF_4: ; $ECCC
+ARX_2_OUTBUF_3: ; $ECCC
     LDI  A,$0D
     SEC
-    SJP  (XP_STROUT)
-    BCH ARX2OUTBUF_F_1 ; $ECDD
+    SJP  (XREG_STR_2_OUTBUF)
+    BCH ARX_2_OUTBUF_6 ; $ECDD
 
-ARX2OUTBUF_1: ; $ECD4
+ARX_2_OUTBUF_4: ; $ECD4
     LDI  A,$00
 
 ;------------------------------------------------------------------------------
 ; $ECD6 - Transfer AR-X formatted to Output Buffer
 ;------------------------------------------------------------------------------
-ARX2OUTBUF_F: ; 
+ARX_2_OUTBUF_5: ; 
     VMJ  ($96) ; ($96)($4B)
-    BCS ARX2OUTBUF_F_2 ; $ECE2
+    BCS ARX_2_OUTBUF_7 ; $ECE2
     STA  UL
     VMJ  ($94) ; ($94)($4A)
 
-ARX2OUTBUF_F_1: ; $ECDD
+ARX_2_OUTBUF_6: ; $ECDD
     LDA  YL
     STA  ($788F)
     REC
 
-ARX2OUTBUF_F_2: ; $ECE2
+ARX_2_OUTBUF_7: ; $ECE2
     RTN
 
 
 
 ;------------------------------------------------------------------------------
-; $ECE3 - Transfers value (string or numeric) to output buffer and resets output buffer pointer.
+; $ECE3 - Xfer value (string/numeric) to OUTBUF and resets OUTBUF pointer.
 ;------------------------------------------------------------------------------
-ARXASCII2OUTBUF: 
+XFER_2_OUTBUF: 
     VMJ  ($98) ; ($98)($4C)
-    BCS ARX2OUTBUF_F_1 ; $ECDD
+    BCS ARX_2_OUTBUF_6 ; $ECDD
     LDI  A,$01
-    BCH ARX2OUTBUF_F
+    BCH ARX_2_OUTBUF_5
 
 
 
 ;------------------------------------------------------------------------------
-; (9A) $ECEB - Executes using command pointed to by Y-Reg. If an error occurs C=1.
+; $ECEB (9A) - Executes using command pointed to by Y-Reg. If an error occurs C=1.
 ;------------------------------------------------------------------------------
 USING_PARAM: ; 
     VEJ  (C4) \ AWRD($F085) \ ABRF($ECF5)
@@ -10154,15 +10163,15 @@ USING_PARAM: ;
 ;------------------------------------------------------------------------------
 ; $ECFA - Output of 26 characters of the output buffer
 ;------------------------------------------------------------------------------
-OUTBUF2LCD: ; 
+OUTBUF_2_LCD: ; 
     LDI  A,$1A
     LDI  UH,$7B
     LDI  UL,$60
 
 ;------------------------------------------------------------------------------
-; (92) $ED00 - Output of text on the LCD. U-Reg contains start address; A the length.
+; $ED00 (92) - Output text on LCD. U-Reg contains start address; A the length.
 ;------------------------------------------------------------------------------
-TEXTUREG_A: ; 
+OUTBUF_2_LCD_1: ; 
     PSH  A
     VMJ  ($8C) ; ($8C)($46)
     POP  A
@@ -10170,24 +10179,24 @@ TEXTUREG_A: ;
     PSH  A
     DEC  U
 
-TEXTUREG_A4: ; $ED0B
+OUTBUF_2_LCD_2: ; $ED0B
     INC  U
     LDA  ($787B)
     CPA  UL
-    BZS TEXTUREG_A1 ; $ED28
+    BZS OUTBUF_2_LCD_3 ; $ED28
     POP  A
     DEC  A
-    BCR TEXTUREG_A2 ; $ED38
+    BCR OUTBUF_2_LCD_5 ; $ED38
     PSH  A
     PSH  U
     LDA  (U)
     VMJ  ($8A) ; ($8A)($45)
     POP  U
-    BCS TEXTUREG_A3 ; $ED36
+    BCS OUTBUF_2_LCD_4 ; $ED36
     ADI  (CURSOR_PTR),$06
-    BCH TEXTUREG_A4 ; $ED0B
+    BCH OUTBUF_2_LCD_2 ; $ED0B
 
-TEXTUREG_A1: ; $ED28
+OUTBUF_2_LCD_3: ; $ED28
     LDA  XH
     STA  (CURS_POS_NBUF_H)
     LDA  XL
@@ -10196,10 +10205,10 @@ TEXTUREG_A1: ; $ED28
     STA  (BLNKD_CHAR_CODE)
     BCH $ED12
 
-TEXTUREG_A3: ; $ED36
+OUTBUF_2_LCD_4: ; $ED36
     POP  A
 
-TEXTUREG_A2: ; $ED38
+OUTBUF_2_LCD_5: ; $ED38
     POP  Y
     RTN
 
@@ -10209,7 +10218,7 @@ TEXTUREG_A2: ; $ED38
 ; $ED3B - Outputs text from U-Reg on LCD, # characters in XL. The output is 
 ; independent of the value of the matrix pointer. Its old value is then restored.
 ;------------------------------------------------------------------------------
-TEXTUREG_XL:
+XREG_2_LCD:
     LDA  (CURSOR_PTR)
     ANI  (CURSOR_PTR),$00
     PSH  A
@@ -10224,8 +10233,8 @@ TEXTUREG_XL:
 ;------------------------------------------------------------------------------
 ; $ED4D - Output a character at the next matrix column
 ;------------------------------------------------------------------------------
-CHAR2COL: ; 
-    SJP  (CHARA2COL)
+CHAR_OUT: ; 
+    SJP  (CHAR_OUT_1)
     BCS INIT_MTRX
     ADI  (CURSOR_PTR),$06
     RTN
@@ -10236,69 +10245,69 @@ CHAR2COL: ;
 ; $ED57 - Output of the character in accumulator at next matrix column. 
 ; The output address is calculated automatically.
 ;------------------------------------------------------------------------------
-CHARA2COL: ; $ED57
+CHAR_OUT_1: ; $ED57
     STA  UH
     VMJ  ($8C) ; ($8C)($46)
     LDA  UH
 
 ;------------------------------------------------------------------------------
-; (8A) $ED5B - Output of ASCII character in accumulator starting at matrix
+; $ED5B (8A) - Output of ASCII character in accumulator starting at matrix
 ; column address pointed to by X-Reg. Second character set is recognized.
 ;------------------------------------------------------------------------------
-CHARA2COLX: ; 
+CHAR_OUT_2: ; 
     PSH  Y
-    SJP  (CHAR2ADDR)
+    SJP  (CHAR_2_ADDR)
     LDI  UL,$04
 
-CHARA2COLX_2: ; $ED62
+CHAR_OUT_3: ; $ED62
     LIN  Y
     VMJ  ($88) ; ($88)($44)
     CPI  XH,$78
-    BCS CHARA2COLX_1 ; $ED71
-    LOP  UL,CHARA2COLX_2 ; $ED62
+    BCS CHAR_OUT_4 ; $ED71
+    LOP  UL,CHAR_OUT_3 ; $ED62
     LDI  A,$00
     VMJ  ($88) ; ($88)($44)
     CPI  XH,$78
 
-CHARA2COLX_1: ; $ED71
+CHAR_OUT_4: ; $ED71
     RPV
     BII  (PU_PV),$01
-    BZS $ED79 ; CHARA2COLX_3
+    BZS $ED79 ; CHAR_OUT_5
     SPV
 
-CHARA2COLX_3: ; $ED79
+CHAR_OUT_5: ; $ED79
     SIE
-    BCH TEXTUREG_A2 ; $ED38
+    BCH OUTBUF_2_LCD_5 ; $ED38
 
 
 
 ;------------------------------------------------------------------------------
-; Converts characters in the accumulator to HEX nibble
+; $ED7D - Converts characters in the accumulator to HEX nibble
 ;            Address: ED7D
 ;   Entry parameters: Accumulator contains ASCII characters
 ;
 ; Modified registers: Accumulator contains converted HEX nibble (00-0F)
 ;   Error conditions: Carry=0 if ASCII characters cannot be converted
 ;------------------------------------------------------------------------------
-A2HEX: ; $ED7D
+CHAR_2_HEX: ; $ED7D
     CPI  A,$47
-    BCS A2HEX_1 ; $ED8D
+    BCS CHAR_2_HEX_1 ; $ED8D
     CPI  A,$41
-    BCS A2HEX_2 ; $ED92
+    BCS CHAR_2_HEX_3 ; $ED92
     CPI  A,$3A
-    BCS A2HEX_1 ; $ED8D
+    BCS CHAR_2_HEX_1 ; $ED8D
     CPI  A,$30
-    BCS A2HEX_3 ; $ED8F
+    BCS CHAR_2_HEX_2 ; $ED8F
 
-A2HEX_1: ; $ED8D
+CHAR_2_HEX_1: ; $ED8D
     REC
     RTN
 
-A2HEX_3: ; $ED8F
+CHAR_2_HEX_2: ; $ED8F
     SBI  A,$30
     RTN
 
-A2HEX_2: ; $ED92
+CHAR_2_HEX_3: ; $ED92
     SBI  A,$37
     RTN
 
@@ -10312,30 +10321,31 @@ A2HEX_2: ; $ED92
 ; Modified registers: X-Reg was incremented by 2 Accumulator contains hex value. Carry=0
 ;   Error conditions: Carry=0 if ASCII characters cannot be converted to hex.
 ;------------------------------------------------------------------------------
-ASCII2HEX: ; $ED95
+ASCII_2_HEX: ; $ED95
     PSH  U
     LIN  X
-    SJP  (A2HEX)
-    BCR ASCII2HEX_1 ; $EDA8
+    SJP  (CHAR_2_HEX)
+    BCR ASCII_2_HEX_1 ; $EDA8
     AEX
     STA  UH
     LIN  X
-    SJP  (A2HEX)
-    BCR ASCII2HEX_1 ; $EDA8
+    SJP  (CHAR_2_HEX)
+    BCR ASCII_2_HEX_1 ; $EDA8
     REC
     ADC  UH
     SEC
 
-ASCII2HEX_1: ; $EDA8
+ASCII_2_HEX_1: ; $EDA8
     POP  U
     RTN
 
 
 
 ;------------------------------------------------------------------------------
-; (90) $EDAB - Checks whether the matrix pointer is still in the permissible range 0-155. Set C=1 if not.
+; $EDAB (90) - Checks whether the matrix pointer is still in the permissible 
+;              range 0-155. Set C=1 if not.
 ;------------------------------------------------------------------------------
-MTRXNRANGE: 
+MTRX_IN_RANGE: 
     LDA  (CURSOR_PTR)
     CPI  A,$9C
     RTN
@@ -10343,19 +10353,20 @@ MTRXNRANGE:
 
 
 ;------------------------------------------------------------------------------
-; (8E) $EDB1 - Increases matrix pointer if still in the permissible range 0-155 C=1 if not.
+; $EDB1 (8E) - Increases matrix pointer if still in the permissible range 
+;              0-155 C=1 if not.
 ;------------------------------------------------------------------------------
-MTRXINC: 
+MTRX_INC: 
     LDA  (CURSOR_PTR)
     INC  A
-    BCS MTRXINC_1 ; $EDB9
+    BCS MTRX_INC_1 ; $EDB9
     CPI  A,$9C
 
-MTRXINC_1: ; $EDB9
+MTRX_INC_1: ; $EDB9
     BCR $EDBD
     LDI  A,$9C
 
-MTRXINC_2: ; $EDBD
+MTRX_INC_2: ; $EDBD
     STA  (CURSOR_PTR)
     RTN
 
@@ -10364,74 +10375,74 @@ MTRXINC_2: ; $EDBD
 ;------------------------------------------------------------------------------
 ; $EDC1 - Cache LCD display of 7810-7BFF
 ;------------------------------------------------------------------------------
-LCDCACHE: ; 
+LCD_CACHE: ; 
     PSH  Y
 
-LCDCACHE_3: ; $EDC3
+LCD_CACHE_1: ; $EDC3
     SEC
     LDI  YH,$7B
     LDI  YL,$10
     LDI  XH,$76
 
-LCDCACHE_2: ; $EDCA
+LCD_CACHE_2: ; $EDCA
     LDI  XL,$00
     LDI  UL,$4D
 
-LCDCACHE_1: ; $EDCE
+LCD_CACHE_3: ; $EDCE
     TIN
-    LOP  UL,LCDCACHE_1 ; $EDCE
-    BCR TEXTUREG_A2 ; $ED38
+    LOP  UL,LCD_CACHE_3 ; $EDCE
+    BCR OUTBUF_2_LCD_5 ; $ED38
     REC
     LDI  XH,$77
-    BCH LCDCACHE_2 ; $EDCA
+    BCH LCD_CACHE_2 ; $EDCA
 
 
 
 ;------------------------------------------------------------------------------
-; $EDD8 - Retrieve LCD display from $7610-$7BFF
+; $EDD8 - Retrieve LCD display from $7B10-$7BFF
 ;------------------------------------------------------------------------------
-BCMD_BFF: ; 
+LCD_RESTORE: ; 
     PSH  Y
 
-BCMD_BFF_3: ; $EDDA
+LCD_RESTORE_1: ; $EDDA
     SEC
     LDI  XH,$7B
     LDI  XL,$10
     LDI  YH,$76
 
-BCMD_BFF_2: ; $EDE1
+LCD_RESTORE_2: ; $EDE1
     LDI  YL,$00
     LDI  UL,$4D
 
-BCMD_BFF_1: ; $EDD8
+LCD_RESTORE_3: ; $EDD8
     TIN
-    LOP  UL,BCMD_BFF_1 ; $EDE5
-    BCR TEXTUREG_A2 ; $ED38
+    LOP  UL,LCD_RESTORE_3 ; $EDE5
+    BCR OUTBUF_2_LCD_5 ; $ED38
     REC
     LDI  YH,$77
-    BCH BCMD_BFF_2 ; $EDE1
+    BCH LCD_RESTORE_2 ; $EDE1
 
 
 
 ;------------------------------------------------------------------------------
 ; $EDEF - Output characters from accumulator to next matrix column address.
 ;------------------------------------------------------------------------------
-HEX2COL: 
+GPRINT_OUT: 
     STA  UH
     VMJ  ($8C) ; ($8C)($46)
     LDA  UH
-    BCH GPRNT_A_2LCD
+    BCH GPRINT_OUT_1
     LIN  Y
 
 ;------------------------------------------------------------------------------
 ; (88) $EDF6 - Output of accumulator as "GPRINT" value on LCD
 ; Output of the accumulator as a bit pattern on the LCD (X-Reg and f.).
 ;------------------------------------------------------------------------------
-GPRNT_A_2LCD:
+GPRINT_OUT_1:
     STA  UH
     ANI  A,$0F
     CPI  XH,$76
-    BCS GPRNT_A_2LCD_1 ; $EE13
+    BCS GPRINT_OUT_4 ; $EE13
     ANI  (X),$F0
     ORA  (X)
     SIN  X
@@ -10440,19 +10451,19 @@ GPRNT_A_2LCD:
     ANI  A,$0F
     ANI  (X),$F0
 
-GPRNT_A_2LCD_3: ; $EE07
+GPRINT_OUT_2: ; $EE07
     ORA  (X)
     SIN  X
     CPI  XL,$4E
-    BCS GPRNT_A_2LCD_2 ; $EE0E
+    BCS GPRINT_OUT_3 ; $EE0E
     RTN
 
-GPRNT_A_2LCD_2: ; $EE0E
+GPRINT_OUT_3: ; $EE0E
     LDI  XL,$00
     INC  XH
     RTN
 
-GPRNT_A_2LCD_1: ; $EE13
+GPRINT_OUT_4: ; $EE13
     AEX
     ANI  (X),$0F
     ORA  (X)
@@ -10460,47 +10471,46 @@ GPRNT_A_2LCD_1: ; $EE13
     LDA  UH
     ANI  A,$F0
     ANI  (X),$0F
-    BCH GPRNT_A_2LCD_3 ; $EE07
+    BCH GPRINT_OUT_2 ; $EE07
 
 
 
 ;------------------------------------------------------------------------------
-; (8C) $EE1F - Calculates in X-Reg matrix column address from matrix pointer
-; Calculates the matrix column address from the matrix pointer $7875 in the X-Reg.
+; $EE1F (8C) - Calculate in X-Reg matrix column address from pointer in $7875
 ;------------------------------------------------------------------------------
-MATRIX_PTR2XREG:
+XREG_2_MATRIX_COL:
     LDA  (CURSOR_PTR)
 
 ;------------------------------------------------------------------------------
 ; $EE22 - Calculated from the accumulator matrix column address in the X-Reg.
 ;------------------------------------------------------------------------------
-MATRIX_A2XREG: 
+XREG_2_MATRIX_COL_1: 
     CPI  A,$4E
-    BCS MATRIX_A2XREG_1 ; $EE36
+    BCS XREG_2_MATRIX_COL_3 ; $EE36
     CPI  A,$27
-    BCS MATRIX_A2XREG_2 ; $EE2F
+    BCS XREG_2_MATRIX_COL_2 ; $EE2F
     LDI  XH,$74
     SHL
     STA  XL
     RTN
 
-MATRIX_A2XREG_2: ; $EE2F
+XREG_2_MATRIX_COL_2: ; $EE2F
     SBI  A,$27
     LDI  XH,$75
     SHL
     STA  XL
     RTN
 
-MATRIX_A2XREG_1: ; $EE36
+XREG_2_MATRIX_COL_3: ; $EE36
     CPI  A,$75
-    BCS MATRIX_A2XREG_3 ; $EE41
+    BCS XREG_2_MATRIX_COL_4 ; $EE41
     SBI  A,$4D
     LDI  XH,$76
     SHL
     STA  XL
     RTN
 
-MATRIX_A2XREG_3: ; $EE41
+XREG_2_MATRIX_COL_4: ; $EE41
     SBI  A,$75
     LDI  XH,$77
     SHL
@@ -10510,74 +10520,74 @@ MATRIX_A2XREG_3: ; $EE41
 
 
 ;------------------------------------------------------------------------------
-; $EE48 - Retrieves address in character set table for character in accumulator
-; Retrieves the address in the character set table for characters in the
-; accumulator. 2. Character set is taken into account. Table address is passed to Y-Reg.
+; $EE48 - Retrieves the address in character set table for characters in the
+;         accumulator. 2nd Character set is taken into account. 
+;         Table address is passed to Y-Reg.
 ;------------------------------------------------------------------------------
-CHAR2ADDR: 
+CHAR_2_ADDR: 
     SHL
-    BCS CHAR2ADDR_1 ; $EE5A
+    BCS CHAR_2_ADDR_4 ; $EE5A
 
-CHAR2ADDR_6: ; $EE4B
+CHAR_2_ADDR_1: ; $EE4B
     LDI  YH,$FC
     CPI  A,$40
-    BCS CHAR2ADDR_2 ; $EE53
+    BCS CHAR_2_ADDR_2 ; $EE53
     LDI  A,$40
 
-CHAR2ADDR_2: ; $EE53
+CHAR_2_ADDR_2: ; $EE53
     STA  YL
 
-CHAR2ADDR_5: ; $EE54
+CHAR_2_ADDR_3: ; $EE54
     ADR  Y
     SHR
     ADR  Y
     RTN
 
-CHAR2ADDR_1: ; $EE5A
+CHAR_2_ADDR_4: ; $EE5A
     STA  YL
     LDA  (KATAFLAGS)
     SHL
-    BZR CHAR2ADDR_3 ; $EE6E
+    BZR CHAR_2_ADDR_6 ; $EE6E
     RIE
     RPV
-    BCR CHAR2ADDR_4 ; $EE67
+    BCR CHAR_2_ADDR_5 ; $EE67
     SPV
 
-CHAR2ADDR_4: ; $EE67
+CHAR_2_ADDR_5: ; $EE67
     LDA  (KATACHAR)
     STA  YH
     LDA  YL
-    BCH CHAR2ADDR_5 ; $EE54
+    BCH CHAR_2_ADDR_3 ; $EE54
 
-CHAR2ADDR_3: ; $EE6E
+CHAR_2_ADDR_6: ; $EE6E
     LDA  YL
-    BCH CHAR2ADDR_6 ; $EE4B
+    BCH CHAR_2_ADDR_1 ; $EE4B
 
 
 
 ;------------------------------------------------------------------------------
-; (F2) Clears the LCD display
+; $EE71 (F2) - Clears the LCD display
 ;            Address: EE71 (F2)
 ;          Parameter: None
 ;
 ; Modified Registers: U-Reg, Accumulator
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-LCDCLR: ; $EE71
+LCD_CLR: ; $EE71
     LDI  UH,$76
-    SJP  (LCDCLRRNG)
+    SJP  (LCD_CLR_1)
     LDI  UH,$77
 
 ;------------------------------------------------------------------------------
 ; $EE78 - Clears area from (UH00)-(UH4D)
 ;------------------------------------------------------------------------------
-LCDCLRRNG: ; 
+LCD_CLR_1: ; 
     LDI  UL,$4D
     LDI  A,$00
 
-LCDCLRRNG_1: ; $EE7C
+LCD_CLR_2: ; $EE7C
     STA  (U)
-    LOP  UL,LCDCLRRNG_1 ; $EE7C
+    LOP  UL,LCD_CLR_2 ; $EE7C
     RTN
 
 
@@ -10586,7 +10596,7 @@ LCDCLRRNG_1: ; $EE7C
 ; $EE80 - Saves cursor parameters in cache from $786C. 
 ; Transfers the display to the buffer area.
 ;------------------------------------------------------------------------------
-SAVELCD2BUF: ; 
+SAVE_LCD_CURS: ; 
     ANI  (ARX + $07),$00
     ORI  (CURSOR_ENA),$80
     PSH  Y
@@ -10596,19 +10606,19 @@ SAVELCD2BUF: ;
     LDI  YL,$6C
     LDI  UL,$03
 
-SAVELCD2BUF_1: ; $EE94
+SAVE_LCD_CURS_1: ; $EE94
     TIN
-    LOP  UL,SAVELCD2BUF_1 ; $EE94
-    BCH LCDCACHE_3 ; $EDC3
+    LOP  UL,SAVE_LCD_CURS_1 ; $EE94
+    BCH LCD_CACHE_1 ; $EDC3
 
 
 
 ;------------------------------------------------------------------------------
 ; $EE99 - Transfer back cursor parameters and display.
 ;------------------------------------------------------------------------------
-BUF2LCD:
+RESTORE_LCD_CURS:
     BII  (CURSOR_ENA),$80
-    BZS LCDCHRLEFT_1 ; $EEC0
+    BZS LCD_CHARS_OPEN_2 ; $EEC0
     PSH  Y
     LDI  XH,$78
     LDI  XL,$6C
@@ -10616,44 +10626,44 @@ BUF2LCD:
     LDI  YL,$7C
     LDI  UL,$03
 
-BUF2LCD_1: ; $EEAB
+RESTORE_LCD_CURS_1: ; $EEAB
     TIN
-    LOP  UL,BUF2LCD_1 ; $EEAB
-    BCH BCMD_BFF_3 ; $EDDA
+    LOP  UL,RESTORE_LCD_CURS_1 ; $EEAB
+    BCH LCD_RESTORE_1 ; $EDDA
 
 
 
 ;------------------------------------------------------------------------------
-; $EEB0 - Determines from accumulator number of characters that can be displayed. 
-; If output not possible C=1.
+; $EEB0 - Determines from A number of characters that can be displayed. 
+;         If output not possible C=1.
 ;------------------------------------------------------------------------------
-LCDCHRLEFT: ; 
+LCD_CHARS_OPEN: ; 
     LDI  UL,$19
     LDA  (CURSOR_PTR)
-    BZS LCDCHRLEFT_2 ; $EEC5
+    BZS LCD_CHARS_OPEN_4 ; $EEC5
     DEC  A
     LDI  UH,$06
     SEC
 
-LCDCHRLEFT_4: ; $EEBB
+LCD_CHARS_OPEN_1: ; $EEBB
     SBC  UH
-    BCR LCDCHRLEFT_3 ; $EEC2
-    LOP  UL,LCDCHRLEFT_4 ; $EEBB
+    BCR LCD_CHARS_OPEN_3 ; $EEC2
+    LOP  UL,LCD_CHARS_OPEN_1 ; $EEBB
 
-LCDCHRLEFT_1: ; $EEC0
+LCD_CHARS_OPEN_2: ; $EEC0
     SEC
     RTN
 
-LCDCHRLEFT_3: ; $EEC2
+LCD_CHARS_OPEN_3: ; $EEC2
     ADC  UH
-    BZR LCDCHRLEFT_5 ; $EEC6
+    BZR LCD_CHARS_OPEN_5 ; $EEC6
 
-LCDCHRLEFT_2: ; $EEC5
+LCD_CHARS_OPEN_4: ; $EEC5
     INC  UL
 
-LCDCHRLEFT_5: ; $EEC6
+LCD_CHARS_OPEN_5: ; $EEC6
     LDA  UL
-    BZS LCDCHRLEFT_1 ; $EEC0
+    BZS LCD_CHARS_OPEN_2 ; $EEC0
     REC
     RTN
 
@@ -10664,9 +10674,9 @@ LCDCHRLEFT_5: ; $EEC6
 ;------------------------------------------------------------------------------
 BCMD_POINT: ; 
     VEJ  (D0) \ ABYT($0A) \ ABRF($EF19) ; *** $EF19 mid of command, EF1A - RET perhaps?
-    SJP  (MATRIX_A2XREG)
+    SJP  (XREG_2_MATRIX_COL_1)
     CPI  XH,$76
-    BCS BCMD_POINT_1 ; $EEE2
+    BCS BCMD_POINT_2 ; $EEE2
     LIN  X
     ANI  A,$0F
     STA  UL
@@ -10674,30 +10684,30 @@ BCMD_POINT: ;
     ANI  A,$0F
     AEX
 
-BCMD_POINT_3: ; $EEE2
+BCMD_POINT_1: ; $EEE2
     REC
     ADC  UL
     JMP  BCMD_LEN_2 ; $D9E4
 
-BCMD_POINT_1: ; $EEE2
+BCMD_POINT_2: ; $EEE2
     LIN  X
     ANI  A,$F0
     AEX
     STA  UL
     LIN  X
     ANI  A,$F0
-    BCH BCMD_POINT_3 ; $EEDD
+    BCH BCMD_POINT_1 ; $EEDD
 
-BCMD_POINT_2: ; $EEEC
+BCMD_POINT_3: ; $EEEC
     SHR
     BCR CURSOR_OFF_1 ; $EF04
     PSH  Y
-    SJP  (USING2STK)
-    JMP  BCMD_PAUSE_25 ; $E6A9
+    SJP  (USING_2_STK)
+    JMP  BCMD_PAUSE_1 ; $E6A9
 
 BCMD_POINT_4: ; $EEF7
     ANI  (CURSOR_ENA),$7F
-    SJP  (STK2USING)
+    SJP  (STK_2_USING)
     POP  Y
 
 
@@ -10714,25 +10724,26 @@ CURSOR_OFF_1: ; $EF04
 
 
 ;------------------------------------------------------------------------------
-; $EF05 - Saves USING parameters on processor stack ($7895-$7897) and deletes USING parameters.
+; $EF05 - Saves USING parameters on processor stack ($7895-$7897) 
+;         and deletes USING parameters.
 ;------------------------------------------------------------------------------
-USING2STK: ; 
+USING_2_STK: ; 
     LDI  XH,$78
     LDI  XL,$95
     POP  Y
     LDI  UL,$02
 
-USING2STK_1: ; $EF0D
+USING_2_STK_1: ; $EF0D
     LIN  X
     PSH  A
-    LOP  UL,USING2STK_1 ; $EF0D
+    LOP  UL,USING_2_STK_1 ; $EF0D
     DEC  X
     LDI  A,$00
     SDE  X
     SDE  X
     STA  (X)
 
-USING2STK_2: ; $EF18
+USING_2_STK_2: ; $EF18
     PSH  Y
     RTN
 
@@ -10741,22 +10752,22 @@ USING2STK_2: ; $EF18
 ;------------------------------------------------------------------------------
 ; $EF1B - Convert AR-X to string
 ;------------------------------------------------------------------------------
-ARX2STRNG: ; 
-    SJP  (USING2STK)
+ARX_2_STRNG: ; 
+    SJP  (USING_2_STK)
     LDI  A,$01
     VMJ  ($96) ; ($96)($4B)
     STA  UL
     LDA  (X)
     CPI  A,$20
-    BZR ARX2STRNG_1 ; $EF2A
+    BZR ARX_2_STRNG_1 ; $EF2A
     DEC  UL
     INC  X
 
-ARX2STRNG_1: ; $EF2A
+ARX_2_STRNG_1: ; $EF2A
     LDA  UL
     VMJ  ($24)
     ANI  (CURSOR_ENA),$7F
-    SJP  (STK2USING)
+    SJP  (STK_2_USING)
     RTN
 
 
@@ -10764,38 +10775,38 @@ ARX2STRNG_1: ; $EF2A
 ;------------------------------------------------------------------------------
 ; $EF35 - Gets USING parameters from stack
 ;------------------------------------------------------------------------------
-STK2USING: ; 
+STK_2_USING: ; 
     LDI  XH,$78
     LDI  XL,$97
     POP  Y
     LDI  UL,$02
 
-STK2USING_1: ; $EF3D
+STK_2_USING_1: ; $EF3D
     POP  A
     SDE  X
-    LOP  UL,STK2USING_1 ; $EF3D
-    BCH USING2STK_2 ; $EF18
+    LOP  UL,STK_2_USING_1 ; $EF3D
+    BCH USING_2_STK_2 ; $EF18
 
 
 
 ;------------------------------------------------------------------------------
 ; $EF44 - Outputs text on LCD display
 ;------------------------------------------------------------------------------
-TXT2LCD: ; 
+TXT_2_LCD: ; 
     PSH  X
     LDI  A,$00
     LDI  UL,$19
     BII  (X),$FF
-    BZS TXT2LCD_1 ; $EF52
+    BZS TXT_2_LCD_1 ; $EF52
     INC  A
     INC  X
     LOP  UL,$EF4A
 
-TXT2LCD_1: ; $EF52
+TXT_2_LCD_1: ; $EF52
     STA  XL
     VEJ  (F2)
     POP  U
-    SJP  (TEXTUREG_XL)
+    SJP  (XREG_2_LCD)
     BCH CURSOR_OFF
 
 
@@ -10803,34 +10814,34 @@ TXT2LCD_1: ; $EF52
 ;------------------------------------------------------------------------------
 ; $EF5B - Text output on LCD from (AR-Y)
 ;------------------------------------------------------------------------------
-TXT2LCD_ARY: ; 
+TXT_2_LCD_2: ; 
     REC
     LDI  A,$F0
     ADC  XL
     LDI  UH,$7A
     LDI  UL,$10
     PSH  U
-    BCH TXT2LCD_1 ; $EF52
+    BCH TXT_2_LCD_1 ; $EF52
 
 
 
 ;------------------------------------------------------------------------------
 ; $EF67 - Prepare the LCD output
 ;------------------------------------------------------------------------------
-PREPLCDOUT:
+PREP_LCD_OUT:
     ORI  (BREAKPARAM),$10
     BII  (CURSOR_ENA),$01
-    BZR PREPLCDOUT_1 ; $EF72
+    BZR PREP_LCD_OUT_1 ; $EF72
     VEJ  (F2)
 
-PREPLCDOUT_1: ; $EF72
+PREP_LCD_OUT_1: ; $EF72
     ANI  (CHARPOS_LCD),$00
-    SJP  (LCDCHRLEFT)
-    BCS PREPLCDOUT_2 ; $EF80
+    SJP  (LCD_CHARS_OPEN)
+    BCS PREP_LCD_OUT_2 ; $EF80
     EAI  $FF
     STA  ($7877)
 
-PREPLCDOUT_2: ; $EF80
+PREP_LCD_OUT_2: ; $EF80
     RTN
 
 
@@ -10843,47 +10854,48 @@ PREPLCDOUT_2: ; $EF80
 ; Modified Registers: X-Reg, U-Reg, Accumulator
 ;   Error conditions: None
 ;------------------------------------------------------------------------------
-OUTBUFCLR: ; $EF81
+OUTBUF_CLR: ; $EF81
     LDI  XH,$7B
     LDI  XL,$60
     LDI  UL,$4F
     VMJ  ($BA) ; ($BA)($5D)
     RTN
 
-OUTBUFCLR_8: ; $EF8A
+OUTBUF_CLR_1: ; $EF8A
     LDI  YL,$07
     LDI  A,$06
-    JMP  BCMD_SIN_1 ; $F3BA
+    JMP  BCMD_SIN_3 ; $F3BA
 
-OUTBUFCLR_7: ; $EF91
-    JMP  ARX2BCD_ABS ; $F65D
+OUTBUF_CLR_2: ; $EF91
+    JMP  ARX_2_BCD_ABS ; $F65D
 
-OUTBUFCLR_1: ; $EF94
+OUTBUF_CLR_3: ; $EF94
     CPI  YL,$2B
-    BZS OUTBUFCLR_4 ; $EF9C
+    BZS OUTBUF_CLR_4 ; $EF9C
     ADI  (ARY + $01),$80
 
-OUTBUFCLR_4: ; $EF9C
+OUTBUF_CLR_4: ; $EF9C
     VEJ  (F0)
 
-OUTBUFCLR_6: ; $EF9D
+OUTBUF_CLR_5: ; $EF9D
     BCS $EFA2
     JMP  GET_VAR_INDEX_32 ; $D8F0
     JMP  GET_VAR_INDEX_33 ; $D8F2
 
-OUTBUFCLR_2: ; $EFA5
+OUTBUF_CLR_6: ; $EFA5
     CPI  YL,$2A
-    BZR OUTBUFCLR_5 ; $EFAD
+    BZR OUTBUF_CLR_7 ; $EFAD
     VMJ  ($7E) ; ($7E)($3F)
-    BCH OUTBUFCLR_6 ; $EF9D
+    BCH OUTBUF_CLR_5 ; $EF9D
 
-OUTBUFCLR_5: ; $EFAD
+OUTBUF_CLR_7: ; $EFAD
     VMJ  ($58) ; ($58)($2C)
-    BCH OUTBUFCLR_6 ; $EF9D
+    BCH OUTBUF_CLR_5 ; $EF9D
 
-OUTBUFCLR_3: ; $EFB1
+OUTBUF_CLR_8: ; $EFB1
     SJP  ($F89C)
-    BCH OUTBUFCLR_6 ; $EF9D
+    BCH OUTBUF_CLR_5 ; $EF9D
+
 
 
 ;------------------------------------------------------------------------------
@@ -10893,26 +10905,26 @@ SUBTR: ;
     ADI  (ARY + $01),$80
 
 ;------------------------------------------------------------------------------
-; (F0) $EFBA - Addition: AR-X = AR-X + AR-Y
+; $EFBA (F0) - Addition: AR-X = AR-X + AR-Y
 ;------------------------------------------------------------------------------
 ADDIT: ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$02
     LDI  YL,$12
     LDE  X
-    BZS ADDIT_1 ; $EFF6
+    BZS ADDIT_6 ; $EFF6
     LDE  Y
-    BZS MULTIPLY_1 ; $F065
+    BZS MULTIPLY_7 ; $F065
     VMJ  ($7C) ; ($7C)($3E)
     LDA  (X)
     SEC
     SBC  (Y)
-    BZS ADDIT_2 ; $EFE5
-    BVS ADDIT_3 ; $EFFA
+    BZS ADDIT_3 ; $EFE5
+    BVS ADDIT_3_7 ; $EFFA
     ROL
 
-ADDIT_6: ; $EFD0
-    BCR ADDIT_4 ; $EFFE
+ADDIT_1: ; $EFD0
+    BCR ADDIT_8 ; $EFFE
     ROR
     EAI  $FF
     INC  A
@@ -10922,53 +10934,53 @@ ADDIT_6: ; $EFD0
     POP  A
     LDI  XL,$07
 
-ADDIT_7: ; $EFDE
+ADDIT_2: ; $EFDE
     CPI  A,$0C
-    BCS ADDIT_5 ; $F003
-    SJP  (ADD_ARU_ARX_2) ; $F7F7
+    BCS ADDIT_9 ; $F003
+    SJP  (ARX_MINUS_ARV_7) ; $F7F7
 
-ADDIT_2: ; $EFE5
+ADDIT_3: ; $EFE5
     POP  A
     PSH  A
     SHL
     BCS PC1500_PRT_A_DIR
     VEJ  (EE)
 
-ADDIT_8: ; $EFED
+ADDIT_4: ; $EFED
     POP  A
 
-ADDIT_9: ; $EFEF
+ADDIT_5: ; $EFEF
     STA  UH
     POP  A
     REC
     ADC  UH
-    BCH MULTIPLY_2 ; $F057
+    BCH MULTIPLY_3 ; $F057
 
-ADDIT_1: ; $EFF6
+ADDIT_6: ; $EFF6
     VMJ  ($56) ; ($56)($2B)
-    BCH OUTBUFCLR_7 ; $EF91
+    BCH OUTBUF_CLR_2 ; $EF91
 
-ADDIT_3: ; $EFFA
+ADDIT_3_7: ; $EFFA
     LDI  A,$1F
-    BCH ADDIT_6 ; $EFD0
+    BCH ADDIT_1 ; $EFD0
 
-ADDIT_4: ; $EFFE
+ADDIT_8: ; $EFFE
     ROR
     LDI  XL,$17
-    BCH ADDIT_7 ; $EFDE
+    BCH ADDIT_2 ; $EFDE
 
-ADDIT_5: ; $F003
+ADDIT_9: ; $F003
     LDA  XL
     ANI  A,$F9
     STA  XL
-    SJP  (CLR_7_XREG)
-    BCH ADDIT_2 ; $EFE5
+    SJP  (CLR_ARITHMETIC_REGS_3)
+    BCH ADDIT_3 ; $EFE5
     VMJ  ($7A) ; ($7A)($3D)
-    BCS ADDIT_8 ; $EFED
-    SJP  (ADD_ARU_ARX_3) ; $F7EB
+    BCS ADDIT_4 ; $EFED
+    SJP  (ARX_MINUS_ARV_5) ; $F7EB
     POP  A
     EAI  $80
-    BCH ADDIT_9 ; $EFEF
+    BCH ADDIT_5 ; $EFEF
 
 
 
@@ -10979,7 +10991,7 @@ SQUARE:
     VEJ  (E6)
 
 ;------------------------------------------------------------------------------
-; $F01A - (7E) Multiplication: AR-X = AR-X* AR-Y
+; $F01A (7E) - Multiplication: AR-X = AR-X* AR-Y
 ;------------------------------------------------------------------------------
 MULTIPLY: ;
     VMJ  ($54) ; ($54)($2A)
@@ -10989,55 +11001,55 @@ MULTIPLY: ;
     LDA  (Y)
     REC
     ADC  (X)
-    BVS MULTIPLY_3 ; $F05A
+    BVS MULTIPLY_4 ; $F05A
     STA  (X)
     VMJ  ($78) ; ($78)($3C)
     VMJ  ($76) ; ($76)($3B)
-    SJP  (ADD_ARU_ARX_4) ; $F820
+    SJP  (ARX_MINUS_ARV_12) ; $F820
     LDI  YL,$0F
 
-MULTIPLY_5: ; $F031
+MULTIPLY_1: ; $F031
     PSH  Y
     LDA  (Y)
     PSH  A
     ANI  A,$0F
     AEX
-    SJP  (ADDMANY)
+    SJP  (ADD_N_AR)
     VMJ  ($74) ; ($74)($3A)
     POP  A
     ANI  A,$F0
-    SJP  (ADDMANY)
+    SJP  (ADD_N_AR)
     POP  Y
     DEC  Y
     CPI  YL,$0A
-    BCR DIVISION_11 ; $F050
+    BCR MULTIPLY_2 ; $F050
     VMJ  ($74) ; ($74)($3A)
-    BCH MULTIPLY_5 ; $F031
+    BCH MULTIPLY_1 ; $F031
 
-DIVISION_11: ; $F050
+MULTIPLY_2: ; $F050
     POP  U
     LDA  UL
     STA  (ARY + $01)
     LDA  UH
 
-MULTIPLY_2: ; $F057
+MULTIPLY_3: ; $F057
     VMJ  ($52) ; ($52)($29
     RTN
 
-MULTIPLY_3: ; $F05A
+MULTIPLY_4: ; $F05A
     POP  U
-    BCS MULTIPLY_6 ; $F062
+    BCS MULTIPLY_5 ; $F062
     LDI  UH,$25
     SEC
     RTN
 
-MULTIPLY_6: ; $F062
+MULTIPLY_5: ; $F062
     VEJ  (EC)
 
-MULTIPLY_7: ; $F063
+MULTIPLY_6: ; $F063
     LDI  UH,$00
 
-MULTIPLY_1: ; $F065
+MULTIPLY_7: ; $F065
     REC
     RTN
 
@@ -11045,44 +11057,44 @@ MULTIPLY_1: ; $F065
 
 ;------------------------------------------------------------------------------
 ; $F067 - Adds the mantissas of those AR to the AR-X that are preselected by 
-; the value in the accumulator. If bit# is set 7:AR-W, 6:AR-V, 5:AR-U,
-; 4:AR-Y, 3:AR-Z are added.
+;         the value in the accumulator. If bit# is set 7:AR-W, 6:AR-V, 5:AR-U,
+;         4:AR-Y, 3:AR-Z are added.
 ;------------------------------------------------------------------------------
-ADDMANY: ; 
+ADD_N_AR: ; 
     STA  UH
     LDI  A,$2F
 
-ADDMANY_2: ; $F06A
+ADD_N_AR_1: ; $F06A
     PSH  A
     STA  YL
     LDA  UH
     SHL
     STA  UH
-    BCR ADDMANY_1 ; $F07B
+    BCR ADD_N_AR_3 ; $F07B
     VMJ  ($72) ; ($72)($39)
 
-ADDMANY_3: ; $F074
+ADD_N_AR_2: ; $F074
     REC
     POP  A
     ADI  A,$F8
-    BCH ADDMANY_2 ; $F06A
+    BCH ADD_N_AR_1 ; $F06A
 
-ADDMANY_1: ; $F07B
-    BZR ADDMANY_3 ; $F074
+ADD_N_AR_3: ; $F07B
+    BZR ADD_N_AR_2 ; $F074
     POP  A
     RTN
 
 
 
 ;------------------------------------------------------------------------------
-; (6E) $F080 - Reciprocal of AR-X AR-X=1/AR-X (if error C=1).
+; $F080 (6E) - Reciprocal of AR-X AR-X=1/AR-X (if error C=1).
 ;------------------------------------------------------------------------------
 RECIPRICAL: ; 
     VMJ  ($6A) ; ($6A)($35)
     VMJ  ($66) ; ($66)($33)
 
 ;------------------------------------------------------------------------------
-; (58) $F084 - Division: AR-X = AR-X / AR- Y
+; $F084 (58) - Division: AR-X = AR-X / AR- Y
 ;------------------------------------------------------------------------------
 DIVISION: ; 
     VMJ  ($54) ; ($54)($2A)
@@ -11090,66 +11102,66 @@ DIVISION: ;
     LDI  YL,$11
     VMJ  ($7C) ; ($7C)($3E)
     BII  (ARY + $02),$F0
-    BZS DIVISION_1 ; $F0E3
+    BZS DIVISION_11 ; $F0E3
     REC
     LDA  (X)
     SBC  (Y)
-    BVS MULTIPLY_3 ; $F05A
+    BVS MULTIPLY_4 ; $F05A
     STA  (X)
     SJP  (CLR_SM_ARZ)
-    SJP  (ADD_ARU_ARX_5) ; $F81C
+    SJP  (ARX_MINUS_ARV_11) ; $F81C
     LDI  A,$0C
     PSH  A
 
-DIVISION_6: ; $F0A2
-    SJP  (ADD_ARU_ARX_6) ; $F7D9
-    BCS DIVISION_2 ; $F0BD
+DIVISION_1: ; $F0A2
+    SJP  (ARX_MINUS_ARV) ; $F7D9
+    BCS DIVISION_5 ; $F0BD
 
-DIVISION_8: ; $F0A7
+DIVISION_2: ; $F0A7
     SJP  (ADD_ARU_ARX)
-    BCS DIVISION_3 ; $F0CE
+    BCS DIVISION_7 ; $F0CE
     VEJ  (EE)
-    BCS DIVISION_4 ; $F0D8
+    BCS DIVISION_9 ; $F0D8
 
-DIVISION_10: ; $F0AF
+DIVISION_3: ; $F0AF
     VEJ  (EE)
 
-DIVISION_12: ; $F0B0
+DIVISION_4: ; $F0B0
     POP  A
     DEC  A
-    BCR DIVISION_5 ; $F0DE
+    BCR DIVISION_10 ; $F0DE
     PSH  A
     VEJ  (EA)
     SJP  (ARZ_SHL_4BITS)
-    BCH DIVISION_6 ; $F0A2
+    BCH DIVISION_1 ; $F0A2
 
-DIVISION_2: ; $F0BD
-    SJP  (ADD_ARU_ARX_6) ; $F7D9
-    BCS DIVISION_7 ; $F0C8
+DIVISION_5: ; $F0BD
+    SJP  (ARX_MINUS_ARV) ; $F7D9
+    BCS DIVISION_6 ; $F0C8
     ORI  (ARZ + $07),$04
-    BCH DIVISION_8 ; $F0A7
+    BCH DIVISION_2 ; $F0A7
 
-DIVISION_7: ; $F0C8
+DIVISION_6: ; $F0C8
     ORI  (ARZ + $07),$08
-    BCH DIVISION_9 ; $F0D2
+    BCH DIVISION_8 ; $F0D2
 
-DIVISION_3: ; $F0CE
+DIVISION_7: ; $F0CE
     ORI  (ARZ + $07),$02
 
-DIVISION_9: ; $F0D2
+DIVISION_8: ; $F0D2
     VMJ  ($7A) ; ($7A)($3D)
-    BCS DIVISION_4 ; $F0D8
-    BCH DIVISION_10 ; $F0AF
+    BCS DIVISION_9 ; $F0D8
+    BCH DIVISION_3 ; $F0AF
 
-DIVISION_4: ; $F0D8
+DIVISION_9: ; $F0D8
     ORI  (ARZ + $07),$01
-    BCH DIVISION_12 ; $F0B0
+    BCH DIVISION_4 ; $F0B0
 
-DIVISION_5: ; $F0DE
+DIVISION_10: ; $F0DE
     SJP  (XFER_SM_ARZ2ARX)
-    BCH DIVISION_11 ; $F050
+    BCH MULTIPLY_2 ; $F050
 
-DIVISION_1: ; $F0E3
+DIVISION_11: ; $F0E3
     POP  X
     LDI  UH,$26
     SEC
@@ -11165,26 +11177,26 @@ SQR_ROOT: ;
     LDI  XL,$01
     LDE  X
     SHL
-    BCS SQR_ROOT_1 ; $F15D
+    BCS SQR_ROOT_12 ; $F15D
     LDA  (X)
     BII  A,$80
-    BZS SQR_ROOT_2 ; $F0F7
+    BZS SQR_ROOT_1 ; $F0F7
     SEC
 
-SQR_ROOT_2: ; $F0F7
+SQR_ROOT_1: ; $F0F7
     ROR
     STA  (X)
-    BCR SQR_ROOT_3 ; $F0FC
+    BCR SQR_ROOT_2 ; $F0FC
     VEJ  (EA)
 
-SQR_ROOT_3: ; $F0FC
+SQR_ROOT_2: ; $F0FC
     VMJ  ($70) ; ($70)($38)
     SJP  (CLR_SM_ARZ)
     LDI  A,$24
     ORI  (ARY + $02),$10
-    BCH SQR_ROOT_4 ; $F12F
+    BCH SQR_ROOT_7 ; $F12F
 
-SQR_ROOT_9: ; $F109
+SQR_ROOT_3: ; $F109
     VEJ  (EE)
     POP  Y
     LDX  Y
@@ -11195,17 +11207,17 @@ SQR_ROOT_9: ; $F109
     POP  A
     CPI  A,$0F
     LDA  UH
-    BCR SQR_ROOT_5 ; $F120
+    BCR SQR_ROOT_4 ; $F120
     AEX
     STA  (X)
     ADI  (Y),$F1
     BCH SQR_ROOT_6 ; $F12B
 
-SQR_ROOT_5: ; $F120
+SQR_ROOT_4: ; $F120
     ORA  (X)
     STA  (X)
     CPI  YL,$17
-    BCS SQR_ROOT_7 ; $F156
+    BCS SQR_ROOT_11 ; $F156
     ADI  (Y),$FF
     INC  Y
     ORI  (Y),$10
@@ -11215,7 +11227,7 @@ SQR_ROOT_6: ; $F12B
     POP  A
     INC  A
 
-SQR_ROOT_4: ; $F12F
+SQR_ROOT_7: ; $F12F
     PSH  A
     SHR
     STA  YL
@@ -11228,9 +11240,9 @@ SQR_ROOT_8: ; $F139
     PSH  A
     PSH  Y
 
-SQR_ROOT_11: ; $F13F
+SQR_ROOT_9: ; $F13F
     VMJ  ($7A) ; ($7A)($3D)
-    BCR SQR_ROOT_9 ; $F109
+    BCR SQR_ROOT_3 ; $F109
     POP  Y
     POP  A
     PSH  A
@@ -11243,17 +11255,17 @@ SQR_ROOT_10: ; $F14C
     LDI  A,$00
     BCS SQR_ROOT_10 ; $F14C
     INC  UH
-    BCH SQR_ROOT_11 ; $F13F
+    BCH SQR_ROOT_9 ; $F13F
 
-SQR_ROOT_7: ; $F156
+SQR_ROOT_11: ; $F156
     SJP  (XFER_SM_ARZ2ARX)
     POP  A
     VEJ  (E8)
     RTN
 
-SQR_ROOT_1: ; $F15D
+SQR_ROOT_12: ; $F15D
     LDI  UH,$27
-    BCH BCMD_LOG_2 ; $F1C0
+    BCH BCMD_LOG_8 ; $F1C0
 
 
 
@@ -11262,7 +11274,7 @@ SQR_ROOT_1: ; $F15D
 ;------------------------------------------------------------------------------
 BCMD_LN: ; 
     LDI  A,$02
-    BCH BCMD_LOG_3 ; $F167
+    BCH BCMD_LOG_1 ; $F167
 
 ;------------------------------------------------------------------------------
 ; $F165 - Basic command LOG
@@ -11270,25 +11282,25 @@ BCMD_LN: ;
 BCMD_LOG: ; 
     LDI  A,$00
 
-BCMD_LOG_3: ; $F167
+BCMD_LOG_1: ; $F167
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$02
     LDI  XL,$02
     BII  (X),$F0
-    BZS SQR_ROOT_1 ; $F15D
+    BZS SQR_ROOT_12 ; $F15D
     DEC  X
     BII  (X),$FF
-    BZR SQR_ROOT_1 ; $F15D
+    BZR SQR_ROOT_12 ; $F15D
     DEC  X
     BII  (X),$80
-    BZR BCMD_LOG_4 ; $F1C2
+    BZR BCMD_LOG_9 ; $F1C2
     PSH  A
 
-BCMD_LOG_8: ; $F17D
+BCMD_LOG_2: ; $F17D
     LDA  (X)
     PSH  A
 
-BCMD_LOG_1: ; $F180
+BCMD_LOG_3: ; $F180
     ANI  (X),$00
     ADI  (ARX + $02),$F0
     VEJ  (E8)
@@ -11298,9 +11310,9 @@ BCMD_LOG_1: ; $F180
     STA  UH
     LDI  A,$01
     STA  (ARU)
-    JMP  EXPONENT_1 ; $F2EC
+    JMP  EXPONENT_26 ; $F2EC
 
-BCMD_LOG_9: ; $F196
+BCMD_LOG_4: ; $F196
     ADI  (ARX),$FF
     VEJ  (E8)
     VEJ  (E6)
@@ -11314,32 +11326,32 @@ BCMD_LOG_9: ; $F196
 
 BCMD_LOG_5: ; $F1A8
     POP  A
-    BCS BCMD_LOG_6 ; $F1BE
+    BCS BCMD_LOG_7 ; $F1BE
     SHR
-    BCR BCMD_LOG_7 ; $F1B3
+    BCR BCMD_LOG_6 ; $F1B3
     ORI  (ARX + $01),$80
 
-BCMD_LOG_7: ; $F1B3
+BCMD_LOG_6: ; $F1B3
     SHR
-    BCR EXPONENT_2 ; $F230
-    SJP  (ADD_ARU_ARX_7) ; $F87B
+    BCR EXPONENT_11 ; $F230
+    SJP  (ARX_MINUS_ARV_26) ; $F87B
     VMJ  ($58) ; ($58)($2C)
-    BCS BCMD_LOG_6 ; $F1BE
+    BCS BCMD_LOG_7 ; $F1BE
     RTN
 
-BCMD_LOG_6: ; $F1BE
+BCMD_LOG_7: ; $F1BE
     LDI  UH,$25
 
-BCMD_LOG_2: ; $F1C0
+BCMD_LOG_8: ; $F1C0
     SEC
     RTN
 
-BCMD_LOG_4: ; $F1C2
+BCMD_LOG_9: ; $F1C2
     INC  A
     PSH  A
     VMJ  ($6E) ; ($6E)($37)
     LDI  XL,$00
-    BCH BCMD_LOG_8 ; $F17D
+    BCH BCMD_LOG_2 ; $F17D
 
 
 
@@ -11348,9 +11360,9 @@ BCMD_LOG_4: ; $F1C2
 ;------------------------------------------------------------------------------
 BCMD_EXP: ; 
     VMJ  ($54) ; ($54)($2A)
-    SJP  (ADD_ARU_ARX_7) ; $F87B
+    SJP  (ARX_MINUS_ARV_26) ; $F87B
     VMJ  ($7E) ; ($7E)($3F)
-    BCS BCMD_LOG_6 ; $F1BE
+    BCS BCMD_LOG_7 ; $F1BE
 
 
 
@@ -11363,33 +11375,33 @@ EXPONENT: ;
     PSH  A
     DEC  X
     LDA  (X)
-    BZS EXPONENT_3 ; $F226
+    BZS EXPONENT_9 ; $F226
     BII  A,$80
-    BZR EXPONENT_4 ; $F222
+    BZR EXPONENT_8 ; $F222
     CPI  A,$01
-    BZR EXPONENT_5 ; $F229
+    BZR EXPONENT_10 ; $F229
     LDI  XL,$01
     LDI  UL,$05
 
-EXPONENT_6: ; $F1EA
+EXPONENT_1: ; $F1EA
     INC  X
     LDE  X
     SIN  X
-    LOP  UL,EXPONENT_6 ; $F1EA
+    LOP  UL,EXPONENT_1 ; $F1EA
     ANI  (X),$00
 
-EXPONENT_11: ; $F1F1
+EXPONENT_2: ; $F1F1
     LDI  A,$00
 
-EXPONENT_10: ; $F1F3
+EXPONENT_3: ; $F1F3
     STA  UH
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
     LDI  A,$01
     STA  (ARU)
-    BCH EXPONENT_7 ; $F233
+    BCH EXPONENT_12 ; $F233
 
-EXPONENT_26: ; $F1FF
+EXPONENT_4: ; $F1FF
     POP  A
     LDI  XL,$02
     SDE  X
@@ -11397,7 +11409,7 @@ EXPONENT_26: ; $F1FF
     DEC  X
     STA  (X)
     VEJ  (E8)
-    VEJ  (D0) \ ABYT($08) \ ABRF(EXPONENT_8) ; $F220
+    VEJ  (D0) \ ABYT($08) \ ABRF(EXPONENT_7) ; $F220
     LDI  XH,$7A
     LDA  UL
     STA  (ARX)
@@ -11405,58 +11417,58 @@ EXPONENT_26: ; $F1FF
     VMJ  ($74) ; ($74)($3A)
     POP  A
 
-EXPONENT_12: ; $F218
+EXPONENT_5: ; $F218
     SHL
-    BCR EXPONENT_9 ; $F21F
+    BCR EXPONENT_6 ; $F21F
     VMJ  ($6E) ; ($6E)($37)
-    BCS BCMD_LOG_6 ; $F1BE
+    BCS BCMD_LOG_7 ; $F1BE
 
-EXPONENT_9: ; $F21F
+EXPONENT_6: ; $F21F
     RTN
 
-EXPONENT_8: ; $F220
-    BCH BCMD_LOG_6 ; $F1BE
+EXPONENT_7: ; $F220
+    BCH BCMD_LOG_7 ; $F1BE
 
-EXPONENT_4: ; $F222
+EXPONENT_8: ; $F222
     EAI  $FF
-    BCH EXPONENT_10 ; $F1F3
+    BCH EXPONENT_3 ; $F1F3
 
-EXPONENT_3: ; $F226
+EXPONENT_9: ; $F226
     VEJ  (EA)
-    BCH EXPONENT_11 ; $F1F1
+    BCH EXPONENT_2 ; $F1F1
 
-EXPONENT_5: ; $F229
+EXPONENT_10: ; $F229
     VEJ  (EC)
     POP  A
     EAI  $80
-    BCH EXPONENT_12 ; $F218
+    BCH EXPONENT_5 ; $F218
 
-EXPONENT_2: ; $F230
-    JMP  MULTIPLY_7 ; $F063
+EXPONENT_11: ; $F230
+    JMP  MULTIPLY_6 ; $F063
 
-EXPONENT_7: ; $F233
+EXPONENT_12: ; $F233
     SJP  (CLR_SM_ARW)
     VMJ  ($70) ; ($70)($38)
     LDI  A,$00
     PSH  A
 
-EXPONENT_18: ; $F23C
+EXPONENT_13: ; $F23C
     LDA  UH
     BII  (ARU),$01
-    BZS EXPONENT_13 ; $F24B
+    BZS EXPONENT_14 ; $F24B
     CPI  A,$0D
-    BCR EXPONENT_14 ; $F254
+    BCR EXPONENT_15 ; $F254
     LDI  A,$0C
-    BCH EXPONENT_14 ; $F254
+    BCH EXPONENT_15 ; $F254
 
-EXPONENT_13: ; $F24B
+EXPONENT_14: ; $F24B
     REC
     ADI  A,$0D
     CPI  A,$14
-    BCR EXPONENT_14 ; $F254
+    BCR EXPONENT_15 ; $F254
     LDI  A,$13
 
-EXPONENT_14: ; $F254
+EXPONENT_15: ; $F254
     SHL
     SHL
     SHL
@@ -11468,162 +11480,162 @@ EXPONENT_16: ; $F25D
     POP  A
     PSH  A
     STA  YL
-    SJP  (ADD_ARU_ARX_8) ; $F7DF
-    BCR EXPONENT_15 ; $F26D
+    SJP  (ARX_MINUS_ARV_2) ; $F7DF
+    BCR EXPONENT_17 ; $F26D
     ADI  (ARW + $07),$01
     BCH EXPONENT_16 ; $F25D
 
-EXPONENT_15: ; $F26D
+EXPONENT_17: ; $F26D
     POP  A
     STA  YL
     VMJ  ($72) ; ($72)($39)
     POP  A
     CPI  A,$0C
-    BCS EXPONENT_17 ; $F283
+    BCS EXPONENT_18 ; $F283
     INC  A
     PSH  A
     INC  UH
     SJP  (ARW_SHL_4BITS)
     VEJ  (EA)
-    BCH EXPONENT_18 ; $F23C
+    BCH EXPONENT_13 ; $F23C
 
-EXPONENT_17: ; $F283
+EXPONENT_18: ; $F283
     LDI  YH,$7A
     PSH  A
     VMJ  ($76) ; ($76)($3B)
     VMJ  ($70) ; ($70)($38)
     ORI  (ARY + $01),$01
 
-EXPONENT_25: ; $F28F
+EXPONENT_19: ; $F28F
     LDA  UH
     CPI  A,$07
     BII  (ARU),$01
-    BZS EXPONENT_19 ; $F29A
+    BZS EXPONENT_20 ; $F29A
     CPI  A,$0D
 
-EXPONENT_19: ; $F29A
-    BCR EXPONENT_20 ; $F29E
+EXPONENT_20: ; $F29A
+    BCR EXPONENT_21 ; $F29E
     LDI  A,$FF
 
-EXPONENT_20: ; $F29E
+EXPONENT_21: ; $F29E
     INC  A
     STA  (ARZ)
 
-EXPONENT_23: ; $F2A2
+EXPONENT_22: ; $F2A2
     LDI  XL,$2F
     BII  (X),$0F
-    BZS EXPONENT_21 ; $F2CF
+    BZS EXPONENT_24 ; $F2CF
     ADI  (X),$FF
     BII  (ARU),$01
-    BZS EXPONENT_22 ; $F2B8
+    BZS EXPONENT_23 ; $F2B8
     SJP  (XFER_SM_ARY2ARZ)
-    SJP  (ADD_ARU_ARX_9) ; $F83C
-    BCH EXPONENT_23 ; $F2A2
+    SJP  (ARX_MINUS_ARV_17) ; $F83C
+    BCH EXPONENT_22 ; $F2A2
 
-EXPONENT_22: ; $F2B8
+EXPONENT_23: ; $F2B8
     VMJ  ($78) ; ($78)($3C)
     VEJ  (EE)
     LDA  (ARZ)
-    BZS EXPONENT_23 ; $F2A2
+    BZS EXPONENT_22 ; $F2A2
     DEC  A
     LDI  XL,$0F
-    SJP  (ADD_ARU_ARX_10) ; $F805
+    SJP  (ARX_MINUS_ARV_8) ; $F805
     LDI  XL,$17
     LDI  YL,$0F
-    SJP  (ADD_ARU_ARX_11) ; $F7E1
-    BCH EXPONENT_23 ; $F2A2
+    SJP  (ARX_MINUS_ARV_3) ; $F7E1
+    BCH EXPONENT_22 ; $F2A2
 
-EXPONENT_21: ; $F2CF
+EXPONENT_24: ; $F2CF
     POP  A
     DEC  A
-    BCR EXPONENT_24 ; $F2E3
+    BCR EXPONENT_25 ; $F2E3
     DEC  UH
     PSH  A
     SJP  (ARW_SHR_4BITS)
     BII  (ARU),$01
     VZS  ($74) ; ($74)($3A)
-    BCH EXPONENT_25 ; $F28F
+    BCH EXPONENT_19 ; $F28F
 
-EXPONENT_24: ; $F2E3
+EXPONENT_25: ; $F2E3
     BII  (ARU),$01
-    BZR EXPONENT_26 ; $F1FF
-    JMP  BCMD_SIN_2 ; $F432
+    BZR EXPONENT_4 ; $F1FF
+    JMP  BCMD_SIN_11 ; $F432
 
-EXPONENT_1: ; $F2EC
+EXPONENT_26: ; $F2EC
     SJP  (CLR_SM_ARW)
     VMJ  ($6A) ; ($6A)($35)
     LDI  A,$00
     PSH  A
 
-EXPONENT_35: ; $F2F5
+EXPONENT_27: ; $F2F5
     LDA  UH
     CPI  A,$07
     BII  (ARU),$01
-    BZS EXPONENT_27 ; $F300
+    BZS EXPONENT_28 ; $F300
     CPI  A,$0D
 
-EXPONENT_27: ; $F300
-    BCR EXPONENT_28 ; $F304
+EXPONENT_28: ; $F300
+    BCR EXPONENT_29 ; $F304
     LDI  A,$FF
 
-EXPONENT_28: ; $F304
+EXPONENT_29: ; $F304
     INC  A
     STA  (ARZ)
     BII  (ARU),$01
-    BZS EXPONENT_29 ; $F313
-    BCH EXPONENT_30 ; $F326
+    BZS EXPONENT_31 ; $F313
+    BCH EXPONENT_33 ; $F326
 
-EXPONENT_32: ; $F310
-    SJP  (ADD_ARU_ARX_12) ; $F84D
+EXPONENT_30: ; $F310
+    SJP  (ARX_MINUS_ARV_19) ; $F84D
 
-EXPONENT_29: ; $F313
+EXPONENT_31: ; $F313
     VMJ  ($78) ; ($78)($3C)
 
-EXPONENT_33: ; $F315
+EXPONENT_32: ; $F315
     VMJ  ($7A) ; ($7A)($3D)
-    BCR EXPONENT_31 ; $F32B
+    BCR EXPONENT_34 ; $F32B
     ADI  (ARW + $07),$01
     BII  (ARU),$01
-    BZS EXPONENT_32 ; $F310
-    SJP  (ADD_ARU_ARX_9) ; $F83C
+    BZS EXPONENT_30 ; $F310
+    SJP  (ARX_MINUS_ARV_17) ; $F83C
 
-EXPONENT_30: ; $F326
+EXPONENT_33: ; $F326
     SJP  (XFER_SM_ARY2ARZ)
-    BCH EXPONENT_33 ; $F315
+    BCH EXPONENT_32 ; $F315
 
-EXPONENT_31: ; $F32B
+EXPONENT_34: ; $F32B
     VEJ  (EE)
     POP  A
     CPI  A,$0C
-    BCS EXPONENT_34 ; $F33D
+    BCS EXPONENT_35 ; $F33D
     INC  A
     PSH  A
     INC  UH
     SJP  (ARW_SHL_4BITS)
     VEJ  (EA)
-    BCH EXPONENT_35 ; $F2F5
+    BCH EXPONENT_27 ; $F2F5
 
-EXPONENT_34: ; $F33D
+EXPONENT_35: ; $F33D
     PSH  A
     VMJ  ($76) ; ($76)($3B)
 
-EXPONENT_41: ; $F341
+EXPONENT_36: ; $F341
     LDA  UH
     BII  (ARU),$01
-    BZS EXPONENT_36 ; $F350
+    BZS EXPONENT_37 ; $F350
     CPI  A,$0D
-    BCR EXPONENT_37 ; $F359
+    BCR EXPONENT_38 ; $F359
     LDI  A,$0C
-    BCH EXPONENT_37 ; $F359
+    BCH EXPONENT_38 ; $F359
 
-EXPONENT_36: ; $F350
+EXPONENT_37: ; $F350
     REC
     ADI  A,$0D
     CPI  A,$14
-    BCR EXPONENT_37 ; $F359
+    BCR EXPONENT_38 ; $F359
     LDI  A,$13
 
-EXPONENT_37: ; $F359
+EXPONENT_38: ; $F359
     SHL
     SHL
     SHL
@@ -11635,31 +11647,31 @@ EXPONENT_39: ; $F362
     LDI  XL,$2F
     POP  A
     BII  (X),$0F
-    BZS EXPONENT_38 ; $F373
+    BZS EXPONENT_40 ; $F373
     ADI  (X),$FF
     PSH  A
     STA  YL
     VMJ  ($72) ; ($72)($39)
     BCH EXPONENT_39 ; $F362
 
-EXPONENT_38: ; $F373
+EXPONENT_40: ; $F373
     POP  A
     DEC  A
-    BCR EXPONENT_40 ; $F383
+    BCR EXPONENT_41 ; $F383
     PSH  A
     DEC  UH
     SJP  (ARW_SHR_4BITS)
     VMJ  ($74) ; ($74)($3A)
-    BCH EXPONENT_41 ; $F341
+    BCH EXPONENT_36 ; $F341
 
-EXPONENT_40: ; $F383
+EXPONENT_41: ; $F383
     LDI  YH,$7A
     BII  (ARU),$01
     BZS EXPONENT_42 ; $F38E
-    JMP  BCMD_LOG_9 ; $F196
+    JMP  BCMD_LOG_4 ; $F196
 
 EXPONENT_42: ; $F38E
-    JMP  BCMD_ASN_1 ; $F4F7
+    JMP  BCMD_ASN_6 ; $F4F7
 
 
 
@@ -11671,7 +11683,7 @@ BCMD_COS: ;
     LDI  A,$00
     STA  (ARU)
     LDI  A,$01
-    BCH BCMD_SIN_3 ; $F3A9
+    BCH BCMD_SIN_2 ; $F3A9
 
 
 
@@ -11680,7 +11692,7 @@ BCMD_COS: ;
 ;------------------------------------------------------------------------------
 BCMD_TAN: ; 
     LDI  A,$40
-    BCH BCMD_SIN_4 ; $F3A4
+    BCH BCMD_SIN_1 ; $F3A4
 
 
 
@@ -11690,63 +11702,63 @@ BCMD_TAN: ;
 BCMD_SIN: ; 
     LDI  A,$00
 
-BCMD_SIN_4: ; $F3A4
+BCMD_SIN_1: ; $F3A4
     STA  (ARU)
     LDI  A,$00
 
-BCMD_SIN_3: ; $F3A9
+BCMD_SIN_2: ; $F3A9
     STA  (ARV)
     VMJ  ($54) ; ($54)($2A)
-    SJP  (ADD_ARU_ARX_13) ; $F85A
-    BCR BCMD_SIN_5 ; $F3C9
+    SJP  (ARX_MINUS_ARV_20) ; $F85A
+    BCR BCMD_SIN_4 ; $F3C9
     VMJ  ($7E) ; ($7E)($3F)
-    BCS BCMD_SIN_6 ; $F48E
-    JMP  OUTBUFCLR_8 ; $EF8A
+    BCS BCMD_SIN_16 ; $F48E
+    JMP  OUTBUF_CLR_1 ; $EF8A
 
-BCMD_SIN_1: ; $F3BA
+BCMD_SIN_3: ; $F3BA
     DCA  (Y)
     SDE  Y
     LDI  A,$00
-    BCS BCMD_SIN_1 ; $F3BA
+    BCS BCMD_SIN_3 ; $F3BA
     ANI  (ARX + $07),$F0
-    SJP  (ARX2BCD_ABS)
-    BCS BCMD_SIN_6 ; $F48E
+    SJP  (ARX_2_BCD_ABS)
+    BCS BCMD_SIN_16 ; $F48E
 
-BCMD_SIN_5: ; $F3C9
+BCMD_SIN_4: ; $F3C9
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
     DEC  X
     LDA  (X)
     BII  A,$80
-    BZR BCMD_SIN_7 ; $F429
+    BZR BCMD_SIN_10 ; $F429
     CPI  A,$0A
-    BCS BCMD_SIN_8 ; $F48C
+    BCS BCMD_SIN_15 ; $F48C
     VMJ  ($70) ; ($70)($38)
     ORI  (ARY + $01),$36
     VMJ  ($74) ; ($74)($3A)
     SJP  (ARY_SHR_4BITS)
 
-BCMD_SIN_9: ; $F3E2
+BCMD_SIN_5: ; $F3E2
     INC  UH
 
-BCMD_SIN_12: ; $F3E4
+BCMD_SIN_6: ; $F3E4
     VMJ  ($7A) ; ($7A)($3D)
-    BCS BCMD_SIN_9 ; $F3E2
+    BCS BCMD_SIN_5 ; $F3E2
     VEJ  (EE)
     BII  (ARY + $01),$0F
-    BZS BCMD_SIN_10 ; $F402
+    BZS BCMD_SIN_8 ; $F402
     ADI  (ARX),$FF
-    BCR BCMD_SIN_11 ; $F3F8
+    BCR BCMD_SIN_7 ; $F3F8
     VEJ  (EA)
-    BCH BCMD_SIN_9 ; $F3E2
+    BCH BCMD_SIN_5 ; $F3E2
 
-BCMD_SIN_11: ; $F3F8
+BCMD_SIN_7: ; $F3F8
     VMJ  ($70) ; ($70)($38)
     ORI  (ARY + $02),$90
     LDI  UH,$00
-    BCH BCMD_SIN_12 ; $F3E4
+    BCH BCMD_SIN_6 ; $F3E4
 
-BCMD_SIN_10: ; $F402
+BCMD_SIN_8: ; $F402
     VEJ  (EA)
     ANI  (ARX),$00
     LDA  UH
@@ -11763,25 +11775,25 @@ BCMD_SIN_10: ; $F402
     SIN  X
     ORI  (X),$50
     VMJ  ($7A) ; ($7A)($3D)
-    BCR BCMD_SIN_13 ; $F424
-    SJP  (ADD_ARU_ARX_3) ; $F7EB
+    BCR BCMD_SIN_9 ; $F424
+    SJP  (ARX_MINUS_ARV_5) ; $F7EB
     ADI  (ARV),$01
 
-BCMD_SIN_13: ; $F424
+BCMD_SIN_9: ; $F424
     VEJ  (EE)
     VEJ  (E8)
     LDI  XL,$00
     LDA  (X)
 
-BCMD_SIN_7: ; $F429
+BCMD_SIN_10: ; $F429
     DEC  A
     STA  (X)
     EAI  $FF
     INC  A
     STA  UH
-    JMP  EXPONENT_7 ; $F233
+    JMP  EXPONENT_12 ; $F233
 
-BCMD_SIN_2: ; $F432
+BCMD_SIN_11: ; $F432
     ANI  (ARY),$00
     VEJ  (E8)
     VMJ  ($66) ; ($66)($33)
@@ -11794,12 +11806,12 @@ BCMD_SIN_2: ; $F432
     BZR BCMD_SIN_14 ; $F480
     VMJ  ($80) ; ($80)($40)
     SJP  (SQUARE)
-    BCS BCMD_ASN_2 ; $F52E
+    BCS BCMD_ASN_10 ; $F52E
     VMJ  ($6A) ; ($6A)($35)
     VEJ  (F0)
-    BCS BCMD_ASN_2 ; $F52E
+    BCS BCMD_ASN_10 ; $F52E
     SJP  (SQR_ROOT)
-    BCS BCMD_ASN_2 ; $F52E
+    BCS BCMD_ASN_10 ; $F52E
     VMJ  ($68) ; ($68)($34)
     VMJ  ($7C) ; ($7C)($3E)
     BII  (ARV),$01
@@ -11812,24 +11824,24 @@ BCMD_SIN_2: ; $F432
     POP  A
     BII  (ARV),$20
 
-BCMD_SIN_16: ; $F475
-    BCS BCMD_ASN_2 ; $F52E
-    BZS BCMD_SIN_15 ; $F47D
+BCMD_SIN_12: ; $F475
+    BCS BCMD_ASN_10 ; $F52E
+    BZS BCMD_SIN_13 ; $F47D
     ADI  (ARX + $01),$80
 
-BCMD_SIN_15: ; $F47D
-    JMP  ARX2BCD_ABS ; $F65D
+BCMD_SIN_13: ; $F47D
+    JMP  ARX_2_BCD_ABS ; $F65D
 
 BCMD_SIN_14: ; $F480
     BII  (ARV),$01
     VZR  ($6E) ; ($6E)($37)
     BII  (ARV),$10
-    BCH BCMD_SIN_16 ; $F475
+    BCH BCMD_SIN_12 ; $F475
 
-BCMD_SIN_8: ; $F48C
+BCMD_SIN_15: ; $F48C
     POP  A
 
-BCMD_SIN_6: ; $F48E
+BCMD_SIN_16: ; $F48E
     LDI  UH,$27
     SEC
     RTN
@@ -11841,14 +11853,18 @@ BCMD_SIN_6: ; $F48E
 ;------------------------------------------------------------------------------
 BCMD_ACS: ; 
     LDI  A,$20
-    BCH BCMD_ASN_3 ; $F49C
+    BCH BCMD_ASN_1 ; $F49C
+
+
 
 ;------------------------------------------------------------------------------
 ; $F496 - Basic command ATN
 ;------------------------------------------------------------------------------
 BCMD_ATN: ; 
     LDI  A,$40
-    BCH BCMD_ASN_3 ; $F49C
+    BCH BCMD_ASN_1 ; $F49C
+
+
 
 ;------------------------------------------------------------------------------
 ; $F49A - Basic command ASN
@@ -11856,60 +11872,60 @@ BCMD_ATN: ;
 BCMD_ASN: ; 
     LDI  A,$00
 
-BCMD_ASN_3: ; $F49C
+BCMD_ASN_1: ; $F49C
     STA  (ARU)
     VMJ  ($54) ; ($54)($2A)
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
     BII  (ARU),$40
-    BZR BCMD_ASN_4 ; $F4D2
+    BZR BCMD_ASN_3 ; $F4D2
     VMJ  ($80) ; ($80)($40)
     SJP  (SQUARE)
-    BCS BCMD_SIN_8 ; $F48C
+    BCS BCMD_SIN_15 ; $F48C
     VMJ  ($6A) ; ($6A)($35)
     ADI  (ARX + $01),$80
     VEJ  (F0)
-    BCS BCMD_SIN_8 ; $F48C
+    BCS BCMD_SIN_15 ; $F48C
     SJP  (SQR_ROOT)
-    BCS BCMD_SIN_8 ; $F48C
+    BCS BCMD_SIN_15 ; $F48C
     VMJ  ($68) ; ($68)($34)
     BII  (ARU),$20
-    BZR BCMD_ASN_5 ; $F4CA
+    BZR BCMD_ASN_2 ; $F4CA
     VMJ  ($66) ; ($66)($33)
 
-BCMD_ASN_5: ; $F4CA
+BCMD_ASN_2: ; $F4CA
     BII  (ARY + $02),$F0
-    BZS BCMD_ASN_6 ; $F4F0
+    BZS BCMD_ASN_5 ; $F4F0
     VMJ  ($58) ; ($58)($2C)
 
-BCMD_ASN_4: ; $F4D2
+BCMD_ASN_3: ; $F4D2
     BII  (ARX + $02),$F0
     BZS BCMD_ASN_7 ; $F50E
     BII  (ARX),$80
-    BZR BCMD_ASN_8 ; $F4E4
+    BZR BCMD_ASN_4 ; $F4E4
     VMJ  ($6E) ; ($6E)($37)
     ADI  (ARU),$80
 
-BCMD_ASN_8: ; $F4E4
-    BCS BCMD_SIN_8 ; $F48C
+BCMD_ASN_4: ; $F4E4
+    BCS BCMD_SIN_15 ; $F48C
     LDA  (ARX)
     EAI  $FF
     INC  A
     STA  UH
-    JMP EXPONENT_1 ; $F2EC
+    JMP EXPONENT_26 ; $F2EC
 
-BCMD_ASN_6: ; $F4F0
-    SJP  (ADD_ARU_ARX_14) ; $F883
+BCMD_ASN_5: ; $F4F0
+    SJP  (ARX_MINUS_ARV_28) ; $F883
     VMJ  ($56) ; ($56)($2B)
     BCH BCMD_ASN_7 ; $F50E
 
-BCMD_ASN_1: ; $F4F7
+BCMD_ASN_6: ; $F4F7
     ADI  (ARX),$01
     VEJ  (E8)
     BCS BCMD_ASN_9 ; $F52C
     BII  (ARU),$80
     BZS BCMD_ASN_7 ; $F50E
-    SJP  (ADD_ARU_ARX_14) ; $F883
+    SJP  (ARX_MINUS_ARV_28) ; $F883
     ADI  (ARX + $01),$80
     VEJ  (F0)
     BCS BCMD_ASN_9 ; $F52C
@@ -11918,25 +11934,25 @@ BCMD_ASN_7: ; $F50E
     POP  A
     STA  (ARX + $01)
     SHL
-    BCR BCMD_ASN_10 ; $F522
+    BCR BCMD_ASN_8 ; $F522
     BII  (ARU),$20
-    BZS BCMD_ASN_10 ; $F522
-    SJP  (ADD_ARU_ARX_15) ; $F887
+    BZS BCMD_ASN_8 ; $F522
+    SJP  (ARX_MINUS_ARV_29) ; $F887
     VEJ  (F0)
-    BCS BCMD_ASN_2 ; $F52E
+    BCS BCMD_ASN_10 ; $F52E
 
-BCMD_ASN_10: ; $F522
-    SJP  (ADD_ARU_ARX_13) ; $F85A
+BCMD_ASN_8: ; $F522
+    SJP  (ARX_MINUS_ARV_20) ; $F85A
     BCR BCMD_PI_1 ; $F5BC
     VMJ  ($58) ; ($58)($2C)
-    BCS BCMD_ASN_2 ; $F52E
+    BCS BCMD_ASN_10 ; $F52E
     RTN
 
 BCMD_ASN_9: ; $F52C
     POP  A
 
-BCMD_ASN_2: ; $F52E
-    JMP  ARX2BCD2_1 ; $F698
+BCMD_ASN_10: ; $F52E
+    JMP  ARX_2_BCD_ABS_8 ; $F698
 
 
 
@@ -11947,7 +11963,7 @@ BCMD_DEG: ;
     VMJ  ($54) ; ($54)($2A)
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
-    SJP  (ARX2BCD2_2) ; $F6A9
+    SJP  (RND_2DEC_PLACES) ; $F6A9
     VMJ  ($64) ; ($64)($32)
     VMJ  ($56) ; ($56)($2B)
     VEJ  (E8)
@@ -11971,7 +11987,7 @@ BCMD_DEG: ;
     VEJ  (F0)
     BCS BCMD_ASN_9 ; $F52C
     POP  A
-    JMP  ARX2BCD2 ; $F663
+    JMP  ARX_2_BCD_ABS_2 ; $F663
 
 
 
@@ -11992,23 +12008,22 @@ BCMD_DMS: ;
     VMJ  ($64) ; ($64)($32)
     VEJ  (E8)
     VEJ  (F0)
-    SJP  (ARX2BCD2_2) ; $F6A9
+    SJP  (RND_2DEC_PLACES) ; $F6A9
     VMJ  ($80) ; ($80)($40)
     VMJ  ($56) ; ($56)($2B)
     VEJ  (E8)
     VMJ  ($62) ; ($62)($31)
     VMJ  ($7E) ; ($7E)($3F)
-    SJP  (ARXX)
+    SJP  (RAND_GEN_7)
     VEJ  (E6)
     VMJ  ($64) ; ($64)($32)
     VEJ  (E8)
     VEJ  (F0)
     BCS BCMD_ASN_9 ; $F52C
-
-;BCMD_SGN: $F590
     POP  A
     VMJ  ($52) ; ($52)($29
-    JMP  ARXX ; $F63C
+    JMP  RAND_GEN_7 ; $F63C
+
 
 
 ;------------------------------------------------------------------------------
@@ -12017,6 +12032,8 @@ BCMD_DMS: ;
 BCMD_ABS: ; $F597
     ANI  (ARX + $01),$00
     BCH BCMD_PI_1 ; $F5BC
+
+
 
 ;------------------------------------------------------------------------------
 ; $F59D - Basic command SGN
@@ -12045,7 +12062,7 @@ BCMD_SGN:
 ;------------------------------------------------------------------------------
 BCMD_PI: ; 
     VMJ  ($54) ; ($54)($2A)
-    SJP  ($F875)
+    SJP  (ARX_MINUS_ARV_25) ; $F875
     VMJ  ($56) ; ($56)($2B)
 
 BCMD_PI_1: ; $F5BC
@@ -12062,26 +12079,26 @@ BCMD_INT: ;
     PSH  A
     VMJ  ($60) ; ($60)($30)
     POP  A
-    BZS BCMD_INT_1 ; $F5D5
+    BZS BCMD_INT_3 ; $F5D5
     LDI  XL,$11
     LDI  UL,$06
 
-BCMD_INT_3: ; $F5CE
+BCMD_INT_1: ; $F5CE
     LIN  X
-    BZR BCMD_INT_2 ; $F5D8
-    LOP  UL,BCMD_INT_3 ; $F5CE
+    BZR BCMD_INT_4 ; $F5D8
+    LOP  UL,BCMD_INT_1 ; $F5CE
 
-BCMD_INT_4: ; $F5D3
+BCMD_INT_2: ; $F5D3
     LDI  A,$80
 
-BCMD_INT_1: ; $F5D5
+BCMD_INT_3: ; $F5D5
     VMJ  ($52) ; ($52)($29
     RTN
 
-BCMD_INT_2: ; $F5D8
+BCMD_INT_4: ; $F5D8
     VMJ  ($6A) ; ($6A)($35)
     VEJ  (F0)
-    BCH BCMD_INT_4 ; $F5D3
+    BCH BCMD_INT_2 ; $F5D3
 
 
 
@@ -12091,37 +12108,37 @@ BCMD_INT_2: ; $F5D8
 BCMD_RND:
     VMJ  ($54) ; ($54)($2A)
     BII  (ARX + $01),$80
-    BZR RANDGEN_1 ; $F5F5
+    BZR RAND_GEN_2 ; $F5F5
     BII  (ARX),$80
-    BZS RANDGEN_2 ; $F5FB
+    BZS RAND_GEN_3 ; $F5FB
 
 
 
 ;------------------------------------------------------------------------------
-; $F5EB - Determines random number in AR-X
+; $F5EB - Create random number in AR-X
 ;------------------------------------------------------------------------------
-RANDGEN: ; 
+RAND_GEN: ; 
     VMJ  ($5E) ; ($5E)($2F)
 
-RANDGEN_3: ; $F5ED
+RAND_GEN_1: ; $F5ED
     VMJ  ($5C) ; ($5C)($2E)
     ORI  (ARX),$FF
     VEJ  (E8)
     RTN
 
-RANDGEN_1: ; $F5F5
+RAND_GEN_2: ; $F5F5
     ANI  (ARX + $01),$00
-    BCH RANDGEN_3 ; $F5ED
+    BCH RAND_GEN_1 ; $F5ED
 
-RANDGEN_2: ; $F5FB
+RAND_GEN_3: ; $F5FB
     BII  (ARX + $02),$F0
-    BZS RANDGEN
+    BZS RAND_GEN
     VMJ  ($80) ; ($80)($40)
-    SJP  (RANDGEN)
+    SJP  (RAND_GEN)
     VMJ  ($68) ; ($68)($34)
     LDA  (ARY)
     CPI  A,$0A
-    BCS RANDGEN_4 ; $F618
+    BCS RAND_GEN_4 ; $F618
     VMJ  ($7E) ; ($7E)($3F)
     VMJ  ($60) ; ($60)($30)
     VEJ  (E8)
@@ -12129,14 +12146,15 @@ RANDGEN_2: ; $F5FB
     VEJ  (F0)
     RTN
 
-RANDGEN_4: ; $F618
-    JMP  SQR_ROOT_1 ; $F15D
+RAND_GEN_4: ; $F618
+    JMP  SQR_ROOT_12 ; $F15D
 
 
 
 ;------------------------------------------------------------------------------
 ; $F61B (5C) - Generates RANDOM number and updates RND pointer
 ;------------------------------------------------------------------------------
+RAND_GEN_5: 
     VMJ  ($82) ; ($82)($41)
     VEJ  (EE)
     VEJ  (EA)
@@ -12147,22 +12165,21 @@ RANDGEN_4: ; $F618
     LDI  UL,$05
     SEC
 
-RANDGEN_5: ; $F628
+RAND_GEN_6: ; $F628
     LDE  Y
     DCA  (X)
     SDE  X
-    LOP  UL,RANDGEN_5 ; $F628
+    LOP  UL,RAND_GEN_6 ; $F628
     ANI  (ARX + $01),$00
     LDI  YH,$7B
     LDI  YL,$01
     LDI  XL,$01
-    SJP  (XREG2YREG2) ; $F733
+    SJP  (XREG_2_YREG) ; $F733
     LDI  YH,$7A
 
 
-; $F63C Sets the 11th and 12th digit of the result to 00
-; Sets Byte 7 in the AR-X to 00.
-ARXX: ; 
+; $F63C Sets the 11th and 12th digit (byte 7) of the result to 00
+RAND_GEN_7: ; 
     ANI  (ARX + $07),$00
     RTN
 
@@ -12191,69 +12208,70 @@ BCMD_RANDOM: ;
 ;------------------------------------------------------------------------------
 ; $F65D - Converts AR-X into BCD form. AR-X to A. (absolute value).
 ;------------------------------------------------------------------------------
-ARX2BCD_ABS: 
+ARX_2_BCD_ABS: 
     VMJ  ($6C) ; ($6C)($36)
-    BCH ARX2BCD2
+    BCH ARX_2_BCD_ABS_2
 
 ;------------------------------------------------------------------------------
 ; (E8) $F661 Converts AR-X to BCD form. Value already in A. (absolute value) 
 ; Converts AR-X into BCD format, whereby the absolute value (positive number) is formed.  
 ;------------------------------------------------------------------------------    
-    LDI  A,$00
+ARX_2_BCD_ABS_1:
+   LDI  A,$00
 
 ;------------------------------------------------------------------------------ 
 ; (52) $F663 Converts AR-X to BCD form
 ; Converts the result in the AR-X into the correct BCD format. With overflow 
 ; C=1. AR-X is set to 0 if below the permissible value range.
 ;------------------------------------------------------------------------------ 
-ARX2BCD2: ; $F663
+ARX_2_BCD_ABS_2: ; $F663
     PSH  A
     LDI  XL,$01
     LDI  UL,$06
 
-ARX2BCD2_4: ; $F669
+ARX_2_BCD_ABS_3: ; $F669
     LIN  X
-    BZR ARX2BCD2_3 ; $F670
-    LOP  UL,ARX2BCD2_4 ; F669
-    BCH ARX2BCD2_5 ; $F6A2
+    BZR ARX_2_BCD_ABS_4 ; $F670
+    LOP  UL,ARX_2_BCD_ABS_3 ; F669
+    BCH ARX_2_BCD_ABS_10 ; $F6A2
 
-ARX2BCD2_3: ; $F670
+ARX_2_BCD_ABS_4: ; $F670
     LDI  XL,$01
     LDE  X
-    BZS ARX2BCD2_6 ; $F67B
+    BZS ARX_2_BCD_ABS_5 ; $F67B
     ADI  (X),$01
     VMJ  ($74) ; ($74)($3A)
-    BCH ARX2BCD2_3 ; $F670
+    BCH ARX_2_BCD_ABS_4 ; $F670
 
-ARX2BCD2_6: ; $F67B
+ARX_2_BCD_ABS_5: ; $F67B
     BII  (ARX + $02),$F0
-    BZR ARX2BCD2_7 ; $F688
+    BZR ARX_2_BCD_ABS_6 ; $F688
     ADI  (ARX),$FF
     VEJ  (EA)
-    BCH ARX2BCD2_6 ; $F67B
+    BCH ARX_2_BCD_ABS_5 ; $F67B
 
-ARX2BCD2_7: ; $F688
+ARX_2_BCD_ABS_6: ; $F688
     LDA  (ARX)
     BII  A,$80
-    BZR ARX2BCD2_8 ; $F69C
+    BZR ARX_2_BCD_ABS_9 ; $F69C
     CPI  A,$64
 
-ARX2BCD2_10: ; $F691
+ARX_2_BCD_ABS_7: ; $F691
     POP  A
     STA  (ARX + $01)
     BCR ARX2BCD2_9 ; $F6A5
 
-ARX2BCD2_1: ; $F698
+ARX_2_BCD_ABS_8: ; $F698
     LDI  UH,$25
     SEC
     RTN
 
-ARX2BCD2_8: ; $F69C
+ARX_2_BCD_ABS_9: ; $F69C
     EAI  $FF
     CPI  A,$63
-    BCR ARX2BCD2_10 ; $F691
+    BCR ARX_2_BCD_ABS_7 ; $F691
 
-ARX2BCD2_5: ; $F698
+ARX_2_BCD_ABS_10: ; $F698
     VEJ  (EC)
     POP  A
 
@@ -12267,63 +12285,63 @@ ARX2BCD2_9: ; $F6A5
 ;------------------------------------------------------------------------------ 
 ; $F6A9 - Limit result to 2 decimal places
 ;------------------------------------------------------------------------------ 
-ARX2BCD2_2: ; 
+RND_2DEC_PLACES: ; 
     SJP  (CLR_SM_ARX)
     LDI  XL,$00
     LDA  (X)
     REC
     ADI  A,$02
-    BCH XFER_DEC_ARX2ARY_1 ; $F6BA
+    BCH XXFER_DEC_ARX2ARY_1 ; $F6BA
 
 
 
 ;------------------------------------------------------------------------------ 
 ; $F6B4 - Transfers decimal places from AR-X to AR-Y, whereby their position 
-; from AR-X is retained.
+;         from AR-X is retained.
 ;------------------------------------------------------------------------------ 
 XFER_DEC_ARX2ARY: ; 
     SJP  (CLR_SM_ARX)
     LDI  XL,$00
     LDA  (X)
 
-XFER_DEC_ARX2ARY_1: ; $F6BA
+XXFER_DEC_ARX2ARY_1: ; $F6BA
     BII  A,$80
-    BZR XFER_DEC_ARX2ARY_2 ; $F6DB
+    BZR XXFER_DEC_ARX2ARY_6 ; $F6DB
     CPI  A,$0B
-    BCS XFER_DEC_ARX2ARY_3 ; $F6DA
+    BCS XXFER_DEC_ARX2ARY_5 ; $F6DA
     ADI  A,$05
 
-XFER_DEC_ARX2ARY_6: ; $F6C4
+XXFER_DEC_ARX2ARY_2: ; $F6C4
     SHR
     STA  XL
     ORI  A,$10
     STA  YL
-    BCS XFER_DEC_ARX2ARY_4 ; $F6DF
+    BCS XXFER_DEC_ARX2ARY_7 ; $F6DF
 
-XFER_DEC_ARX2ARY_5: ; $F6CB
+XXFER_DEC_ARX2ARY_3: ; $F6CB
     LDA  (X)
     ANI  (X),$00
 
-XFER_DEC_ARX2ARY_7: ; $F6CE
+XXFER_DEC_ARX2ARY_4: ; $F6CE
     SIN  Y
     INC  XL
     CPI  XL,$08
-    BCR XFER_DEC_ARX2ARY_5 ; $F6CB
+    BCR XXFER_DEC_ARX2ARY_3 ; $F6CB
     LDA  (ARX)
     STA  (ARY)
 
-XFER_DEC_ARX2ARY_3: ; $F6DA
+XXFER_DEC_ARX2ARY_5: ; $F6DA
     RTN
 
-XFER_DEC_ARX2ARY_2: ; $F6DB
+XXFER_DEC_ARX2ARY_6: ; $F6DB
     LDI  A,$04
-    BCH XFER_DEC_ARX2ARY_6 ; $F6C4
+    BCH XXFER_DEC_ARX2ARY_2 ; $F6C4
 
-XFER_DEC_ARX2ARY_4: ; $F6DF
+XXFER_DEC_ARX2ARY_7: ; $F6DF
     LDA  (X)
     ANI  (X),$F0
     ANI  A,$0F
-    BCH XFER_DEC_ARX2ARY_7 ; $F6CE
+    BCH XXFER_DEC_ARX2ARY_4 ; $F6CE
 
 
 
@@ -12350,7 +12368,7 @@ SIGN_TEST: ;
 
 
 ;------------------------------------------------------------------------------
-; (6C) $F6FB - Loads signs from AR-X into Accumulator and clears signs from AR-X.
+; (6C) $F6FB - Loads signs from AR-X into Accumulator, clears signs from AR-X.
 ;------------------------------------------------------------------------------
 LDA_SGN_ARX: ; 
     LDI  XL,$01
@@ -12363,43 +12381,43 @@ LDA_SGN_ARX: ;
 ;------------------------------------------------------------------------------
 ; $F701 - Transfers AR-Y to AR-S
 ;------------------------------------------------------------------------------
-XFER_ARY2ARS:  ; 
+XFER_ARY_2_ARS:  ; 
     LDI  XL,$10
     LDI  YL,$30
-    BCH XFER_ARY2ARX2_1 ; $F741
+    BCH XFER_ARY_2_ARX_2 ; $F741
 
 
 
 ;------------------------------------------------------------------------------
 ; $F707 (80) - Transfers AR-X to AR-S
 ;------------------------------------------------------------------------------
-XFER_ARX2ARS:  ; 
+XFER_ARX_2_ARS:  ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  YL,$30
-    BCH XFER_ARX2ARY_1 ; $F711
+    BCH XFER_ARX_2_ARY_1 ; $F711
 
 
 
 ;------------------------------------------------------------------------------
 ; (E6) $F70D - Transfers AR-X to AR-Y
 ;------------------------------------------------------------------------------
-XFER_ARX2ARY: ; 
+XFER_ARX_2_ARY: ; 
     VMJ  ($54) ; ($54)($2A)
     LDI  YL,$10
 
-XFER_ARX2ARY_1: ; $F711
+XFER_ARX_2_ARY_1: ; $F711
     LDI  XL,$00
-    BCH XFER_ARY2ARX2_1 ; $F741
+    BCH XFER_ARY_2_ARX_2 ; $F741
 
 
 
 ;------------------------------------------------------------------------------
 ; (68) $F715 - Transfers AR-S to AR-Y
 ;------------------------------------------------------------------------------
-XFER_ARS2ARY: ; 
+XFER_ARS_2_ARY: ; 
     LDI  XL,$30
     LDI  YL,$10
-    BCH XFER_ARY2ARX2_1 ; $F741
+    BCH XFER_ARY_2_ARX_2 ; $F741
 
 
 
@@ -12420,7 +12438,7 @@ XFER_SM_ARZ2ARX: ;
 
 XFER_SM_ARZ2ARX_1: ; $F721
     LDI  YL,$01
-    BCH XREG2YREG2 ; XFER_SM_ARX2ARZ 
+    BCH XREG_2_YREG ; XFER_SM_ARX2ARZ 
 
 
 
@@ -12434,12 +12452,12 @@ XFER_SM_ARY2ARZ: ;
 
 
 ;------------------------------------------------------------------------------
-; (82) $F729 - The sign and mantissa of the BCD value in AR-X are transferred to AR-Y.
+; (82) $F729 - The sign and mantissa of BCD value in AR-X transferred to AR-Y.
 ;------------------------------------------------------------------------------
 XFER_SM_ARX2ARY: ; 
     LDI  XL,$01
     LDI  YL,$11
-    BCH XREG2YREG2
+    BCH XREG_2_YREG
 
 
 
@@ -12457,37 +12475,37 @@ XFER_SM_ARX2ARZ_1: ; $F731
 ;------------------------------------------------------------------------------
 ; $F733 - Block shift: 7 bytes from (X-Reg) to (Y-Reg)
 ;------------------------------------------------------------------------------
-XREG2YREG2:
+XREG_2_YREG:
     LDI  UL,$06
-    BCH XFER_ARY2ARX2_2 ; $F743
+    BCH XFER_ARY_2_ARX_3 ; $F743
 
 
 
 ;------------------------------------------------------------------------------
 ; $F737 - Transfer AR-S to AR-X.
 ;------------------------------------------------------------------------------
-XFER_ARY2ARX:
+XFER_ARS_2_ARX:
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$30
-    BCH XFER_ARY2ARX2_3 ; $F73F
+    BCH XFER_ARY_2_ARX_1 ; $F73F
 
 
 
 ;------------------------------------------------------------------------------
-; $F73D - Transfers AR-S to AR-X
+; $F73D - Transfers AR-Y to AR-X
 ;------------------------------------------------------------------------------
-XFER_ARY2ARX2: ; 
+XFER_ARY_2_ARX: ; 
     LDI  XL,$10
 
-XFER_ARY2ARX2_3: ; $F73F
+XFER_ARY_2_ARX_1: ; $F73F
     LDI  YL,$00
 
-XFER_ARY2ARX2_1: ; $F741
+XFER_ARY_2_ARX_2: ; $F741
     LDI  UL,$07
 
-XFER_ARY2ARX2_2: ; $F743
+XFER_ARY_2_ARX_3: ; $F743
     TIN
-    LOP  UL,XFER_ARY2ARX2_2 ; $F743
+    LOP  UL,XFER_ARY_2_ARX_3 ; $F743
     RTN
 
 
@@ -12506,22 +12524,22 @@ XFER_ARY2ARX2_2: ; $F743
 ; (70) Clears the sign and mantissa of AR-Y
 CLR_SM_ARY: ; $F747
     LDI  XL,$11
-    BCH CLR_7_XREG
+    BCH CLR_ARITHMETIC_REGS_3
 
 ;  Clears the sign and mantissa of AR-Z
 CLR_SM_ARZ: ; $F74B
     LDI  XL,$09
-    BCH CLR_7_XREG
+    BCH CLR_ARITHMETIC_REGS_3
 
 ; Clears sign and mantissa of AR-W
 CLR_SM_ARW: ; $F74F
     LDI  XL,$29
-    BCH CLR_7_XREG
+    BCH CLR_ARITHMETIC_REGS_3
 
 ; (76) Clears arithmetic register AR-X
 CLR_SM_ARX: ; $F753
     LDI  XL,$10
-    BCH CLR_SM_ARX3
+    BCH CLR_ARITHMETIC_REGS_1
 
 
 
@@ -12539,16 +12557,16 @@ CLR_ARITHMETIC_REGS: ; $F757
     LDI  XL,$00
 
 ; Clears 8 bytes from (X-Reg).
-CLR_SM_ARX3: ; $F75B
+CLR_ARITHMETIC_REGS_1: ; $F75B
     LDI  UL,$07
     BCH CLR_N_XREG
 
 ; (76) Clears sign and mantissa in AR-X
-CLR_SM_XREG: ; $F75F
+CLR_ARITHMETIC_REGS_2: ; $F75F
     LDI  XL,$01
 
 ; Clear 7 bytes from (X-Reg).
-CLR_7_XREG: ; $F761
+CLR_ARITHMETIC_REGS_3: ; $F761
     LDI  UL,$06
 
 
@@ -12638,7 +12656,7 @@ ARS_SHL_4BITS: ;
     LDI  XH,$7A
     LDI  XL,$37
     LDI  UL,$04
-    BCH ARX_SHL_4BITS_1 ; $F7A0
+    BCH ARX_SHL_4BITS_2 ; $F7A0
 
 
 
@@ -12647,7 +12665,7 @@ ARS_SHL_4BITS: ;
 ;------------------------------------------------------------------------------
 ARW_SHL_4BITS: ; 
     LDI  XL,$30
-    BCH ARX_SHL_4BITS_2 ; $F79E
+    BCH ARX_SHL_4BITS_1 ; $F79E
 
 
 
@@ -12656,7 +12674,7 @@ ARW_SHL_4BITS: ;
 ;------------------------------------------------------------------------------
 ARZ_SHL_4BITS: ; 
     LDI  XL,$10
-    BCH ARX_SHL_4BITS_2 ; $F79E
+    BCH ARX_SHL_4BITS_1 ; $F79E
 
 
 
@@ -12666,10 +12684,10 @@ ARZ_SHL_4BITS: ;
 ARX_SHL_4BITS: ; 
     LDI  XL,$08
 
-ARX_SHL_4BITS_2: ; $F79E
+ARX_SHL_4BITS_1: ; $F79E
     LDI  UL,$06
 
-ARX_SHL_4BITS_1: ; $F7A0
+ARX_SHL_4BITS_2: ; $F7A0
     LDI  A,$00
 
 ARX_SHL_4BITS_3: ; $F7A2
@@ -12681,18 +12699,18 @@ ARX_SHL_4BITS_3: ; $F7A2
 
 
 ;------------------------------------------------------------------------------
-; (5E) $F7A7 - Transfer random number from RND pointer to AR-X
+; $F7A7 (5E) - Transfer random number from RND pointer to AR-X
 ;------------------------------------------------------------------------------
 RND2ARX: ; 
     LDI  YL,$01
     LDI  XH,$7B
     LDI  XL,$01
-    SJP  (XREG2YREG2) ; F8A5
+    SJP  (XREG_2_YREG) ; F8A5
 
 
 
 ;------------------------------------------------------------------------------
-; (5A) Make pointer to arithmetic register
+; $F7B0 (5A) - Make pointer to arithmetic register
 ; Position high bytes in X-Reg and Y-Reg on arithmetic registers
 ;            Address: F7B0 (54)
 ;   Entry parameters: None
@@ -12710,7 +12728,7 @@ SET_HB_XYREGS: ; $F7B0
 ;------------------------------------------------------------------------------
 ; (64) $F7B5 - Swaps AR-X with AR-S
 ;------------------------------------------------------------------------------
-SWAP_AARX_ARY: ; 
+SWAP_ARX_ARS: ; 
     LDI  YL,$30
     BCH SWAP_ARX_ARY_1 ; $F7BB
 
@@ -12746,75 +12764,79 @@ SWAP_BYTES: ;
 ;------------------------------------------------------------------------------
 ADD_ARU_ARX: ; 
     LDI  YL,$1F
-    BCH ADD_ARU_ARX_16 ; $F7CE
+    BCH ADD_SM_ARY_ARX ; $F7CE
 
 ;------------------------------------------------------------------------------
-; (EE) $F7CC - Add the sign and mantissa of AR-X and AR-Y and store them in AR-X.
+; $F7CC (EE) - Add the sign and mantissa of AR-X and AR-Y store them in AR-X.
 ;------------------------------------------------------------------------------
+ADD_SM_ARX_ARX:    
     LDI  YL,$17
 
 ;------------------------------------------------------------------------------
-; (72) $F7CE - Adds the mantissa of the AR-Y to the AR-X.
+; $F7CE (72) - Adds the mantissa of the AR-Y to the AR-X.
 ;------------------------------------------------------------------------------
-ADD_ARU_ARX_16: ; 
+ADD_SM_ARY_ARX: ; 
     LDI  XL,$07
 
-ADD_ARU_ARX_26: ; $F7D0
+ADD_SM_ARY_ARX_1: ; $F7D0
     REC
     LDI  UL,$06
 
-ADD_ARU_ARX_17: ; $F7D3
+ADD_SM_ARY_ARX_2: ; $F7D3
     LDE  Y
     DCA  (X)
     SDE  X
-    LOP  UL,ADD_ARU_ARX_17 ; $F7D3
+    LOP  UL,ADD_SM_ARY_ARX_2 ; $F7D3
     RTN
 
-;------------------------------------------------------------------------------
-; $F7D9 - AR-X=AR-X-AR-V.
-;------------------------------------------------------------------------------
-ADD_ARU_ARX_6: ; 
-    LDI  YL,$27
-    BCH ADD_ARU_ARX_8 ; $F7DF
+
 
 ;------------------------------------------------------------------------------
-; (7A) $F7DD - AR-X=AR-X-AR-V.
+; $F7D9 - AR-X = AR-X-AR-V.
 ;------------------------------------------------------------------------------
+ARX_MINUS_ARV: ; 
+    LDI  YL,$27
+    BCH ARX_MINUS_ARV_2 ; $F7DF
+
+;------------------------------------------------------------------------------
+; $F7DD (7A) - AR-X = AR-X-AR-V.
+;------------------------------------------------------------------------------
+ARX_MINUS_ARV_1:   
     LDI  YL,$17
 
 ; $F7DF Subtract from AR-X the AR pointed to by Y-Reg on entry.
-ADD_ARU_ARX_8: ; $F7DF
+ARX_MINUS_ARV_2: ; $F7DF
     LDI  XL,$07
 
 ; $F7E1 From the arithmetic register pointed to by X-Reg, subtract AR pointed to by Y-Reg.
-ADD_ARU_ARX_11: ; 
+ARX_MINUS_ARV_3: ; 
     SEC
     LDI  UL,$06
 
-ADD_ARU_ARX_18: ; $F7E4
+ARX_MINUS_ARV_4: ; $F7E4
     LDA  (X)
     DCS  (Y)
     SDE  X
     DEC  Y
-    LOP  UL,ADD_ARU_ARX_18 ; $F7E4
+    LOP  UL,ARX_MINUS_ARV_4 ; $F7E4
     RTN
 
 ; $F7EB Calculates the decimal to AR-X in AR-X.
-ADD_ARU_ARX_3: ; 
+ARX_MINUS_ARV_5: ; 
     LDI  XL,$07
     SEC
     LDI  UL,$06
 
-ADD_ARU_ARX_19: ; $F7F0
+ARX_MINUS_ARV_6: ; $F7F0
     LDI  A,$00
     DCS  (X)
     SDE  X
-    LOP  UL,ADD_ARU_ARX_19 ; $F7F0
+    LOP  UL,ARX_MINUS_ARV_6 ; $F7F0
     RTN
 
-ADD_ARU_ARX_2: ; $F7F7
+ARX_MINUS_ARV_7: ; $F7F7
     SHR
-    BCR ADD_ARU_ARX_10 ; $F805
+    BCR ARX_MINUS_ARV_8 ; $F805
     PSH  A
     LDA  XL
     ANI  A,$F8
@@ -12822,11 +12844,13 @@ ADD_ARU_ARX_2: ; $F7F7
     SJP  (X_REG_SHR_4BITS)
     POP  A
 
-; $F805 Accumulator contains the number of places by which the AR pointed 
-; to by the X-Reg is shifted to the right
-ADD_ARU_ARX_10: ; 
+;------------------------------------------------------------------------------
+; $F805 - Accumulator contains the number of places by which the AR pointed 
+;         to by the X-Reg is shifted to the right
+;------------------------------------------------------------------------------
+ARX_MINUS_ARV_8: ; 
     BII  A,$FF
-    BZS ADD_ARU_ARX_20 ; $F83B
+    BZS ARX_MINUS_ARV_16 ; $F83B
     STX  Y
     EAI  $FF
     SEC
@@ -12834,196 +12858,213 @@ ADD_ARU_ARX_10: ;
     STA  YL
     LDI  UL,$06
 
-ADD_ARU_ARX_22: ; $F812
+ARX_MINUS_ARV_9: ; $F812
     LDA  YL
     ANI  A,$07
-    BZS ADD_ARU_ARX_21 ; $F818
+    BZS ARX_MINUS_ARV_10 ; $F818
     LDE  Y
 
-ADD_ARU_ARX_21: ; $F818
+ARX_MINUS_ARV_10: ; $F818
     SDE  X
-    LOP  UL,ADD_ARU_ARX_22 ; $F812
+    LOP  UL,ARX_MINUS_ARV_9 ; $F812
     RTN
 
-ADD_ARU_ARX_5: ; $F81C
+ARX_MINUS_ARV_11: ; $F81C
     LDI  UH,$01
-    BCH ADD_ARU_ARX_23 ; $F822
+    BCH ARX_MINUS_ARV_13 ; $F822
 
-ADD_ARU_ARX_4: ; $F820
+ARX_MINUS_ARV_12: ; $F820
     LDI  UH,$02
 
-ADD_ARU_ARX_23: ; $F822
+ARX_MINUS_ARV_13: ; $F822
     LDI  XL,$17
     LDI  YL,$1F
 
-ADD_ARU_ARX_25: ; $F826
+ARX_MINUS_ARV_14: ; $F826
     LDI  UL,$06
     REC
 
-ADD_ARU_ARX_24: ; $F829
+ARX_MINUS_ARV_15: ; $F829
     LDA  (X)
     DCA  (X)
     SDE  Y
     DEC  X
-    LOP  UL,ADD_ARU_ARX_24 ; $F829
+    LOP  UL,ARX_MINUS_ARV_15 ; $F829
     DEC  UH
-    BCR ADD_ARU_ARX_20 ; $F83B
+    BCR ARX_MINUS_ARV_16 ; $F83B
     LDI  A,$0F
     ADR  X
     ADR  Y
-    BCH ADD_ARU_ARX_25 ; $F826
+    BCH ARX_MINUS_ARV_14 ; $F826
 
-ADD_ARU_ARX_20: ; $F83B
+ARX_MINUS_ARV_16: ; $F83B
     RTN
 
-ADD_ARU_ARX_9: ; $F83C
+ARX_MINUS_ARV_17: ; $F83C
     LDA  (ARZ)
-    BZS ADD_ARU_ARX_20 ; $F83B
+    BZS ARX_MINUS_ARV_16 ; $F83B
     DEC  A
     LDI  XL,$0F
-    SJP  (ADD_ARU_ARX_2) ; $F7F7
+    SJP  (ARX_MINUS_ARV_7) ; $F7F7
 
-ADD_ARU_ARX_27: ; $F847
+ARX_MINUS_ARV_18: ; $F847
     LDI  XL,$17
     LDI  YL,$0F
-    BCH ADD_ARU_ARX_26 ; $F7D0
+    BCH ADD_SM_ARY_ARX_1 ; $F7D0
 
-ADD_ARU_ARX_12: ; $F84D
+ARX_MINUS_ARV_19: ; $F84D
     LDA  (ARZ)
-    BZS ADD_ARU_ARX_20 ; $F83B
+    BZS ARX_MINUS_ARV_16 ; $F83B
     DEC  A
     LDI  XL,$0F
-    SJP  (ADD_ARU_ARX_10) ; $F805
-    BCH ADD_ARU_ARX_27 ; $F847
+    SJP  (ARX_MINUS_ARV_8) ; $F805
+    BCH ARX_MINUS_ARV_18 ; $F847
 
-
-; $F85A Loads auxiliary constants to AR-Y according to the evaluation of the
-;  display according to 'RAD' or 'DEG'.
-ADD_ARU_ARX_13: ; 
+;------------------------------------------------------------------------------
+; $F85A - Loads auxiliary constants to AR-Y according to the evaluation of the
+;         display according to 'RAD' or 'DEG'.
+;------------------------------------------------------------------------------
+ARX_MINUS_ARV_20: ; 
     LDA  (DISP_BUFF + $4F)
     BII  A,$04
     REC
-    BZS ADD_ARU_ARX_20 ; $F83B
+    BZS ARX_MINUS_ARV_16 ; $F83B
     BII  A,$02
-    BZR ADD_ARU_ARX_28 ; $F87F
+    BZR ARX_MINUS_ARV_27 ; $F87F
     LDI  XL,$98
 
-ADD_ARU_ARX_31: ; $F868
+ARX_MINUS_ARV_21: ; $F868
     LDI  UL,$07
     LDI  XH,$FC
 
-ADD_ARU_ARX_33: ; $F86C
+ARX_MINUS_ARV_22: ; $F86C
     LDI  YL,$10
 
-ADD_ARU_ARX_29: ; $F86E
+ARX_MINUS_ARV_23: ; $F86E
     TIN
-    LOP  UL,ADD_ARU_ARX_29 ; $F86E
+    LOP  UL,ARX_MINUS_ARV_23 ; $F86E
     LDI  XH,$7A
     SEC
 
-ADD_ARU_ARX_42: ; $F874
+ARX_MINUS_ARV_24: ; $F874
     RTN
 
-; $F875  Transfers PI to AR-Y.
+ARX_MINUS_ARV_25: ; $F875  Transfers PI to AR-Y.
     LDI  XL,$F8
     LDI  UL,$07
-    BCH ADD_ARU_ARX_30 ; $F898
+    BCH XFER_1_2_ARY_2 ; $F898
 
-; $F87B Transfers auxiliary constants to AR-Y.
-ADD_ARU_ARX_7: ; $F87B
+;------------------------------------------------------------------------------
+; $F87B - Transfers auxiliary constants to AR-Y.
+;------------------------------------------------------------------------------
+ARX_MINUS_ARV_26: ; $F87B
     LDI  XL,$60
-    BCH ADD_ARU_ARX_31 ; $F868
+    BCH ARX_MINUS_ARV_21 ; $F868
 
-ADD_ARU_ARX_28: ; $F87F
+ARX_MINUS_ARV_27: ; $F87F
     LDI  A,$E9
-    BCH ADD_ARU_ARX_32 ; $F891
+    BCH XFER_1_2_ARY_1 ; $F891
 
-
-; $F883 Loads AR-Y with auxiliary constant.
-ADD_ARU_ARX_14: ; $F883
+;------------------------------------------------------------------------------
+; $F883 - Loads AR-Y with auxiliary constant.
+;------------------------------------------------------------------------------
+ARX_MINUS_ARV_28: ; $F883
     LDI  A,$EF
-    BCH ADD_ARU_ARX_32 ; $F891
+    BCH XFER_1_2_ARY_1 ; $F891
 
-; $F887 Loads AR-Y with auxiliary constant.
-ADD_ARU_ARX_15: ; $F887
+;------------------------------------------------------------------------------
+; $F887 - Loads AR-Y with auxiliary constant.
+;------------------------------------------------------------------------------
+ARX_MINUS_ARV_29: ; $F887
     LDI  A,$F2
-    BCH ADD_ARU_ARX_32 ; $F891
+    BCH XFER_1_2_ARY_1 ; $F891
+
+
 
 ;------------------------------------------------------------------------------
-; (62) $F88B Transfers 0.6 to AR-V (FF 00 60 ...).
+; $F88B (62) - Transfers 0.6 to AR-Y (FF 00 60 ...).
 ;------------------------------------------------------------------------------
+XFER_06_2_ARY:   
     LDI  A,$F5
-    BCH ADD_ARU_ARX_32 ; $F891
+    BCH XFER_1_2_ARY_1 ; $F891
+
+
 
 ;------------------------------------------------------------------------------
-; (6A) $F88F Transfers numerical value 1 to AR-Y.
+; $F88F (6A) - Transfers numerical value 1 to AR-Y.
 ;------------------------------------------------------------------------------
+XFER_1_2_ARY: 
     LDI  A,$EC
 
-ADD_ARU_ARX_32: ; $F891
+XFER_1_2_ARY_1: ; $F891
     STA  YL
     VMJ  ($70) ; ($70)($38)
     LDA  YL
     STA  XL
     LDI  UL,$02
 
-ADD_ARU_ARX_30: ; $F898
+XFER_1_2_ARY_2: ; $F898
     LDI  XH,$FB
-    BCH ADD_ARU_ARX_33 ; $F86C
+    BCH ARX_MINUS_ARV_22 ; $F86C
 
+
+
+;------------------------------------------------------------------------------
 ; $F89C AR-X=AR-X to the power of AR-Y.
+;------------------------------------------------------------------------------
+ARX_POW_ARY:   
     VMJ  ($54) ; ($54)($2A)
     LDI  XL,$02
     LDE  X
-    BZS ADD_ARU_ARX_34 ; $F920
+    BZS ARX_POW_ARY_9 ; $F920
     BII  (X),$80
-    BZR ADD_ARU_ARX_45 ; $F8E0
+    BZR ARX_POW_ARY_6 ; $F8E0
     BII  (ARY + $02),$FF
-    BZS ADD_ARU_ARX_35 ; $F8DA
+    BZS ARX_POW_ARY_5 ; $F8DA
     LDI  A,$00
     PSH  A
 
-ADD_ARU_ARX_41: ; $F8B1
-    SJP  (XFER_ARY2ARS)
+ARX_POW_ARY_1: ; $F8B1
+    SJP  (XFER_ARY_2_ARS)
     SJP  (BCMD_LOG)
-    BCS ADD_ARU_ARX_36 ; $F8C2
+    BCS ARX_POW_ARY_2 ; $F8C2
     VMJ  ($68) ; ($68)($34)
     VMJ  ($7E) ; ($7E)($3F)
-    BCS ADD_ARU_ARX_36 ; $F8C2
+    BCS ARX_POW_ARY_2 ; $F8C2
     SJP  (EXPONENT)
 
-ADD_ARU_ARX_36: ; $F8C2
+ARX_POW_ARY_2: ; $F8C2
     POP  A
-    BCS ADD_ARU_ARX_37 ; $F8D0
+    BCS ARX_POW_ARY_3 ; $F8D0
     BII  A,$F0
-    BZS ADD_ARU_ARX_38 ; $F8D7
+    BZS ARX_POW_ARY_4 ; $F8D7
     SHR
     BCS $F8D3
     SHL
-    BCR ADD_ARU_ARX_38 ; $F8D7
+    BCR ARX_POW_ARY_4 ; $F8D7
 
-ADD_ARU_ARX_37: ; $F8D0
-    JMP  SQR_ROOT_1 ; $F15D
+ARX_POW_ARY_3: ; $F8D0
+    JMP  SQR_ROOT_12 ; $F15D
     ORI  (ARX + $01),$80
 
-ADD_ARU_ARX_38: ; $F8D7
-    JMP  MULTIPLY_7 ; $F063
+ARX_POW_ARY_4: ; $F8D7
+    JMP  MULTIPLY_6 ; $F063
 
-ADD_ARU_ARX_35: ; $F8DA
+ARX_POW_ARY_5: ; $F8DA
     VMJ  ($6A) ; ($6A)($35)
     VMJ  ($56) ; ($56)($2B)
-    BCH ADD_ARU_ARX_38 ; $F8D7
+    BCH ARX_POW_ARY_4 ; $F8D7
 
-ADD_ARU_ARX_45: ; $F8E0
+ARX_POW_ARY_6: ; $F8E0
     ANI  (X),$00
     VMJ  ($80) ; ($80)($40)
     VMJ  ($56) ; ($56)($2B)
     LDA  (ARX)
     BII  A,$80
-    BZR ADD_ARU_ARX_37 ; $F8D0
+    BZR ARX_POW_ARY_3 ; $F8D0
     CPI  A,$0B
     LDI  A,$00
-    BCS ADD_ARU_ARX_39 ; $F913
+    BCS ARX_POW_ARY_7 ; $F913
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
     VMJ  ($60) ; ($60)($30)
@@ -13031,7 +13072,7 @@ ADD_ARU_ARX_45: ; $F8E0
     LDI  YL,$11
     LDI  UL,$06
     LIN  Y
-    BZR ADD_ARU_ARX_36 ; $F8C2
+    BZR ARX_POW_ARY_2 ; $F8C2
     LOP  UL,$F8FE
     POP  A
     STA  (ARX + $01)
@@ -13039,56 +13080,59 @@ ADD_ARU_ARX_45: ; $F8E0
     ADI  A,$04
     SHR
     STA  XL
-    BCS ADD_ARU_ARX_40 ; $F91C
+    BCS ARX_POW_ARY_8 ; $F91C
     DEC  XL
     LDA  (X)
 
-ADD_ARU_ARX_39: ; $F913
+ARX_POW_ARY_7: ; $F913
     ORI  A,$F0
     PSH  A
     VEJ  (E6)
     VMJ  ($64) ; ($64)($32)
-    BCH ADD_ARU_ARX_41 ; $F8B1
+    BCH ARX_POW_ARY_1 ; $F8B1
 
-ADD_ARU_ARX_40: ; $F91C
+ARX_POW_ARY_8: ; $F91C
     LDA  (X)
     AEX
-    BCH ADD_ARU_ARX_39 ; $F913
+    BCH ARX_POW_ARY_7 ; $F913
 
-ADD_ARU_ARX_34: ; $F920
+ARX_POW_ARY_9: ; $F920
     LDI  XL,$12
     LDE  X
-    BZS ADD_ARU_ARX_37 ; $F8D0
+    BZS ARX_POW_ARY_3 ; $F8D0
     BII  (X),$80
-    BZS ADD_ARU_ARX_38 ; $F8D7
-    BCH ADD_ARU_ARX_37 ; $F8D0
+    BZS ARX_POW_ARY_4 ; $F8D7
+    BCH ARX_POW_ARY_3 ; $F8D0
 
 
-; $F92B Convert AR-X from integer to BCD format.
-ADD_ARU_ARX_1: ; $F92B
+
+;------------------------------------------------------------------------------
+; $F92B - Convert AR-X from integer to BCD format.
+;------------------------------------------------------------------------------
+ARX_INT_2_BCD: ; $F92B
     LDI  A,$A0
     CPA  (ARX + $04)
-    BCR ADD_ARU_ARX_42 ; $F874
+    BCR ARX_MINUS_ARV_24 ; $F874
     LDI  XH,$7A
     LDA  (ARX + $07)
     REC
     ADI  A,$B0
-    BCR ADD_ARU_ARX_43 ; $F94E
+    BCR ARX_INT_2_BCD_2 ; $F94E
     VMJ  ($6C) ; ($6C)($36)
     PSH  A
     LDI  XL,$06
     LDI  UL,$05
 
-ADD_ARU_ARX_44: ; $F944
+ARX_INT_2_BCD_1: ; $F944
     LDI  A,$00
     DCA  (X)
     SDE  X
-    LOP  UL,ADD_ARU_ARX_44 ; $F944
+    LOP  UL,ARX_INT_2_BCD_1 ; $F944
     POP  A
     VMJ  ($52) ; ($52)($29
 
-ADD_ARU_ARX_43: ; $F94E
-    JMP  ARXX ; $F63C
+ARX_INT_2_BCD_2: ; $F94E
+    JMP  RAND_GEN_7 ; $F63C
     VEJ  (E4)
     VEJ  (E4)
     VEJ  (E4)
@@ -13099,115 +13143,119 @@ ADD_ARU_ARX_43: ; $F94E
 
 
 ;------------------------------------------------------------------------------
-;  Tokenizer program: Converts subsets of ASCII character strings into tokens, 
-;                     provided these could be fount in the token tables. 
-;                     The input buffer is compressed in the process. All Basic 
-;                     commands tokenized to 2 bytes, insert codes are deleted 
-;                     and spaces outside of strings as well.
+;  $F957 - Tokenizer program 
+;          Converts subsets of ASCII character strings into tokens, provided 
+;          these could be fount in the token tables. The input buffer is
+;          compressed in the process. All Basic commands tokenized to 2 bytes,
+;          insert codes are deleted and spaces outside of strings as well.
+;                     
 ;            Address: F957
 ; 
 ;         Parameters: Y-Reg must point to the input buffer
 ; Modified Registers: All
 ;   Error conditions: Error 28 when strings contain tokens.
 ;------------------------------------------------------------------------------
-TOKENIZE_INBUF: ; $F957
+TOK_INBUF: ; $F957
     LDI  UH,$00
 
 ; $F959 Tokenizer (string flag already in UH).
-TOKENIZE_INBUF_4: ; $F959
+TOK_INBUF_1: ; $F959
     LDA  (INBUFPTR_L)
     STA  YL
     LDI  YH,$7B
     LDX  Y
 
-TOKENIZE_INBUF_1: ; $F961
+TOK_INBUF_2: ; $F961
     LIN  Y
     CPI  A,$27
-    BZS TOKENIZE_INBUF_1 ; $F961
+    BZS TOK_INBUF_2 ; $F961
     CPI  A,$0D
-    BZR TOKENIZE_INBUF_2 ; $F96E
+    BZR TOK_INBUF_3 ; $F96E
     LDI  UH,$00
-    BCH VAR_TYPE_1 ; $FA18
+    BCH TOK_INBUF_23 ; $FA18
 
-TOKENIZE_INBUF_2: ; $F96E
+TOK_INBUF_3: ; $F96E
     CPI  A,$22
-    BZR VAR_TYPE_2 ; $F9A1
+    BZR TOK_INBUF_12 ; $F9A1
     DEC  UH
-    BZS TOKENIZE_INBUF_3 ; $F978
+    BZS TOK_INBUF_4 ; $F978
     LDI  UH,$01
 
-TOKENIZE_INBUF_3: ; $F978
+TOK_INBUF_4: ; $F978
     SIN  X
-    BCH TOKENIZE_INBUF_1 ; $F961
+    BCH TOK_INBUF_2 ; $F961
 
 
 
 ;------------------------------------------------------------------------------
 ; $F97B - Convert input line into tokens and use formula interpreter
 ;------------------------------------------------------------------------------
-VAR_TYPE: ; $F97B
+TOK_INBUF_5: ; $F97B
     LDI  UH,$00
     BII  (CURVARTYPE),$80 ; $7885
-    BZR VAR_TYPE_3 ; $F985
+    BZR TOK_INBUF_6 ; $F985
     LDI  UH,$01
 
-VAR_TYPE_3: ; $F985
-    SJP  (TOKENIZE_INBUF_4) ; $F959
-    BZS VAR_TYPE_4 ; $F99F
+TOK_INBUF_6: ; $F985
+    SJP  (TOK_INBUF_1) ; $F959
+    BZS TOK_INBUF_11 ; $F99F
     CPA  XL
-    BCS VAR_TYPE_5 ; $F998
+    BCS TOK_INBUF_8 ; $F998
     LDA  (CURVARTYPE); $7885
     ROL
-    BCS VAR_TYPE_6 ; $F999
+    BCS TOK_INBUF_9 ; $F999
     VMJ  ($0C)
 
-VAR_TYPE_8: ; $F995
-    VEJ  (C8) \ ABRF(VAR_TYPE_7) ; $F99D
+TOK_INBUF_7: ; $F995
+    VEJ  (C8) \ ABRF(TOK_INBUF_10) ; $F99D
     DEC  UL
 
-VAR_TYPE_5: ; $F998
+TOK_INBUF_8: ; $F998
     RTN
 
-VAR_TYPE_6: ; $F999
-    VEJ  (DE) \ ABRF(VAR_TYPE_4) ; $F99F
-    BCH VAR_TYPE_8 ; $F995
+TOK_INBUF_9: ; $F999
+    VEJ  (DE) \ ABRF(TOK_INBUF_11) ; $F99F
+    BCH TOK_INBUF_7 ; $F995
 
-VAR_TYPE_7: ; $F99D
+TOK_INBUF_10: ; $F99D
     LDI  UH,$01
 
-VAR_TYPE_4: ; $F99F
+TOK_INBUF_11: ; $F99F
     REC
     RTN
 
-VAR_TYPE_2: ; $F9A1
+TOK_INBUF_12: ; $F9A1
     CPI  UH,$00
-    BZS VAR_TYPE_9 ; $F9AB
+    BZS TOK_INBUF_13 ; $F9AB
     CPI  A,$E0
-    BCR TOKENIZE_INBUF_3 ; $F978
-    BCH VAR_TYPE_1 ; $FA18
+    BCR TOK_INBUF_4 ; $F978
+    BCH TOK_INBUF_23 ; $FA18
 
-VAR_TYPE_9: ; $F9AB
+TOK_INBUF_13: ; $F9AB
     CPI  A,$20
-    BZS TOKENIZE_INBUF_1 ; $F961
+    BZS TOK_INBUF_2 ; $F961
     CPI  A,$41
-    BCR TOKENIZE_INBUF_3 ; $F978
+    BCR TOK_INBUF_4 ; $F978
     CPI  A,$5B
     BCR $F9C0
     CPI  A,$E0
-    BCR TOKENIZE_INBUF_3 ; $F978
+    BCR TOK_INBUF_4 ; $F978
     STA  UH
     LIN  Y
     STA  UL
-    BCH VAR_TYPE_10 ; $FA09
+    BCH TOK_INBUF_21 ; $FA09
     PSH  X
     STA  UH
     LDI  UL,$60
     LDI  XH,$C0
 
+;------------------------------------------------------------------------------
 ; $F9C7 work off. Search Token Table
+;------------------------------------------------------------------------------
+TOK_INBUF_14:   
     LDA  (PU_PV)
 
-VAR_TYPE_22: ; $F9CA
+TOK_INBUF_15: ; $F9CA
     PSH  A
     LDI  XL,$1E
     LDA  UH
@@ -13215,40 +13263,40 @@ VAR_TYPE_22: ; $F9CA
     SHL
     ADR  X
     LIN  X
-    BZS VAR_TYPE_11 ; $FA40
+    BZS TOK_INBUF_27 ; $FA40
     PSH  A
     LDA  (X)
     STA  XL
     POP  A
     STA  XH
 
-VAR_TYPE_20: ; $F9DE
+TOK_INBUF_16: ; $F9DE
     PSH  Y
 
-VAR_TYPE_12: ; $F9E0
+TOK_INBUF_17: ; $F9E0
     LIN  Y
     CPI  A,$20
-    BZS VAR_TYPE_12 ; $F9E0
+    BZS TOK_INBUF_17 ; $F9E0
     CPI  A,$27
-    BZS VAR_TYPE_12 ; $F9E0
+    BZS TOK_INBUF_17 ; $F9E0
     CPI  A,$2E
-    BZR VAR_TYPE_13 ; $F9F5
+    BZR TOK_INBUF_19 ; $F9F5
 
-VAR_TYPE_14: ; $F9ED
+TOK_INBUF_18: ; $F9ED
     LDI  A,$E0
     CIN
-    BCS VAR_TYPE_14 ; $F9ED
+    BCS TOK_INBUF_18 ; $F9ED
     DEC  X
-    BCH VAR_TYPE_15 ; $F9FD
+    BCH TOK_INBUF_20 ; $F9FD
 
-VAR_TYPE_13: ; $F9F5
+TOK_INBUF_19: ; $F9F5
     CIN
-    BZR VAR_TYPE_16 ; $FA30
+    BZR TOK_INBUF_25 ; $FA30
     LDA  (X)
     CPI  A,$E0
-    BCR VAR_TYPE_12 ; $F9E0
+    BCR TOK_INBUF_17 ; $F9E0
 
-VAR_TYPE_15: ; $F9FD
+TOK_INBUF_20: ; $F9FD
     LIN  X
     STA  UH
     LDA  (X)
@@ -13258,32 +13306,32 @@ VAR_TYPE_15: ; $F9FD
     VMJ  ($1E)
     POP  X
 
-VAR_TYPE_10: ; $FA09
+TOK_INBUF_21: ; $FA09
     LDA  UH
     SIN  X
     LDA  UL
     SIN  X
     CPI  UH,$F1
     LDI  UH,$00
-    BZR TOKENIZE_INBUF_1 ; $F961
+    BZR TOK_INBUF_2 ; $F961
     CPI  UL,$AB
-    BZR TOKENIZE_INBUF_1 ; $F961
+    BZR TOK_INBUF_2 ; $F961
 
-VAR_TYPE_17: ; $FA17
+TOK_INBUF_22: ; $FA17
     LIN  Y
 
-VAR_TYPE_1: ; $FA18
+TOK_INBUF_23: ; $FA18
     SIN  X
     CPI  A,$0D
-    BZR VAR_TYPE_17 ; $FA17
+    BZR TOK_INBUF_22 ; $FA17
     DEC  Y
     DEC  X
     PSH  X
 
-VAR_TYPE_18: ; $FA21
+TOK_INBUF_24: ; $FA21
     STA  (X)
     INC  XL
-    BCR VAR_TYPE_18 ; $FA21
+    BCR TOK_INBUF_24 ; $FA21
     POP  X
     LDA  (INBUFPTR_L)
     STA  YL
@@ -13291,12 +13339,12 @@ VAR_TYPE_18: ; $FA21
     LDI  UH,$1C
     RTN
 
-VAR_TYPE_16: ; $FA30
+TOK_INBUF_25: ; $FA30
     LDI  A,$E0
 
-VAR_TYPE_19: ; $FA32
+TOK_INBUF_26: ; $FA32
     CIN
-    BCS VAR_TYPE_19 ; $FA32
+    BCS TOK_INBUF_26 ; $FA32
     INC  X
     INC  X
     INC  X
@@ -13304,26 +13352,26 @@ VAR_TYPE_19: ; $FA32
     INC  X
     ANI  A,$10
     POP  Y
-    BZS VAR_TYPE_20 ; $F9DE
+    BZS TOK_INBUF_16 ; $F9DE
 
-VAR_TYPE_11: ; $FA40
+TOK_INBUF_27: ; $FA40
     POP  A
     VMJ  ($1E)
 
-VAR_TYPE_23: ; $FA44
+TOK_INBUF_28: ; $FA44
     LDA  UL
     SJP  (DEC_OPN)
     STA  UL
-    BCS VAR_TYPE_21 ; $FA51
+    BCS TOK_INBUF_29 ; $FA51
     VMJ  ($3C)
-    BZS VAR_TYPE_22 ; $F9CA
-    BCH VAR_TYPE_23 ; $FA44
+    BZS TOK_INBUF_15 ; $F9CA
+    BCH TOK_INBUF_28 ; $FA44
 
-VAR_TYPE_21: ; $FA51
+TOK_INBUF_29: ; $FA51
     POP  X
     LDA  UH
     LDI  UH,$00
-    BCH TOKENIZE_INBUF_3 ; $F978
+    BCH TOK_INBUF_4 ; $F978
 
 
 
@@ -13381,7 +13429,7 @@ TOKEN_CHECK_1: ; $FA75
     STA  XL
     POP  A
     CPI  XL,$55
-    BZR PVBANK2
+    BZR PV_BANK
     RTN
 
 
@@ -13389,28 +13437,28 @@ TOKEN_CHECK_1: ; $FA75
 ;------------------------------------------------------------------------------
 ; (1C) $FA89 - Processes tokens corresponding to data bytes
 ;------------------------------------------------------------------------------
-TOKEN_PROCESS: ; $FA89
+TOK_PROCESS: ; $FA89
     POP  X
     LIN  X
     PSH  X
     CPI  UH,$F2
-    BCS TOKEN_PROCESS_1 ; $FAE2
+    BCS TOK_PROCESS_10 ; $FAE2
     PSH  A
     ANI  (OPN),$FC
     LDA  (OPN)
     CPI  UH,$F0
-    BZR TOKEN_PROCESS_2 ; $FAA4
+    BZR TOK_PROCESS_3 ; $FAA4
 
-TOKEN_PROCESS_9: ; $FA9F
+TOK_PROCESS_1: ; $FA9F
     PSH  A
 
-TOKEN_PROCESS_4: ; $FAA1
+TOK_PROCESS_2: ; $FAA1
     SHL
-    BCH TOKEN_PROCESS_3 ; $FAB0
+    BCH TOK_PROCESS_4 ; $FAB0
 
-TOKEN_PROCESS_2: ; $FAA4
+TOK_PROCESS_3: ; $FAA4
     LDI  A,$60
-    BCS TOKEN_PROCESS_4 ; $FAA1
+    BCS TOK_PROCESS_2 ; $FAA1
     SEC
     LDA  UH
     ANI  A,$07
@@ -13418,72 +13466,72 @@ TOKEN_PROCESS_2: ; $FAA4
     ROR
     CPI  UH,$E8
 
-TOKEN_PROCESS_3: ; $FAB0
+TOK_PROCESS_4: ; $FAB0
     SJP  (TOKEN_CHECK_1) ; $FA75
-    BCR TOKEN_PROCESS_5 ; $FAC5
+    BCR TOK_PROCESS_7 ; $FAC5
     PSH  A
     LDI  XL,$51
 
-TOKEN_PROCESS_10: ; $FAB9
+TOK_PROCESS_5: ; $FAB9
     INC  X
 
-TOKEN_PROCESS_11: ; $FABA
+TOK_PROCESS_6: ; $FABA
     INC  X
     INC  X
     LIN  X
     ANI  A,$0F
-    BZR TOKEN_PROCESS_6 ; $FAE7
+    BZR TOK_PROCESS_11 ; $FAE7
     POP  A
     VMJ  ($1E)
 
-TOKEN_PROCESS_5: ; $FAC5
+TOK_PROCESS_7: ; $FAC5
     POP  A
     CPI  UH,$F0
-    BZR TOKEN_PROCESS_1 ; $FAE2
+    BZR TOK_PROCESS_10 ; $FAE2
     CPA  (OPN)
-    BZR TOKEN_PROCESS_7 ; $FAD4
+    BZR TOK_PROCESS_8 ; $FAD4
     LDI  A,$60
-    BCH TOKEN_PROCESS_8 ; $FAD9
+    BCH TOK_PROCESS_9 ; $FAD9
 
-TOKEN_PROCESS_7: ; $FAD4
+TOK_PROCESS_8: ; $FAD4
     SJP  (DEC_OPN)
     BCS $FAE0
 
-TOKEN_PROCESS_8: ; $FAD9
+TOK_PROCESS_9: ; $FAD9
     CPA  (OPN)
-    BZS TOKEN_PROCESS_7 ; $FAD4
-    BCH TOKEN_PROCESS_9 ; $FA9F
+    BZS TOK_PROCESS_8 ; $FAD4
+    BCH TOK_PROCESS_1 ; $FA9F
     POP  A
 
-TOKEN_PROCESS_1: ; $FAE2
+TOK_PROCESS_10: ; $FAE2
     LDI  A,$00
     LDI  UH,$1B
     RTN
 
-TOKEN_PROCESS_6: ; $FAE7
+TOK_PROCESS_11: ; $FAE7
     ADR  X
     LIN  X
     CPA  UH
-    BZR TOKEN_PROCESS_10 ; $FAB9
+    BZR TOK_PROCESS_5 ; $FAB9
     LIN  X
     CPA  UL
-    BZR TOKEN_PROCESS_11 ; $FABA
+    BZR TOK_PROCESS_6 ; $FABA
     CPI  UH,$F0
-    BZR TOKEN_PROCESS_12 ; $FAFB
+    BZR TOK_PROCESS_12 ; $FAFB
     POP  A
     POP  U
-    BCH TOKEN_PROCESS_13 ; $FAFE
+    BCH TOK_PROCESS_13 ; $FAFE
 
-TOKEN_PROCESS_12: ; $FAFB
+TOK_PROCESS_12: ; $FAFB
     POP  U
     LDA  UH
 
-TOKEN_PROCESS_13: ; $FAFE
+TOK_PROCESS_13: ; $FAFE
     PSH  A
     LDA  UL
-    BZS PVBANK2_1 ; $FB7A
+    BZS PV_BANK_6 ; $FB7A
     SHR
-    BCS PVBANK2_2 ; $FB3A
+    BCS PV_BANK_3 ; $FB3A
     PSH  A
     DEC  X
     LDE  X
@@ -13491,41 +13539,41 @@ TOKEN_PROCESS_13: ; $FAFE
     LDE  X
     STA  UH
 
-TOKEN_PROCESS_14: ; $FB0D
+TOK_PROCESS_14: ; $FB0D
     DEC  X
     LDA  (X)
     CPI  A,$80
-    BCR TOKEN_PROCESS_14 ; $FB0D
+    BCR TOK_PROCESS_14 ; $FB0D
     POP  A
     ROR
-    BCS TOKEN_PROCESS_15 ; $FB20
+    BCS TOK_PROCESS_15 ; $FB20
     POP  A
     SHR
     LDA  (X)
     ANI  A,$0F
-    BCH PVBANK2_3 ; $FB2D
+    BCH PV_BANK_1 ; $FB2D
 
-TOKEN_PROCESS_15: ; $FB20
+TOK_PROCESS_15: ; $FB20
     LIN  X
     ANI  A,$0F
     DEC  A
     STA  UL
 
-TOKEN_PROCESS_16: ; $FB25
+TOK_PROCESS_16: ; $FB25
     TIN
-    LOP  UL,TOKEN_PROCESS_16 ; $FB25
+    LOP  UL,TOK_PROCESS_16 ; $FB25
     POP  A
 
 
 
 ;------------------------------------------------------------------------------
-; (1E) $FB2A - Performs PV banking according to PV byte $79D0.
+; $FB2A (1E) - Performs PV banking according to PV byte $79D0.
 ;------------------------------------------------------------------------------
-PVBANK2: ; $FB2A
+PV_BANK: ; $FB2A
     ROR
     LDI  A,$EF
 
-PVBANK2_3: ; $FB2D
+PV_BANK_1: ; $FB2D
     PSH  A
     LDA  (PU_PV)
     SJP  (SET_PV)
@@ -13533,10 +13581,10 @@ PVBANK2_3: ; $FB2D
     RTN
 
 ; $FB38 Execution of functions and trace.
-PVBANK2_10: ; $FB38
+PV_BANK_2: ; $FB38
     PSH  A
 
-PVBANK2_2: ; $FB3A
+PV_BANK_3: ; $FB3A
     LDI  UL,$28
     LDI  UH,$FB
     PSH  U
@@ -13548,12 +13596,12 @@ PVBANK2_2: ; $FB3A
     LIN  U
     SHL
     SHL
-    BCS PVBANK2_4 ; $FB75
+    BCS PV_BANK_4 ; $FB75
     STA  UL
     LDI  UH,$12
     LDA  (NUMARGS)
     DEC  A
-    BZR PVBANK2_5 ; $FB79
+    BZR PV_BANK_5 ; $FB79
     LDI  A,$B2
     CPA  (ARX + $04)
     LDI  A,$00
@@ -13561,94 +13609,94 @@ PVBANK2_2: ; $FB3A
     LDI  UH,$11
     ADC  UL
     SHL
-    BCS PVBANK2_5 ; $FB79
+    BCS PV_BANK_5 ; $FB79
     CPI  UL,$80
-    BCR PVBANK2_4 ; $FB75
+    BCR PV_BANK_4 ; $FB75
     LDA  XH
     CPI  A,$80
     ORI  A,$80
     STA  XH
-    BCR PVBANK2_4 ; $FB75
+    BCR PV_BANK_4 ; $FB75
     PSH  X
     VEJ  (D2) \ ABRF($FB77) \ ABYT($80)
     POP  X
 
-PVBANK2_4: ; $FB75
+PV_BANK_4: ; $FB75
     STX  P
     POP  X
 
-PVBANK2_5: ; $FB79
+PV_BANK_5: ; $FB79
     RTN
 
-PVBANK2_1: ; $FB7A
+PV_BANK_6: ; $FB7A
     STX  U
     LIN  U
     STA  XH
     LIN  U
     STA  XL
     VEJ  (D8)
-    BZR PVBANK2_6 ; $FB93
+    BZR PV_BANK_8 ; $FB93
     LDI  A,$20
     BII  (U),$60
-    BZR PVBANK2_7 ; $FB95
+    BZR PV_BANK_9 ; $FB95
     LDI  UH,$1A
     LIN  X
     AND  (DISP_BUFF + $4F)
-    BZS PVBANK2_8 ; $FB9C
+    BZS PV_BANK_10 ; $FB9C
 
-PVBANK2_9: ; $FB91
+PV_BANK_7: ; $FB91
     STX  P
 
-PVBANK2_6: ; $FB93
+PV_BANK_8: ; $FB93
     LDI  A,$00
 
-PVBANK2_7: ; $FB95
+PV_BANK_9: ; $FB95
     EOR  (U)
     ANI  A,$60
-    BZR PVBANK2_9 ; $FB91
+    BZR PV_BANK_7 ; $FB91
     LDI  UH,$01
 
-PVBANK2_8: ; $FB9C
+PV_BANK_10: ; $FB9C
     VEJ  (E0)
 
 
 
 ;------------------------------------------------------------------------------
-; (3E) $FB9D - Determine and run through the trace routine.
+; $FB9D (3E) - Determine and run through the trace routine.
 ;------------------------------------------------------------------------------
-TRACE2: ; 
-    STA  (TRACE)
+TRACE: ; 
+    STA  (TRACE_PARAM)
     CPI  A,$02
     LDA  (TRACE_ON)
-    BZS TRACE2_1 ; $FBC8
-    BCR TRACE2_2 ; $FBBB
+    BZS TRACE_5 ; $FBC8
+    BCR TRACE_2 ; $FBBB
     CPI  A,$58
-    BZS TRACE2_2 ; $FBBB
+    BZS TRACE_2 ; $FBBB
     VMJ  ($3C)
-    BZR TRACE2_3 ; $FBB9
+    BZR TRACE_1 ; $FBB9
     LDI  XL,$1D
-    SJP  (PVBANK2_10) ; $FB38
+    SJP  (PV_BANK_2) ; $FB38
     LDA  UH
-    BZR TRACE2_4 ; $FBC7
+    BZR TRACE_4 ; $FBC7
 
-TRACE2_3: ; $FBB9
+TRACE_1: ; $FBB9
     LDI  A,$58
 
-TRACE2_2: ; $FBBB
+TRACE_2: ; $FBBB
     LDI  UH,$00
     VMJ  ($3C)
     LDI  XL,$1D
-    BZR TRACE2_5 ; $FBC6
-    SJP  (PVBANK2_10) ; $FB38
+    BZR TRACE_3 ; $FBC6
+    SJP  (PV_BANK_2) ; $FB38
 
-TRACE2_5: ; $FBC6
+TRACE_3: ; $FBC6
     LDA  UH
 
-TRACE2_4: ; $FBC7
+TRACE_4: ; $FBC7
     RTN
 
-TRACE2_1: ; $FBC8
-    BCS TRACE2_3 ; $FBB9
+TRACE_5: ; $FBC8
+    BCS TRACE_1 ; $FBB9
     RTN
 
 

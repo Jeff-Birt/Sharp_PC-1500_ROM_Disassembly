@@ -51,7 +51,7 @@ BREAKPARAM        = $788A ; BREAK flag parameter
 INBUFPTR_L        = $788B ; Input Buffer pointer (L)
 NUMARGS           = $788C ; Number of function input arguments, array dim 1/2
 TRACE_ON          = $788D ; TRACE ON/OFF pointer: 00=OFF, >0=ON 
-TRACE             = $788E ; TRACE Parameter
+TRACE_PARAM       = $788E ; TRACE Parameter
 FORNXT_STK_PTR    = $7890 ; FOR/NEXT stack pointer (L)
 GOSB_STK_PTR_L    = $7891 ; GOSUB stack pointer (L)
 BAS_DATA_STK_L    = $7892 ; BASIC DATA STACK pointer (L)
